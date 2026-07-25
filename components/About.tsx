@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 const skills = [
   { name: 'Python', level: 70 },
   { name: 'Bash', level: 45 },
+  { name: 'Forensics', level: 60 },
   { name: 'CTF Basics', level: 40 },
   { name: 'Linux', level: 55 },
   { name: 'Git', level: 50 },
@@ -36,12 +37,12 @@ export default function About() {
           >
             <p className="text-gray-300 leading-relaxed mb-4 font-mono text-sm">
               <span className="text-python-yellow">{'>'}</span> CS student
-              passionate about cybersecurity and automation.
+              passionate about cybersecurity, forensics, and automation.
             </p>
             <p className="text-gray-300 leading-relaxed mb-4 font-mono text-sm">
               <span className="text-python-yellow">{'>'}</span> Currently
               pursuing BaSC in Computer Science while diving deep into Python
-              and CTF challenges.
+              and CTF challenges — mostly forensics on picoCTF.
             </p>
             <p className="text-gray-300 leading-relaxed font-mono text-sm">
               <span className="text-python-yellow">{'>'}</span> Building in

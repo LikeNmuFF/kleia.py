@@ -4,6 +4,9 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'kleia.py | Learning Python, one bug at a time',
   description: 'Personal Python and CTF learning journey by a CS student',
+  icons: {
+    icon: '/logo.png',
+  },
 }
 
 export default function RootLayout({
