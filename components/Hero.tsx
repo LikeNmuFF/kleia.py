@@ -45,9 +45,9 @@ export default function Hero() {
         >
           <TypeWriter
             texts={[
-              'Learning Python, one bug at a time 🐍',
-              'Forensics enthusiast on picoCTF 🔍',
-              'Building in public, failing forward 💻',
+              'Learning Python, one bug at a time ',
+              'Forensics enthusiast on picoCTF ',
+              'Building in public, failing forward ',
             ]}
             speed={80}
             deleteSpeed={40}
