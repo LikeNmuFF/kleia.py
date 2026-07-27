@@ -56,26 +56,39 @@ export default function ChatWindow({ conversationId, currentUserId }: ChatWindow
   }, [conversationId])
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-[#0a0a0f]">
+      {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex ${msg.sender_id === currentUserId ? 'justify-end' : 'justify-start'}`}
-          >
-            <div
-              className={`max-w-xs px-4 py-2 rounded-lg ${
-                msg.sender_id === currentUserId
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 text-gray-900'
-              }`}
-            >
-              <p className="text-sm font-medium mb-1">{msg.profiles.username}</p>
-              <p>{msg.content}</p>
-            </div>
+        {messages.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-gray-500">No messages yet. Start the conversation!</p>
           </div>
-        ))}
+        ) : (
+          messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`flex ${msg.sender_id === currentUserId ? 'justify-end' : 'justify-start'}`}
+            >
+              <div
+                className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
+                  msg.sender_id === currentUserId
+                    ? 'bg-gradient-to-r from-violet-600 to-cyan-600 text-white'
+                    : 'bg-white/10 text-white'
+                }`}
+              >
+                {msg.sender_id !== currentUserId && (
+                  <p className="text-xs font-medium text-violet-400 mb-1">
+                    {msg.profiles.username}
+                  </p>
+                )}
+                <p className="leading-relaxed">{msg.content}</p>
+              </div>
+            </div>
+          ))
+        )}
       </div>
+
+      {/* Message Input */}
       <MessageInput conversationId={conversationId} />
     </div>
   )

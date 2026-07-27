@@ -30,19 +30,19 @@ export default function CreatePost() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6">
+    <form onSubmit={handleSubmit} className="card">
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder="Share something with the community..."
-        className="w-full border rounded-lg p-3 resize-none"
+        className="input-field resize-none min-h-[100px]"
         rows={3}
       />
       <div className="mt-3 flex justify-end">
         <button
           type="submit"
           disabled={loading || !content.trim()}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          className="px-5 py-2 bg-gradient-to-r from-violet-600 to-cyan-600 text-white rounded-xl font-medium text-sm transition-all hover:from-violet-500 hover:to-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? 'Posting...' : 'Post'}
         </button>

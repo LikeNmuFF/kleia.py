@@ -49,44 +49,70 @@ export default function NotesEditor({ notes }: NotesEditorProps) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-xl font-semibold mb-4">Shared Notes</h2>
-      <div className="space-y-2 mb-4">
-        {notes.map((note) => (
+    <div className="card">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-semibold text-white">Shared Notes</h2>
+        {selectedNote && (
           <button
-            key={note.id}
             onClick={() => {
-              setSelectedNote(note)
-              setTitle(note.title)
-              setContent(note.content || '')
+              setSelectedNote(null)
+              setTitle('')
+              setContent('')
             }}
-            className="w-full text-left p-2 rounded hover:bg-gray-100"
+            className="text-sm text-gray-400 hover:text-white transition-colors"
           >
-            {note.title}
+            New Note
           </button>
-        ))}
+        )}
       </div>
-      <input
-        type="text"
-        placeholder="Note title"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        className="w-full border rounded-lg px-3 py-2 mb-2"
-      />
-      <textarea
-        placeholder="Write your note..."
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        rows={6}
-        className="w-full border rounded-lg px-3 py-2 mb-2"
-      />
-      <button
-        onClick={handleSave}
-        disabled={loading || !title.trim()}
-        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-      >
-        {loading ? 'Saving...' : 'Save Note'}
-      </button>
+
+      {/* Notes List */}
+      {notes.length > 0 && (
+        <div className="mb-4 max-h-40 overflow-y-auto space-y-1">
+          {notes.map((note) => (
+            <button
+              key={note.id}
+              onClick={() => {
+                setSelectedNote(note)
+                setTitle(note.title)
+                setContent(note.content || '')
+              }}
+              className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${
+                selectedNote?.id === note.id
+                  ? 'bg-violet-600/20 text-violet-400'
+                  : 'text-gray-400 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              {note.title}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Editor */}
+      <div className="space-y-3">
+        <input
+          type="text"
+          placeholder="Note title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="input-field"
+        />
+        <textarea
+          placeholder="Write your note..."
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          rows={6}
+          className="input-field resize-none"
+        />
+        <button
+          onClick={handleSave}
+          disabled={loading || !title.trim()}
+          className="btn-primary"
+        >
+          {loading ? 'Saving...' : selectedNote ? 'Update Note' : 'Save Note'}
+        </button>
+      </div>
     </div>
   )
 }

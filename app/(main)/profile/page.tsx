@@ -13,7 +13,12 @@ export default async function ProfilePage() {
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4">
-      <h1 className="text-2xl font-bold mb-6 text-[#FFD43B]">Profile</h1>
+      {/* Page Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-white mb-2">Profile</h1>
+        <p className="text-gray-400">Manage your account settings</p>
+      </div>
+
       {profile && <ProfileForm profile={profile} />}
     </div>
   )

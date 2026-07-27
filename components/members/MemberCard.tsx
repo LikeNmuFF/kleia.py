@@ -9,9 +9,9 @@ interface Member {
 
 export default function MemberCard({ member }: { member: Member }) {
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="flex items-center space-x-4">
-        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+    <div className="card">
+      <div className="flex items-center gap-4">
+        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
           {member.avatar_url ? (
             <img
               src={member.avatar_url}
@@ -19,27 +19,30 @@ export default function MemberCard({ member }: { member: Member }) {
               className="w-12 h-12 rounded-full"
             />
           ) : (
-            <span className="text-blue-600 font-semibold text-lg">
+            <span className="text-white font-semibold text-lg">
               {member.username[0].toUpperCase()}
             </span>
           )}
         </div>
-        <div>
-          <p className="font-semibold">{member.full_name || member.username}</p>
-          <p className="text-sm text-gray-500">@{member.username}</p>
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-white truncate">
+            {member.full_name || member.username}
+          </p>
+          <p className="text-sm text-gray-400 truncate">@{member.username}</p>
         </div>
       </div>
-      {member.bio && <p className="mt-3 text-gray-600">{member.bio}</p>}
-      <div className="mt-3">
+
+      {member.bio && (
+        <p className="mt-3 text-gray-400 text-sm leading-relaxed line-clamp-2">{member.bio}</p>
+      )}
+
+      <div className="mt-3 flex items-center gap-2">
         <span
-          className={`text-xs px-2 py-1 rounded ${
-            member.status === 'online'
-              ? 'bg-green-100 text-green-800'
-              : 'bg-gray-100 text-gray-800'
+          className={`w-2 h-2 rounded-full ${
+            member.status === 'online' ? 'bg-emerald-400' : 'bg-gray-500'
           }`}
-        >
-          {member.status}
-        </span>
+        />
+        <span className="text-xs text-gray-500 capitalize">{member.status || 'offline'}</span>
       </div>
     </div>
   )

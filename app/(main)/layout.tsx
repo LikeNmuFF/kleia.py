@@ -11,25 +11,99 @@ export default async function MainLayout({
   const { data: { user } } = await supabase.auth.getUser()
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow">
+    <div className="min-h-screen bg-[#0a0a0f]">
+      {/* Top Navigation */}
+      <nav className="sticky top-0 z-50 border-b border-white/5 bg-[#0a0a0f]/80 backdrop-blur-xl">
         <div className="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
-          <Link href="/feed" className="text-xl font-bold text-blue-600">
-            Kleia
+          {/* Logo */}
+          <Link href="/feed" className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center">
+              <span className="text-white font-bold text-sm">K</span>
+            </div>
+            <span className="text-xl font-semibold tracking-tight text-white">kleia</span>
           </Link>
-          <div className="flex items-center space-x-6">
-            <Link href="/feed" className="text-gray-600 hover:text-gray-900">Feed</Link>
-            <Link href="/chat" className="text-gray-600 hover:text-gray-900">Chat</Link>
-            <Link href="/events" className="text-gray-600 hover:text-gray-900">Events</Link>
-            <Link href="/members" className="text-gray-600 hover:text-gray-900">Members</Link>
-            <Link href="/study" className="text-gray-600 hover:text-gray-900">Study</Link>
-            <Link href="/profile" className="text-gray-600 hover:text-gray-900">
-              {user?.email}
+
+          {/* Navigation Links */}
+          <div className="hidden md:flex items-center gap-1">
+            <Link
+              href="/feed"
+              className="px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+            >
+              Feed
+            </Link>
+            <Link
+              href="/chat"
+              className="px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+            >
+              Chat
+            </Link>
+            <Link
+              href="/events"
+              className="px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+            >
+              Events
+            </Link>
+            <Link
+              href="/members"
+              className="px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+            >
+              Members
+            </Link>
+            <Link
+              href="/study"
+              className="px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+            >
+              Study
+            </Link>
+          </div>
+
+          {/* User Menu */}
+          <div className="flex items-center gap-3">
+            <Link
+              href="/profile"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+            >
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center">
+                <span className="text-white text-xs font-medium">
+                  {user?.email?.[0].toUpperCase() || 'U'}
+                </span>
+              </div>
+              <span className="hidden sm:inline">{user?.email?.split('@')[0]}</span>
             </Link>
             <LogoutButton />
           </div>
         </div>
+
+        {/* Mobile Navigation */}
+        <div className="md:hidden border-t border-white/5 px-4 py-2 flex justify-around">
+          <Link href="/feed" className="flex flex-col items-center gap-1 text-gray-400 hover:text-white transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+            </svg>
+            <span className="text-xs">Feed</span>
+          </Link>
+          <Link href="/chat" className="flex flex-col items-center gap-1 text-gray-400 hover:text-white transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            <span className="text-xs">Chat</span>
+          </Link>
+          <Link href="/events" className="flex flex-col items-center gap-1 text-gray-400 hover:text-white transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span className="text-xs">Events</span>
+          </Link>
+          <Link href="/study" className="flex flex-col items-center gap-1 text-gray-400 hover:text-white transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+            <span className="text-xs">Study</span>
+          </Link>
+        </div>
       </nav>
+
+      {/* Main Content */}
       <main>{children}</main>
     </div>
   )
