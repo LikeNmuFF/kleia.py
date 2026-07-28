@@ -1,0 +1,16 @@
+{
+  "name": "kleia",
+  "short_name": "kleia",
+  "description": "A community platform for study groups and friends",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#0a0a0f",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "any",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { createEvent } from '@/app/actions/events'
 
 export default function CreateEvent() {
   const [isOpen, setIsOpen] = useState(false)
@@ -11,29 +11,33 @@ export default function CreateEvent() {
   const [startTime, setStartTime] = useState('')
   const [location, setLocation] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const router = useRouter()
-  const supabase = createClient()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setError('')
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      await supabase.from('events').insert({
-        creator_id: user.id,
-        title,
-        description,
-        start_time: startTime,
-        location,
-      })
-      setTitle('')
-      setDescription('')
-      setStartTime('')
-      setLocation('')
-      setIsOpen(false)
-      router.refresh()
+    const result = await createEvent({
+      title,
+      description,
+      start_time: startTime,
+      location,
+    })
+
+    if (result.error) {
+      setError(result.error)
+      setLoading(false)
+      return
     }
+
+    setTitle('')
+    setDescription('')
+    setStartTime('')
+    setLocation('')
+    setIsOpen(false)
+    router.refresh()
     setLoading(false)
   }
 
@@ -48,12 +52,13 @@ export default function CreateEvent() {
 
       {isOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#12121a] rounded-2xl border border-white/10 p-6 w-full max-w-md">
+          <div className="rounded-2xl p-6 w-full max-w-md" style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-white">Create Event</h2>
+              <h2 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Create Event</h2>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-gray-400 hover:text-white transition-colors"
+                className="transition-colors"
+                style={{ color: 'var(--text-muted)' }}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -63,7 +68,7 @@ export default function CreateEvent() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Title</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Title</label>
                 <input
                   type="text"
                   placeholder="Event title"
@@ -75,7 +80,7 @@ export default function CreateEvent() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Description</label>
                 <textarea
                   placeholder="What's this event about?"
                   value={description}
@@ -86,7 +91,7 @@ export default function CreateEvent() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Date & Time</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Date & Time</label>
                 <input
                   type="datetime-local"
                   value={startTime}
@@ -97,7 +102,7 @@ export default function CreateEvent() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Location</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Location</label>
                 <input
                   type="text"
                   placeholder="Where will this take place?"
@@ -107,11 +112,16 @@ export default function CreateEvent() {
                 />
               </div>
 
+              {error && (
+                <p className="text-sm text-red-400">{error}</p>
+              )}
+
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="flex-1 px-4 py-3 border border-white/10 text-white rounded-xl font-medium hover:bg-white/5 transition-all"
+                  className="flex-1 px-4 py-3 rounded-xl font-medium transition-all"
+                  style={{ border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
                 >
                   Cancel
                 </button>

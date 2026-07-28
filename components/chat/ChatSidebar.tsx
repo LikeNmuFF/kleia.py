@@ -1,56 +1,129 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { getStatusInfo } from '@/lib/utils/time'
+
 interface Conversation {
   id: string
   name: string | null
   type: string
 }
 
+interface MemberInfo {
+  username: string
+  avatar_url: string | null
+  status: string | null
+  last_seen: string | null
+}
+
 interface ChatSidebarProps {
   conversations: Conversation[]
   selectedId: string | null
   onSelect: (id: string) => void
+  onNewChat: () => void
+  currentUserId: string
 }
 
-export default function ChatSidebar({ conversations, selectedId, onSelect }: ChatSidebarProps) {
+export default function ChatSidebar({ conversations, selectedId, onSelect, onNewChat, currentUserId }: ChatSidebarProps) {
+  const [memberMap, setMemberMap] = useState<Record<string, MemberInfo>>({})
+  const supabase = createClient()
+
+  useEffect(() => {
+    const fetchMembers = async () => {
+      const map: Record<string, MemberInfo> = {}
+
+      for (const conv of conversations) {
+        const { data: memberships } = await supabase
+          .from('conversation_members')
+          .select('user_id')
+          .eq('conversation_id', conv.id)
+          .neq('user_id', currentUserId)
+
+        if (memberships && memberships.length > 0) {
+          const otherId = memberships[0].user_id
+          if (!map[conv.id]) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('username, avatar_url, status, last_seen')
+              .eq('id', otherId)
+              .single()
+
+            if (profile) map[conv.id] = profile
+          }
+        }
+      }
+
+      setMemberMap(map)
+    }
+
+    if (conversations.length > 0 && currentUserId) {
+      fetchMembers()
+    }
+  }, [conversations, currentUserId, supabase])
+
   return (
-    <div className="w-72 border-r border-white/5 bg-[#0a0a0f] h-full flex flex-col">
-      <div className="p-4 border-b border-white/5">
-        <h2 className="font-semibold text-white">Messages</h2>
+    <div className="w-72 h-full flex flex-col" style={{ borderRight: '1px solid var(--border-color)', backgroundColor: 'var(--bg-primary)' }}>
+      <div className="p-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-color)' }}>
+        <h2 className="font-semibold" style={{ color: 'var(--text-primary)' }}>Messages</h2>
+        <button
+          onClick={onNewChat}
+          className="p-2 rounded-lg transition-all"
+          style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-secondary)' }}
+          title="New chat"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+        </button>
       </div>
       <div className="flex-1 overflow-y-auto">
         {conversations.length === 0 ? (
-          <div className="p-4 text-center text-gray-500 text-sm">
+          <div className="p-4 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
             No conversations yet
           </div>
         ) : (
-          conversations.map((conv) => (
-            <button
-              key={conv.id}
-              onClick={() => onSelect(conv.id)}
-              className={`w-full text-left p-4 border-b border-white/5 transition-all ${
-                selectedId === conv.id
-                  ? 'bg-white/10'
-                  : 'hover:bg-white/5'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
-                  <span className="text-white font-medium text-sm">
-                    {conv.name ? conv.name[0].toUpperCase() : 'DM'}
-                  </span>
+          conversations.map((conv) => {
+            const member = memberMap[conv.id]
+            const statusInfo = member ? getStatusInfo(member.status, member.last_seen) : null
+
+            return (
+              <button
+                key={conv.id}
+                onClick={() => onSelect(conv.id)}
+                className="w-full text-left p-4 transition-all"
+                style={{
+                  borderBottom: '1px solid var(--border-color)',
+                  backgroundColor: selectedId === conv.id ? 'var(--card-hover)' : 'transparent',
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
+                      {member?.avatar_url ? (
+                        <img src={member.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover" />
+                      ) : (
+                        <span className="text-white font-medium text-sm">
+                          {member?.username?.[0]?.toUpperCase() || '?'}
+                        </span>
+                      )}
+                    </div>
+                    {statusInfo && (
+                      <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 ${statusInfo.color}`} style={{ borderColor: 'var(--bg-primary)' }} />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-medium truncate" style={{ color: 'var(--text-primary)' }}>
+                      {member?.username || 'Unknown'}
+                    </p>
+                    <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
+                      {statusInfo?.text || 'Offline'}
+                    </p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="font-medium text-white truncate">
-                    {conv.name || 'Direct Message'}
-                  </p>
-                  <p className="text-xs text-gray-500 truncate">
-                    {conv.type === 'group' ? 'Group chat' : 'Private'}
-                  </p>
-                </div>
-              </div>
-            </button>
-          ))
+              </button>
+            )
+          })
         )}
       </div>
     </div>

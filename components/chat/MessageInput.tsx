@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { sendMessage } from '@/app/actions/chat'
 
 interface MessageInputProps {
   conversationId: string
@@ -10,35 +10,29 @@ interface MessageInputProps {
 export default function MessageInput({ conversationId }: MessageInputProps) {
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
-  const supabase = createClient()
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!message.trim()) return
 
     setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
+    const result = await sendMessage(conversationId, message)
 
-    if (user) {
-      await supabase.from('messages').insert({
-        conversation_id: conversationId,
-        sender_id: user.id,
-        content: message.trim(),
-      })
+    if (result.success) {
       setMessage('')
     }
     setLoading(false)
   }
 
   return (
-    <form onSubmit={handleSend} className="p-4 border-t border-white/5">
+    <form onSubmit={handleSend} className="p-4" style={{ borderTop: '1px solid var(--border-color)' }}>
       <div className="flex gap-3">
         <input
           type="text"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Type a message..."
-          className="flex-1 px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-all"
+          className="input-field"
         />
         <button
           type="submit"

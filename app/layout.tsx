@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
+import Providers from '@/components/Providers'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -34,8 +35,7 @@ export const metadata: Metadata = {
   publisher: 'Kleia',
   icons: {
     icon: '/logo.png',
-    shortcut: '/logo-16x16.png',
-    apple: '/logo-180x180.png',
+    apple: '/logo.png',
   },
   manifest: '/site.webmanifest',
   openGraph: {
@@ -83,8 +83,12 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
-      <body className={`${inter.className} ${jetBrainsMono.variable}`}>{children}</body>
+    <html lang="en" className="scroll-smooth dark" suppressHydrationWarning>
+      <body className={`${inter.className} ${jetBrainsMono.variable}`}>
+        <Providers>
+          {children}
+        </Providers>
+      </body>
     </html>
   )
 }

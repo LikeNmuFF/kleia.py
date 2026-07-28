@@ -8,7 +8,7 @@ export default async function EventsPage() {
 
   const { data: events } = await supabase
     .from('events')
-    .select('*, profiles(username)')
+    .select('id, title, description, start_time, location, creator_id')
     .order('start_time', { ascending: true })
 
   return (
@@ -16,8 +16,8 @@ export default async function EventsPage() {
       {/* Page Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Events</h1>
-          <p className="text-gray-400">Schedule study sessions and meetups</p>
+          <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Events</h1>
+          <p style={{ color: 'var(--text-secondary)' }}>Schedule study sessions and meetups</p>
         </div>
         <CreateEvent />
       </div>
@@ -30,13 +30,13 @@ export default async function EventsPage() {
           ))
         ) : (
           <div className="text-center py-12">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
-              <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--card-bg)' }}>
+              <svg className="w-8 h-8" style={{ color: 'var(--text-muted)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-white mb-2">No events yet</h3>
-            <p className="text-gray-400">Create your first event to get started!</p>
+            <h3 className="text-lg font-medium mb-2" style={{ color: 'var(--text-primary)' }}>No events yet</h3>
+            <p style={{ color: 'var(--text-secondary)' }}>Create your first event to get started!</p>
           </div>
         )}
       </div>

@@ -1,7 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { rsvpEvent } from '@/app/actions/events'
+
+interface Profile {
+  username: string
+}
 
 interface EventCardProps {
   event: {
@@ -10,29 +15,52 @@ interface EventCardProps {
     description: string | null
     start_time: string
     location: string | null
-    profiles: { username: string }
+    creator_id: string
   }
   currentUserId: string
 }
 
 export default function EventCard({ event, currentUserId }: EventCardProps) {
   const [rsvpStatus, setRsvpStatus] = useState<string | null>(null)
+  const [creator, setCreator] = useState<Profile | null>(null)
   const supabase = createClient()
 
+  const isOwnEvent = event.creator_id === currentUserId
+
+  useEffect(() => {
+    const fetchCreator = async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', event.creator_id)
+        .single()
+
+      if (data) setCreator(data)
+    }
+
+    fetchCreator()
+  }, [event.creator_id, supabase])
+
   const handleRSVP = async (status: string) => {
-    await supabase.from('event_attendees').upsert({
-      event_id: event.id,
-      user_id: currentUserId,
-      status,
-    })
-    setRsvpStatus(status)
+    const result = await rsvpEvent(event.id, status)
+    if (result.success) setRsvpStatus(status)
   }
 
   return (
     <div className="card">
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <h3 className="text-xl font-semibold text-white mb-2">{event.title}</h3>
+          <div className="flex items-center gap-2 mb-2">
+            <h3 className="text-xl font-semibold text-white">{event.title}</h3>
+            {isOwnEvent && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
+                Your event
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-gray-500 mb-3">
+            Created by {creator?.username || 'Member'}
+          </p>
           {event.description && (
             <p className="text-gray-400 mb-3 leading-relaxed">{event.description}</p>
           )}
@@ -56,7 +84,6 @@ export default function EventCard({ event, currentUserId }: EventCardProps) {
         </div>
       </div>
 
-      {/* RSVP Buttons */}
       <div className="mt-4 pt-4 border-t border-white/5 flex gap-2">
         <button
           onClick={() => handleRSVP('going')}

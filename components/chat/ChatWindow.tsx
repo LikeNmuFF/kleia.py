@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import MessageInput from './MessageInput'
 
@@ -9,7 +9,11 @@ interface Message {
   content: string
   created_at: string
   sender_id: string
-  profiles: { username: string }
+}
+
+interface SenderInfo {
+  username: string
+  avatar_url: string | null
 }
 
 interface ChatWindowProps {
@@ -19,17 +23,41 @@ interface ChatWindowProps {
 
 export default function ChatWindow({ conversationId, currentUserId }: ChatWindowProps) {
   const [messages, setMessages] = useState<Message[]>([])
+  const [senderMap, setSenderMap] = useState<Record<string, SenderInfo>>({})
+  const messagesEndRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
 
   useEffect(() => {
     const fetchMessages = async () => {
       const { data } = await supabase
         .from('messages')
-        .select('*, profiles(username)')
+        .select('id, content, created_at, sender_id')
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true })
+        .limit(200)
 
-      if (data) setMessages(data)
+      if (data) {
+        setMessages(data)
+
+        const senderIds: string[] = Array.from(new Set(data.map((m: { sender_id: string }) => m.sender_id)))
+        const map: Record<string, SenderInfo> = {}
+
+        for (const id of senderIds) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('username, avatar_url')
+            .eq('id', id)
+            .single()
+
+          if (profile) map[id] = profile
+        }
+
+        setSenderMap(map)
+      }
     }
 
     fetchMessages()
@@ -44,8 +72,21 @@ export default function ChatWindow({ conversationId, currentUserId }: ChatWindow
           table: 'messages',
           filter: `conversation_id=eq.${conversationId}`,
         },
-        (payload) => {
-          setMessages((prev) => [...prev, payload.new as Message])
+        async (payload: { new: Message }) => {
+          const newMsg = payload.new as Message
+          setMessages((prev) => [...prev, newMsg])
+
+          if (!senderMap[newMsg.sender_id]) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('username, avatar_url')
+              .eq('id', newMsg.sender_id)
+              .single()
+
+            if (profile) {
+              setSenderMap((prev) => ({ ...prev, [newMsg.sender_id]: profile }))
+            }
+          }
         }
       )
       .subscribe()
@@ -55,37 +96,65 @@ export default function ChatWindow({ conversationId, currentUserId }: ChatWindow
     }
   }, [conversationId])
 
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
+
   return (
-    <div className="flex flex-col h-full bg-[#0a0a0f]">
+    <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--bg-primary)' }}>
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <p className="text-gray-500">No messages yet. Start the conversation!</p>
+            <p style={{ color: 'var(--text-muted)' }}>No messages yet. Start the conversation!</p>
           </div>
         ) : (
-          messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex ${msg.sender_id === currentUserId ? 'justify-end' : 'justify-start'}`}
-            >
+          messages.map((msg) => {
+            const sender = senderMap[msg.sender_id]
+            const isOwn = msg.sender_id === currentUserId
+
+            return (
               <div
-                className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
-                  msg.sender_id === currentUserId
-                    ? 'bg-gradient-to-r from-violet-600 to-cyan-600 text-white'
-                    : 'bg-white/10 text-white'
-                }`}
+                key={msg.id}
+                className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
               >
-                {msg.sender_id !== currentUserId && (
-                  <p className="text-xs font-medium text-violet-400 mb-1">
-                    {msg.profiles.username}
-                  </p>
+                {!isOwn && (
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center flex-shrink-0 mr-2 mt-1">
+                    {sender?.avatar_url ? (
+                      <img src={sender.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+                    ) : (
+                      <span className="text-white text-xs font-medium">
+                        {sender?.username?.[0]?.toUpperCase() || '?'}
+                      </span>
+                    )}
+                  </div>
                 )}
-                <p className="leading-relaxed">{msg.content}</p>
+                <div
+                  className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
+                    isOwn
+                      ? 'bg-gradient-to-r from-violet-600 to-cyan-600 text-white'
+                      : ''
+                  }`}
+                  style={!isOwn ? { backgroundColor: 'var(--card-bg)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' } : undefined}
+                >
+                  {!isOwn && (
+                    <p className="text-xs font-medium text-violet-400 mb-1">
+                      {sender?.username || 'Unknown'}
+                    </p>
+                  )}
+                  <p className="leading-relaxed">{msg.content}</p>
+                  <p className={`text-[10px] mt-1 ${isOwn ? 'text-white/60' : ''}`} style={!isOwn ? { color: 'var(--text-muted)' } : undefined}>
+                    {new Date(msg.created_at).toLocaleTimeString('en-US', {
+                      hour: 'numeric',
+                      minute: '2-digit',
+                    })}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))
+            )
+          })
         )}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Message Input */}

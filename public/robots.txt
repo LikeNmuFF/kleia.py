@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://www.kleia.py/sitemap.xml
+
+# Crawl delay
+Crawl-delay: 5
+
+# Priority pages
+# Homepage
+Disallow: /api/
+Disallow: /auth/
+Disallow: /_next/

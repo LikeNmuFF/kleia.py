@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { saveNote } from '@/app/actions/study'
 
 interface Note {
   id: string
@@ -21,25 +21,12 @@ export default function NotesEditor({ notes }: NotesEditorProps) {
   const [content, setContent] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
 
   const handleSave = async () => {
+    if (!title.trim()) return
     setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (user) {
-      if (selectedNote) {
-        await supabase
-          .from('shared_notes')
-          .update({ title, content })
-          .eq('id', selectedNote.id)
-      } else {
-        await supabase.from('shared_notes').insert({
-          author_id: user.id,
-          title,
-          content,
-        })
-      }
+    const result = await saveNote(selectedNote?.id || null, title, content)
+    if (result.success) {
       setTitle('')
       setContent('')
       setSelectedNote(null)
@@ -66,7 +53,6 @@ export default function NotesEditor({ notes }: NotesEditorProps) {
         )}
       </div>
 
-      {/* Notes List */}
       {notes.length > 0 && (
         <div className="mb-4 max-h-40 overflow-y-auto space-y-1">
           {notes.map((note) => (
@@ -89,7 +75,6 @@ export default function NotesEditor({ notes }: NotesEditorProps) {
         </div>
       )}
 
-      {/* Editor */}
       <div className="space-y-3">
         <input
           type="text"

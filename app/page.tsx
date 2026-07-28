@@ -97,12 +97,9 @@ export default function Home() {
         transition={{ duration: 0.6 }}
         className="relative z-50 flex justify-between items-center px-6 lg:px-12 py-5 border-b border-white/5"
       >
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center">
-            <span className="text-white font-bold text-sm">K</span>
-          </div>
-          <span className="text-xl font-semibold tracking-tight">kleia</span>
-        </div>
+        <Link href="/" className="flex items-center gap-2">
+          <span className="text-2xl font-bold tracking-tight font-logo">kleia</span>
+        </Link>
         <div className="flex items-center gap-3">
           <Link
             href="/login"
@@ -250,10 +247,8 @@ export default function Home() {
         <footer className="border-t border-white/5 py-12 px-6">
           <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-md bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center">
-                <span className="text-white font-bold text-xs">K</span>
-              </div>
-              <span className="text-sm text-gray-500">© 2026 Kleia. Learn together.</span>
+              <span className="text-lg font-bold font-logo">kleia</span>
+              <span className="text-sm text-gray-500">© 2026 Learn together.</span>
             </div>
             <div className="flex gap-6 text-sm text-gray-500">
               <a href="mailto:me@kleia.site" className="hover:text-white transition-colors">Contact</a>

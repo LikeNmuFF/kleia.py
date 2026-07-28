@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { addPlaylist } from '@/app/actions/study'
 
 interface Playlist {
   id: string
@@ -20,19 +20,12 @@ export default function PlaylistManager({ playlists }: PlaylistManagerProps) {
   const [url, setUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
 
   const handleAdd = async () => {
+    if (!title || !url) return
     setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (user && title && url) {
-      await supabase.from('playlists').insert({
-        user_id: user.id,
-        title,
-        url,
-        type: 'link',
-      })
+    const result = await addPlaylist(title, url)
+    if (result.success) {
       setTitle('')
       setUrl('')
       router.refresh()
@@ -44,7 +37,6 @@ export default function PlaylistManager({ playlists }: PlaylistManagerProps) {
     <div className="card">
       <h2 className="text-xl font-semibold text-white mb-4">Playlists</h2>
 
-      {/* Add Form */}
       <div className="flex gap-2 mb-4">
         <input
           type="text"
@@ -69,7 +61,6 @@ export default function PlaylistManager({ playlists }: PlaylistManagerProps) {
         </button>
       </div>
 
-      {/* Playlists List */}
       <div className="space-y-2">
         {playlists.length === 0 ? (
           <p className="text-gray-500 text-sm text-center py-4">

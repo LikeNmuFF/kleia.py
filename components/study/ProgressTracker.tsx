@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { addProgress } from '@/app/actions/study'
 
 interface Progress {
   id: string
@@ -20,18 +20,12 @@ export default function ProgressTracker({ progress }: ProgressTrackerProps) {
   const [hours, setHours] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
 
   const handleAdd = async () => {
+    if (!subject || !hours) return
     setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (user && subject && hours) {
-      await supabase.from('progress_tracking').insert({
-        user_id: user.id,
-        subject,
-        hours_studied: parseFloat(hours),
-      })
+    const result = await addProgress(subject, parseFloat(hours))
+    if (result.success) {
       setSubject('')
       setHours('')
       router.refresh()
@@ -43,7 +37,6 @@ export default function ProgressTracker({ progress }: ProgressTrackerProps) {
     <div className="card">
       <h2 className="text-xl font-semibold text-white mb-4">Progress Tracking</h2>
 
-      {/* Add Form */}
       <div className="flex gap-2 mb-4">
         <input
           type="text"
@@ -69,7 +62,6 @@ export default function ProgressTracker({ progress }: ProgressTrackerProps) {
         </button>
       </div>
 
-      {/* Progress List */}
       <div className="space-y-2">
         {progress.length === 0 ? (
           <p className="text-gray-500 text-sm text-center py-4">

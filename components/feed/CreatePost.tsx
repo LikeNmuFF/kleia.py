@@ -1,31 +1,32 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { createPost } from '@/app/actions/posts'
 
 export default function CreatePost() {
   const [content, setContent] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const router = useRouter()
-  const supabase = createClient()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!content.trim()) return
 
     setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
+    setError('')
 
-    if (user) {
-      await supabase.from('posts').insert({
-        author_id: user.id,
-        content: content.trim(),
-        type: 'text',
-      })
-      setContent('')
-      router.refresh()
+    const result = await createPost(content)
+
+    if (result.error) {
+      setError(result.error)
+      setLoading(false)
+      return
     }
+
+    setContent('')
+    router.refresh()
     setLoading(false)
   }
 
@@ -38,6 +39,9 @@ export default function CreatePost() {
         className="input-field resize-none min-h-[100px]"
         rows={3}
       />
+      {error && (
+        <p className="mt-2 text-sm text-red-400">{error}</p>
+      )}
       <div className="mt-3 flex justify-end">
         <button
           type="submit"

@@ -4,18 +4,32 @@ import CreatePost from '@/components/feed/CreatePost'
 
 export default async function FeedPage() {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
   const { data: posts } = await supabase
     .from('posts')
-    .select('*, profiles(username, avatar_url)')
+    .select('id, content, type, author_id, created_at, likes_count, comments_count')
     .order('created_at', { ascending: false })
+
+  // Batch fetch all user likes for loaded posts (1 query instead of N)
+  let likedPostIds: string[] = []
+  if (user && posts && posts.length > 0) {
+    const postIds = posts.map((p) => p.id)
+    const { data: likes } = await supabase
+      .from('post_likes')
+      .select('post_id')
+      .eq('user_id', user.id)
+      .in('post_id', postIds)
+
+    if (likes) likedPostIds = likes.map((l) => l.post_id)
+  }
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4">
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Feed</h1>
-        <p className="text-gray-400">Share updates, resources, and discussions</p>
+        <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Feed</h1>
+        <p style={{ color: 'var(--text-secondary)' }}>Share updates, resources, and discussions</p>
       </div>
 
       {/* Create Post */}
@@ -25,17 +39,22 @@ export default async function FeedPage() {
       <div className="mt-6 space-y-4">
         {posts && posts.length > 0 ? (
           posts.map((post) => (
-            <PostCard key={post.id} post={post} />
+            <PostCard
+              key={post.id}
+              post={post}
+              currentUserId={user?.id}
+              initialLiked={likedPostIds.includes(post.id)}
+            />
           ))
         ) : (
           <div className="text-center py-12">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
-              <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--card-bg)' }}>
+              <svg className="w-8 h-8" style={{ color: 'var(--text-muted)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-white mb-2">No posts yet</h3>
-            <p className="text-gray-400">Be the first to share something with the community!</p>
+            <h3 className="text-lg font-medium mb-2" style={{ color: 'var(--text-primary)' }}>No posts yet</h3>
+            <p style={{ color: 'var(--text-secondary)' }}>Be the first to share something with the community!</p>
           </div>
         )}
       </div>
