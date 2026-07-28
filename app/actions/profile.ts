@@ -16,7 +16,6 @@ export async function updateProfile(data: {
     return { error: 'Unauthorized' }
   }
 
-  // Check username availability if changing
   if (data.username) {
     const { data: existing } = await supabase
       .from('profiles')
@@ -50,6 +49,8 @@ export async function updateProfile(data: {
 
 export async function checkUsernameAvailability(username: string, currentUserId: string) {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { available: false }
 
   const { data } = await supabase
     .from('profiles')

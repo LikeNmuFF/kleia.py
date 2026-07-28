@@ -8,7 +8,6 @@ export async function getConversations() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
-  // Get conversation IDs this user is a member of
   const { data: memberships } = await supabase
     .from('conversation_members')
     .select('conversation_id')
@@ -16,9 +15,8 @@ export async function getConversations() {
 
   if (!memberships || memberships.length === 0) return []
 
-  const convIds = memberships.map((m) => m.conversation_id)
+  const convIds = memberships.map((m: { conversation_id: string }) => m.conversation_id)
 
-  // Get conversations
   const { data: conversations } = await supabase
     .from('conversations')
     .select('id, name, type, created_at')
@@ -30,6 +28,16 @@ export async function getConversations() {
 
 export async function getConversationMembers(conversationId: string) {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const { count } = await supabase
+    .from('conversation_members')
+    .select('*', { count: 'exact', head: true })
+    .eq('conversation_id', conversationId)
+    .eq('user_id', user.id)
+
+  if (!count || count === 0) return []
 
   const { data: memberships } = await supabase
     .from('conversation_members')
@@ -38,7 +46,7 @@ export async function getConversationMembers(conversationId: string) {
 
   if (!memberships || memberships.length === 0) return []
 
-  const userIds = memberships.map((m) => m.user_id)
+  const userIds = memberships.map((m: { user_id: string }) => m.user_id)
 
   const { data: profiles } = await supabase
     .from('profiles')
@@ -53,55 +61,30 @@ export async function startConversation(otherUserId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not logged in' }
 
-  // Check if direct conversation already exists between these two users
-  // Query conversation_members where user_id is the current user
-  const { data: myMemberships } = await supabase
-    .from('conversation_members')
-    .select('conversation_id')
-    .eq('user_id', user.id)
+  const { data: existing, error: rpcError } = await supabase.rpc(
+    'create_direct_conversation',
+    { other_user_id: otherUserId }
+  )
 
-  if (myMemberships && myMemberships.length > 0) {
-    const myConvIds = myMemberships.map((m) => m.conversation_id)
-
-    // For each conversation the current user is in, check if the other user is also a member
-    for (const convId of myConvIds) {
-      const { count } = await supabase
-        .from('conversation_members')
-        .select('conversation_id', { count: 'exact', head: true })
-        .eq('conversation_id', convId)
-        .eq('user_id', otherUserId)
-
-      if (count && count > 0) {
-        return { conversationId: convId }
-      }
-    }
-  }
-
-  // Create new direct conversation
-  const { data: conversation, error: convError } = await supabase
-    .from('conversations')
-    .insert({ type: 'direct' })
-    .select('id')
-    .single()
-
-  if (convError || !conversation) return { error: convError?.message || 'Failed to create conversation' }
-
-  // Add both members
-  const { error: memberError } = await supabase.from('conversation_members').insert([
-    { conversation_id: conversation.id, user_id: user.id },
-    { conversation_id: conversation.id, user_id: otherUserId },
-  ])
-
-  if (memberError) return { error: memberError.message }
+  if (rpcError) return { error: rpcError.message }
+  if (existing.error) return { error: existing.error }
 
   revalidatePath('/chat')
-  return { conversationId: conversation.id }
+  return existing as { conversationId: string }
 }
 
 export async function sendMessage(conversationId: string, content: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not logged in' }
+
+  const { count } = await supabase
+    .from('conversation_members')
+    .select('*', { count: 'exact', head: true })
+    .eq('conversation_id', conversationId)
+    .eq('user_id', user.id)
+
+  if (!count || count === 0) return { error: 'Not a member of this conversation' }
 
   const { error } = await supabase.from('messages').insert({
     conversation_id: conversationId,
@@ -115,6 +98,16 @@ export async function sendMessage(conversationId: string, content: string) {
 
 export async function getMessages(conversationId: string) {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const { count } = await supabase
+    .from('conversation_members')
+    .select('*', { count: 'exact', head: true })
+    .eq('conversation_id', conversationId)
+    .eq('user_id', user.id)
+
+  if (!count || count === 0) return []
 
   const { data: messages } = await supabase
     .from('messages')

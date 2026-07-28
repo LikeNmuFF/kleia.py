@@ -70,7 +70,7 @@ export default function PlaylistManager({ playlists }: PlaylistManagerProps) {
           playlists.map((p) => (
             <a
               key={p.id}
-              href={p.url}
+              href={p.url.startsWith('https://') ? p.url : '#'}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-all group"

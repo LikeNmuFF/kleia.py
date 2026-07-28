@@ -11,6 +11,14 @@ export async function createPost(content: string) {
     return { error: 'You must be logged in' }
   }
 
+  if (!content.trim()) {
+    return { error: 'Content cannot be empty' }
+  }
+
+  if (content.trim().length > 5000) {
+    return { error: 'Content too long (max 5000 characters)' }
+  }
+
   const { error } = await supabase.from('posts').insert({
     author_id: user.id,
     content: content.trim(),
@@ -65,6 +73,8 @@ export async function toggleLike(postId: string) {
 
 export async function getComments(postId: string) {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
 
   const { data: comments } = await supabase
     .from('comments')
@@ -96,6 +106,10 @@ export async function addComment(postId: string, content: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not logged in' }
+
+  if (!content.trim()) {
+    return { error: 'Comment cannot be empty' }
+  }
 
   const { error } = await supabase.from('comments').insert({
     post_id: postId,
