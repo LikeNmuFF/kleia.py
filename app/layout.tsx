@@ -41,7 +41,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://kleia.py',
+    url: 'https://www.kleia.site',
     siteName: 'Kleia',
     title: 'Kleia | Learn Together, Grow Together',
     description: 'A community platform for study groups and friends. Share resources, track progress with streaks, and stay connected.',
@@ -73,7 +73,7 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: 'https://kleia.py',
+    canonical: 'https://www.kleia.site',
   },
 }
 
