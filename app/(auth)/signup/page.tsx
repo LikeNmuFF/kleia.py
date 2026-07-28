@@ -1,7 +1,11 @@
 import { signup } from './actions'
 import Link from 'next/link'
 
-export default function SignupPage() {
+export default function SignupPage({
+  searchParams,
+}: {
+  searchParams: { error?: string }
+}) {
   return (
     <div className="backdrop-blur-sm rounded-2xl p-8" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
       <div className="text-center mb-8">
@@ -13,6 +17,12 @@ export default function SignupPage() {
         </p>
       </div>
 
+      {searchParams.error && (
+        <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+          {searchParams.error}
+        </div>
+      )}
+
       <form action={signup} className="space-y-5">
         <div>
           <label htmlFor="username" className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
@@ -22,6 +32,7 @@ export default function SignupPage() {
             type="text"
             name="username"
             required
+            minLength={3}
             placeholder="Choose a username"
             className="input-field"
           />

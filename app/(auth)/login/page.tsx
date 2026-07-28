@@ -1,7 +1,11 @@
 import { login, signInWithGoogle, signInWithGitHub } from './actions'
 import Link from 'next/link'
 
-export default function LoginPage() {
+export default function LoginPage({
+  searchParams,
+}: {
+  searchParams: { error?: string }
+}) {
   return (
     <div className="backdrop-blur-sm rounded-2xl p-8" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
       <div className="text-center mb-8">
@@ -12,6 +16,12 @@ export default function LoginPage() {
           Sign in to continue your learning journey
         </p>
       </div>
+
+      {searchParams.error && (
+        <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+          {searchParams.error}
+        </div>
+      )}
 
       <form action={login} className="space-y-5">
         <div>
