@@ -69,3 +69,16 @@ CREATE POLICY "Users can delete own profile"
 CREATE POLICY "Users can delete own groups"
   ON study_groups FOR DELETE
   USING (auth.uid() = creator_id);
+
+-- 7. MEDIUM: Add DELETE policies for user self-management
+CREATE POLICY "Users can remove themselves from conversations"
+  ON conversation_members FOR DELETE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own messages"
+  ON messages FOR DELETE
+  USING (auth.uid() = sender_id);
+
+CREATE POLICY "Users can delete own RSVP"
+  ON event_attendees FOR DELETE
+  USING (auth.uid() = user_id);
