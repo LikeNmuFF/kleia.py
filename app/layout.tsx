@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     default: 'Kleia | Learn Together, Grow Together',
     template: '%s | Kleia',
   },
-  description: 'A community platform for study groups and friends. Share resources, track progress with streaks, and stay connected.',
+  description: 'Kleia — Learn together, grow together. A social study platform for IT and CS students with feeds, chat, events, CTF challenges, and leaderboards.',
   keywords: ['study', 'learning', 'community', 'education', 'streaks', 'productivity'],
   authors: [{ name: 'Kleia' }],
   creator: 'Kleia',
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     url: 'https://www.kleia.site',
     siteName: 'Kleia',
     title: 'Kleia | Learn Together, Grow Together',
-    description: 'A community platform for study groups and friends. Share resources, track progress with streaks, and stay connected.',
+    description: 'Kleia — Learn together, grow together. A social study platform for IT and CS students with feeds, chat, events, CTF challenges, and leaderboards.',
     images: [
       {
         url: '/og-image.png',
@@ -57,7 +57,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Kleia | Learn Together, Grow Together',
-    description: 'A community platform for study groups and friends. Share resources, track progress with streaks, and stay connected.',
+    description: 'Kleia — Learn together, grow together. A social study platform for IT and CS students with feeds, chat, events, CTF challenges, and leaderboards.',
     images: ['/og-image.png'],
     creator: '@kleia_py',
   },

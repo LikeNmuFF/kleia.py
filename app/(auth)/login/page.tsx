@@ -9,12 +9,15 @@ export default function LoginPage({
   return (
     <div className="backdrop-blur-sm rounded-2xl p-8" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
-          Welcome Back
-        </h1>
-        <p style={{ color: 'var(--text-secondary)' }}>
-          Sign in to continue your learning journey
-        </p>
+          <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+            Welcome Back
+          </h1>
+          <p className="text-sm mb-1 text-violet-400 font-medium">
+            Learn Together, Grow Together
+          </p>
+          <p style={{ color: 'var(--text-secondary)' }}>
+            Sign in to continue your learning journey
+          </p>
       </div>
 
       {searchParams.error && (
