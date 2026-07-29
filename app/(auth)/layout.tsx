@@ -23,6 +23,12 @@ export default function AuthLayout({
         </Link>
 
         {children}
+
+        <div className="mt-8 text-center text-xs space-x-4" style={{ color: 'var(--text-muted)' }}>
+          <Link href="/security" className="hover:text-violet-400 transition-colors">Security</Link>
+          <Link href="/privacy" className="hover:text-violet-400 transition-colors">Privacy</Link>
+          <Link href="/terms" className="hover:text-violet-400 transition-colors">Terms</Link>
+        </div>
       </div>
     </div>
   )

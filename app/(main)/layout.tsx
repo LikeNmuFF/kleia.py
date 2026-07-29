@@ -160,6 +160,16 @@ export default async function MainLayout({
 
       {/* Main Content */}
       <main>{children}</main>
+
+      {/* Footer */}
+      <footer className="border-t py-6 mt-12" style={{ borderColor: 'var(--border-color)' }}>
+        <div className="max-w-6xl mx-auto px-4 flex items-center justify-center gap-4 text-xs" style={{ color: 'var(--text-muted)' }}>
+          <span>&copy; {new Date().getFullYear()} Kleia</span>
+          <a href="/security" className="hover:text-violet-400 transition-colors">Security</a>
+          <a href="/privacy" className="hover:text-violet-400 transition-colors">Privacy</a>
+          <a href="/terms" className="hover:text-violet-400 transition-colors">Terms</a>
+        </div>
+      </footer>
     </div>
   )
 }
