@@ -62,11 +62,11 @@ ROT13 shifts each letter by 13 positions (A→N, B→O, etc.). It is symmetric �
   },
   {
     title: 'Morse Code',
-    description: `Decode this Morse code message:
+    description: `Decode this Morse code message to find the flag:
 
--.- .-.. . .. .- .----. .-.. .--- .- -- . ... ... .- --. . ..-. .-.. .- --. .-.. .. -.- . ----- ..-. .. .-. ... -
+-- ----- .-. ... ...-- / -.-. ----- -.. ...-- / ..-. ..- -. 
 
-Hint: Morse code uses dots (.) and dashes (-) separated by spaces for letters.`,
+Words are separated by '/'. Join the decoded words with underscores and wrap in KLEIA{...}.`,
     category: 'misc',
     difficulty: 'easy',
     points: 100,
