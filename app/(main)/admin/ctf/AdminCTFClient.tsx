@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createChallenge, updateChallenge, deleteChallenge } from '@/app/actions/ctf'
 
+const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/raw/upload`
+
 interface Challenge {
   id: string
   title: string
@@ -12,6 +14,8 @@ interface Challenge {
   difficulty: string
   points: number
   hint: string | null
+  file_url: string | null
+  link_url: string | null
   is_active: boolean
   created_at: string
 }
@@ -25,8 +29,23 @@ export default function AdminCTFClient({ challenges }: { challenges: Challenge[]
   const [showCreate, setShowCreate] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [uploading, setUploading] = useState<string | null>(null)
 
   const clearMessages = () => { setError(''); setSuccess('') }
+
+  const uploadToCloudinary = async (file: File): Promise<string | null> => {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('upload_preset', 'kleia-ctf-files')
+    try {
+      const res = await fetch(CLOUDINARY_URL, { method: 'POST', body: formData })
+      const data = await res.json()
+      return data.secure_url || null
+    } catch {
+      setError('Upload failed. Check your Cloudinary preset name.')
+      return null
+    }
+  }
 
   const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -40,12 +59,15 @@ export default function AdminCTFClient({ challenges }: { challenges: Challenge[]
       points: parseInt(form.get('points') as string),
       flag: form.get('flag') as string,
       hint: form.get('hint') as string || undefined,
+      file_url: fileInputUrl || undefined,
+      link_url: (form.get('link_url') as string) || undefined,
     })
 
     if (result.error) setError(result.error)
     else {
       setSuccess('Challenge created!')
       setShowCreate(false)
+      setFileInputUrl('')
       router.refresh()
     }
   }
@@ -62,6 +84,8 @@ export default function AdminCTFClient({ challenges }: { challenges: Challenge[]
       points: parseInt(form.get('points') as string),
       flag: (form.get('flag') as string) || undefined,
       hint: form.get('hint') as string || undefined,
+      file_url: (form.get('file_url') as string) || null,
+      link_url: (form.get('link_url') as string) || null,
     })
 
     if (result.error) setError(result.error)
@@ -91,6 +115,17 @@ export default function AdminCTFClient({ challenges }: { challenges: Challenge[]
       setSuccess('Challenge deleted')
       router.refresh()
     }
+  }
+
+  const [fileInputUrl, setFileInputUrl] = useState('')
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(file.name)
+    const url = await uploadToCloudinary(file)
+    if (url) setFileInputUrl(url)
+    setUploading(null)
   }
 
   return (
@@ -125,7 +160,24 @@ export default function AdminCTFClient({ challenges }: { challenges: Challenge[]
             <input name="points" type="number" min="1" placeholder="Points" required className="input-field" />
             <input name="flag" type="text" placeholder="Flag (plaintext)" required className="input-field" />
             <input name="hint" placeholder="Hint (optional)" className="input-field col-span-2" />
+            <input name="link_url" placeholder="External link URL (optional)" className="input-field col-span-2" />
           </div>
+
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg text-sm" style={{ backgroundColor: 'var(--input-bg)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+              </svg>
+              {uploading ? `Uploading ${uploading}...` : 'Attach file'}
+              <input type="file" className="hidden" onChange={handleFileUpload} />
+            </label>
+            {fileInputUrl && (
+              <span className="text-xs truncate flex-1" style={{ color: 'var(--text-muted)' }}>
+                ✓ {fileInputUrl.split('/').pop()}
+              </span>
+            )}
+          </div>
+
           <button type="submit" className="px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-violet-600 to-cyan-600 text-white">
             Create
           </button>
@@ -149,6 +201,8 @@ export default function AdminCTFClient({ challenges }: { challenges: Challenge[]
                   <input name="points" type="number" defaultValue={ch.points} min="1" required className="input-field" />
                   <input name="flag" placeholder="New flag (leave blank to keep)" className="input-field" />
                   <input name="hint" defaultValue={ch.hint || ''} placeholder="Hint" className="input-field col-span-2" />
+                  <input name="file_url" defaultValue={ch.file_url || ''} placeholder="File URL" className="input-field col-span-2" />
+                  <input name="link_url" defaultValue={ch.link_url || ''} placeholder="External link URL" className="input-field col-span-2" />
                 </div>
                 <div className="flex gap-2">
                   <button type="submit" className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gradient-to-r from-violet-600 to-cyan-600 text-white">Save</button>
@@ -173,6 +227,12 @@ export default function AdminCTFClient({ challenges }: { challenges: Challenge[]
                       )}
                     </div>
                     <p className="text-sm truncate" style={{ color: 'var(--text-muted)' }}>{ch.description}</p>
+                    {(ch.file_url || ch.link_url) && (
+                      <div className="flex gap-3 mt-1">
+                        {ch.file_url && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>📎 file</span>}
+                        {ch.link_url && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>🔗 link</span>}
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-1 ml-4">
                     <button onClick={() => { setEditingId(ch.id); setShowCreate(false) }} className="px-2 py-1 text-xs rounded hover:bg-white/5" style={{ color: 'var(--text-muted)' }}>Edit</button>

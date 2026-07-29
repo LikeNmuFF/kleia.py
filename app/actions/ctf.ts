@@ -88,6 +88,8 @@ export async function createChallenge(data: {
   points: number
   flag: string
   hint?: string
+  file_url?: string
+  link_url?: string
 }) {
   const start = Date.now()
   const supabase = await createClient()
@@ -115,6 +117,8 @@ export async function createChallenge(data: {
       points: data.points,
       flag_hash: hashFlag(data.flag.trim()),
       hint: data.hint?.trim() || null,
+      file_url: data.file_url?.trim() || null,
+      link_url: data.link_url?.trim() || null,
       created_by: user!.id,
     })
 
@@ -138,6 +142,8 @@ export async function updateChallenge(
     points?: number
     flag?: string
     hint?: string
+    file_url?: string
+    link_url?: string
     is_active?: boolean
   }
 ) {
@@ -177,6 +183,12 @@ export async function updateChallenge(
   }
   if (data.hint !== undefined) {
     updateData.hint = data.hint?.trim() || null
+  }
+  if (data.file_url !== undefined) {
+    updateData.file_url = data.file_url?.trim() || null
+  }
+  if (data.link_url !== undefined) {
+    updateData.link_url = data.link_url?.trim() || null
   }
   if (data.is_active !== undefined) {
     updateData.is_active = data.is_active
