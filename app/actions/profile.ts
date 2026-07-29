@@ -47,6 +47,33 @@ export async function updateProfile(data: {
   return { success: true }
 }
 
+export async function updatePassword(currentPassword: string, newPassword: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not logged in' }
+
+  if (newPassword.length < 6) {
+    return { error: 'New password must be at least 6 characters' }
+  }
+
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email: user.email!,
+    password: currentPassword,
+  })
+
+  if (signInError) {
+    return { error: 'Current password is incorrect' }
+  }
+
+  const { error } = await supabase.auth.updateUser({ password: newPassword })
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  return { success: true }
+}
+
 export async function checkUsernameAvailability(username: string, currentUserId: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

@@ -2,8 +2,8 @@
 
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Camera, Check, Loader2, User } from 'lucide-react'
-import { updateProfile, checkUsernameAvailability } from '@/app/actions/profile'
+import { Camera, Check, Loader2, Lock, User } from 'lucide-react'
+import { updateProfile, checkUsernameAvailability, updatePassword } from '@/app/actions/profile'
 
 interface Profile {
   id: string
@@ -31,6 +31,12 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
   const [uploading, setUploading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordLoading, setPasswordLoading] = useState(false)
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordSuccess, setPasswordSuccess] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
 
@@ -306,6 +312,111 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
             </span>
           </div>
         </div>
+      </div>
+
+      {/* Change Password */}
+      <div className="card">
+        <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
+          <Lock className="w-4 h-4 inline mr-2" />
+          Change Password
+        </h3>
+        <form action={async (formData) => {
+          const current = formData.get('currentPassword') as string
+          const newPass = formData.get('newPassword') as string
+          const confirm = formData.get('confirmPassword') as string
+
+          if (newPass !== confirm) {
+            setPasswordError('Passwords do not match')
+            return
+          }
+
+          setPasswordLoading(true)
+          setPasswordError('')
+          setPasswordSuccess(false)
+
+          const result = await updatePassword(current, newPass)
+          setPasswordLoading(false)
+
+          if (result.error) {
+            setPasswordError(result.error)
+          } else {
+            setPasswordSuccess(true)
+            setCurrentPassword('')
+            setNewPassword('')
+            setConfirmPassword('')
+            setTimeout(() => setPasswordSuccess(false), 3000)
+          }
+        }} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+              Current Password
+            </label>
+            <input
+              name="currentPassword"
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              required
+              className="input-field"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+              New Password
+            </label>
+            <input
+              name="newPassword"
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              required
+              minLength={6}
+              className="input-field"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+              Confirm New Password
+            </label>
+            <input
+              name="confirmPassword"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              minLength={6}
+              className="input-field"
+            />
+          </div>
+
+          {passwordError && (
+            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+              {passwordError}
+            </div>
+          )}
+
+          {passwordSuccess && (
+            <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm flex items-center gap-2">
+              <Check className="w-4 h-4" />
+              Password updated successfully
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={passwordLoading}
+            className="px-6 py-3 bg-gradient-to-r from-violet-600 to-cyan-600 text-white rounded-xl font-medium transition-all hover:from-violet-500 hover:to-cyan-500 disabled:opacity-50"
+          >
+            {passwordLoading ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Updating...
+              </span>
+            ) : (
+              'Update Password'
+            )}
+          </button>
+        </form>
       </div>
     </div>
   )
