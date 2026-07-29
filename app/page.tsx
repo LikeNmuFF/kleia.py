@@ -99,6 +99,9 @@ export default function Home() {
       >
         <Link href="/" className="flex items-center gap-2">
           <span className="text-2xl font-bold tracking-tight font-logo">kleia</span>
+          <span className="ml-1.5 px-1.5 py-0.5 text-[10px] font-semibold rounded-md uppercase tracking-wider bg-white/10 text-gray-400">
+            Beta
+          </span>
         </Link>
         <div className="flex items-center gap-3">
           <Link
