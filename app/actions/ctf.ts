@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { logEvent } from '@/lib/logEvent'
 import { hashFlag } from '@/lib/utils/ctf'
 
 const VALID_CATEGORIES = ['web', 'crypto', 'pwn', 'forensics', 'misc']
@@ -29,6 +30,7 @@ function isValidDifficulty(d: string): d is (typeof VALID_DIFFICULTIES)[number] 
 }
 
 export async function submitFlag(challengeId: string, submittedFlag: string) {
+  const start = Date.now()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not logged in' }
@@ -62,11 +64,14 @@ export async function submitFlag(challengeId: string, submittedFlag: string) {
 
   if (insertError) {
     if (insertError.message?.includes('ctf_submissions_one_correct_idx')) {
+      await logEvent({ endpoint: 'ctf.submitFlag', status: 'error', durationMs: Date.now() - start, errorMessage: 'Already solved', userId: user.id })
       return { error: 'Already solved this challenge' }
     }
+    await logEvent({ endpoint: 'ctf.submitFlag', status: 'error', durationMs: Date.now() - start, errorMessage: insertError.message, userId: user.id })
     return { error: 'Submission failed' }
   }
 
+  await logEvent({ endpoint: 'ctf.submitFlag', status: 'success', durationMs: Date.now() - start, userId: user.id })
   revalidatePath('/ctf')
   return {
     success: true,
@@ -84,8 +89,12 @@ export async function createChallenge(data: {
   flag: string
   hint?: string
 }) {
+  const start = Date.now()
   const supabase = await createClient()
-  if (!(await checkAdmin(supabase))) return { error: 'Unauthorized' }
+  if (!(await checkAdmin(supabase))) {
+    await logEvent({ endpoint: 'ctf.createChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: 'Unauthorized', userId: (await supabase.auth.getUser()).data.user?.id })
+    return { error: 'Unauthorized' }
+  }
 
   if (!data.title.trim()) return { error: 'Title cannot be empty' }
   if (!data.description.trim()) return { error: 'Description cannot be empty' }
@@ -109,7 +118,12 @@ export async function createChallenge(data: {
       created_by: user!.id,
     })
 
-  if (error) return { error: error.message }
+  if (error) {
+    await logEvent({ endpoint: 'ctf.createChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user?.id })
+    return { error: error.message }
+  }
+
+  await logEvent({ endpoint: 'ctf.createChallenge', status: 'success', durationMs: Date.now() - start, userId: user?.id })
   revalidatePath('/ctf')
   return { success: true }
 }
@@ -127,8 +141,13 @@ export async function updateChallenge(
     is_active?: boolean
   }
 ) {
+  const start = Date.now()
   const supabase = await createClient()
-  if (!(await checkAdmin(supabase))) return { error: 'Unauthorized' }
+  if (!(await checkAdmin(supabase))) {
+    const { data: { user } } = await supabase.auth.getUser()
+    await logEvent({ endpoint: 'ctf.updateChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: 'Unauthorized', userId: user?.id })
+    return { error: 'Unauthorized' }
+  }
 
   const updateData: Record<string, unknown> = {}
 
@@ -168,21 +187,38 @@ export async function updateChallenge(
     .update(updateData)
     .eq('id', id)
 
-  if (error) return { error: error.message }
+  if (error) {
+    const { data: { user } } = await supabase.auth.getUser()
+    await logEvent({ endpoint: 'ctf.updateChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user?.id })
+    return { error: error.message }
+  }
+
+  await logEvent({ endpoint: 'ctf.updateChallenge', status: 'success', durationMs: Date.now() - start })
   revalidatePath('/ctf')
   return { success: true }
 }
 
 export async function deleteChallenge(id: string) {
+  const start = Date.now()
   const supabase = await createClient()
-  if (!(await checkAdmin(supabase))) return { error: 'Unauthorized' }
+  if (!(await checkAdmin(supabase))) {
+    const { data: { user } } = await supabase.auth.getUser()
+    await logEvent({ endpoint: 'ctf.deleteChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: 'Unauthorized', userId: user?.id })
+    return { error: 'Unauthorized' }
+  }
 
   const { error } = await supabase
     .from('ctf_challenges')
     .delete()
     .eq('id', id)
 
-  if (error) return { error: error.message }
+  if (error) {
+    const { data: { user } } = await supabase.auth.getUser()
+    await logEvent({ endpoint: 'ctf.deleteChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user?.id })
+    return { error: error.message }
+  }
+
+  await logEvent({ endpoint: 'ctf.deleteChallenge', status: 'success', durationMs: Date.now() - start })
   revalidatePath('/ctf')
   return { success: true }
 }

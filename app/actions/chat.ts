@@ -2,16 +2,23 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { logEvent } from '@/lib/logEvent'
 
 export async function getConversations() {
+  const start = Date.now()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
-  const { data: memberships } = await supabase
+  const { data: memberships, error } = await supabase
     .from('conversation_members')
     .select('conversation_id')
     .eq('user_id', user.id)
+
+  if (error) {
+    await logEvent({ endpoint: 'chat.getConversations', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
+    return []
+  }
 
   if (!memberships || memberships.length === 0) return []
 
@@ -27,15 +34,21 @@ export async function getConversations() {
 }
 
 export async function getConversationMembers(conversationId: string) {
+  const start = Date.now()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
-  const { count } = await supabase
+  const { count, error: countError } = await supabase
     .from('conversation_members')
     .select('*', { count: 'exact', head: true })
     .eq('conversation_id', conversationId)
     .eq('user_id', user.id)
+
+  if (countError) {
+    await logEvent({ endpoint: 'chat.getConversationMembers', status: 'error', durationMs: Date.now() - start, errorMessage: countError.message, userId: user.id })
+    return []
+  }
 
   if (!count || count === 0) return []
 
@@ -57,6 +70,7 @@ export async function getConversationMembers(conversationId: string) {
 }
 
 export async function startConversation(otherUserId: string) {
+  const start = Date.now()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not logged in' }
@@ -66,23 +80,36 @@ export async function startConversation(otherUserId: string) {
     { other_user_id: otherUserId }
   )
 
-  if (rpcError) return { error: rpcError.message }
-  if (existing.error) return { error: existing.error }
+  if (rpcError) {
+    await logEvent({ endpoint: 'chat.startConversation', status: 'error', durationMs: Date.now() - start, errorMessage: rpcError.message, userId: user.id })
+    return { error: rpcError.message }
+  }
+  if (existing.error) {
+    await logEvent({ endpoint: 'chat.startConversation', status: 'error', durationMs: Date.now() - start, errorMessage: existing.error, userId: user.id })
+    return { error: existing.error }
+  }
 
+  await logEvent({ endpoint: 'chat.startConversation', status: 'success', durationMs: Date.now() - start, userId: user.id })
   revalidatePath('/chat')
   return existing as { conversationId: string }
 }
 
 export async function sendMessage(conversationId: string, content: string) {
+  const start = Date.now()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not logged in' }
 
-  const { count } = await supabase
+  const { count, error: memberError } = await supabase
     .from('conversation_members')
     .select('*', { count: 'exact', head: true })
     .eq('conversation_id', conversationId)
     .eq('user_id', user.id)
+
+  if (memberError) {
+    await logEvent({ endpoint: 'chat.sendMessage', status: 'error', durationMs: Date.now() - start, errorMessage: memberError.message, userId: user.id })
+    return { error: memberError.message }
+  }
 
   if (!count || count === 0) return { error: 'Not a member of this conversation' }
 
@@ -92,29 +119,45 @@ export async function sendMessage(conversationId: string, content: string) {
     content: content.trim(),
   })
 
-  if (error) return { error: error.message }
+  if (error) {
+    await logEvent({ endpoint: 'chat.sendMessage', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
+    return { error: error.message }
+  }
+
+  await logEvent({ endpoint: 'chat.sendMessage', status: 'success', durationMs: Date.now() - start, userId: user.id })
   return { success: true }
 }
 
 export async function getMessages(conversationId: string) {
+  const start = Date.now()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
-  const { count } = await supabase
+  const { count, error: countError } = await supabase
     .from('conversation_members')
     .select('*', { count: 'exact', head: true })
     .eq('conversation_id', conversationId)
     .eq('user_id', user.id)
 
+  if (countError) {
+    await logEvent({ endpoint: 'chat.getMessages', status: 'error', durationMs: Date.now() - start, errorMessage: countError.message, userId: user.id })
+    return []
+  }
+
   if (!count || count === 0) return []
 
-  const { data: messages } = await supabase
+  const { data: messages, error } = await supabase
     .from('messages')
     .select('id, content, created_at, sender_id')
     .eq('conversation_id', conversationId)
     .order('created_at', { ascending: true })
     .limit(100)
+
+  if (error) {
+    await logEvent({ endpoint: 'chat.getMessages', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
+    return []
+  }
 
   return messages || []
 }

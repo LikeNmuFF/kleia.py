@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { logEvent } from '@/lib/logEvent'
 
 const VALID_RSVP_STATUSES = ['going', 'maybe', 'not_going']
 
@@ -11,6 +12,7 @@ export async function createEvent(data: {
   start_time: string
   location?: string
 }) {
+  const start = Date.now()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -40,14 +42,17 @@ export async function createEvent(data: {
   })
 
   if (error) {
+    await logEvent({ endpoint: 'events.createEvent', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
     return { error: error.message }
   }
 
+  await logEvent({ endpoint: 'events.createEvent', status: 'success', durationMs: Date.now() - start, userId: user.id })
   revalidatePath('/events')
   return { success: true }
 }
 
 export async function rsvpEvent(eventId: string, status: string) {
+  const start = Date.now()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -63,7 +68,12 @@ export async function rsvpEvent(eventId: string, status: string) {
     status,
   })
 
-  if (error) return { error: error.message }
+  if (error) {
+    await logEvent({ endpoint: 'events.rsvpEvent', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
+    return { error: error.message }
+  }
+
+  await logEvent({ endpoint: 'events.rsvpEvent', status: 'success', durationMs: Date.now() - start, userId: user.id })
   revalidatePath('/events')
   return { success: true }
 }

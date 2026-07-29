@@ -2,8 +2,10 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { logEvent } from '@/lib/logEvent'
 
 export async function addProgress(subject: string, hours: number) {
+  const start = Date.now()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -23,12 +25,18 @@ export async function addProgress(subject: string, hours: number) {
     hours_studied: hours,
   })
 
-  if (error) return { error: error.message }
+  if (error) {
+    await logEvent({ endpoint: 'study.addProgress', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
+    return { error: error.message }
+  }
+
+  await logEvent({ endpoint: 'study.addProgress', status: 'success', durationMs: Date.now() - start, userId: user.id })
   revalidatePath('/study')
   return { success: true }
 }
 
 export async function addPlaylist(title: string, url: string) {
+  const start = Date.now()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -60,12 +68,18 @@ export async function addPlaylist(title: string, url: string) {
     type: 'link',
   })
 
-  if (error) return { error: error.message }
+  if (error) {
+    await logEvent({ endpoint: 'study.addPlaylist', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
+    return { error: error.message }
+  }
+
+  await logEvent({ endpoint: 'study.addPlaylist', status: 'success', durationMs: Date.now() - start, userId: user.id })
   revalidatePath('/study')
   return { success: true }
 }
 
 export async function saveNote(noteId: string | null, title: string, content: string) {
+  const start = Date.now()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -82,7 +96,10 @@ export async function saveNote(noteId: string | null, title: string, content: st
       .eq('id', noteId)
       .eq('author_id', user.id)
 
-    if (error) return { error: error.message }
+    if (error) {
+      await logEvent({ endpoint: 'study.saveNote', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
+      return { error: error.message }
+    }
   } else {
     const { error } = await supabase.from('shared_notes').insert({
       author_id: user.id,
@@ -90,9 +107,13 @@ export async function saveNote(noteId: string | null, title: string, content: st
       content,
     })
 
-    if (error) return { error: error.message }
+    if (error) {
+      await logEvent({ endpoint: 'study.saveNote', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
+      return { error: error.message }
+    }
   }
 
+  await logEvent({ endpoint: 'study.saveNote', status: 'success', durationMs: Date.now() - start, userId: user.id })
   revalidatePath('/study')
   return { success: true }
 }

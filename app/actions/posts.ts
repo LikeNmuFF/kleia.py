@@ -2,8 +2,10 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { logEvent } from '@/lib/logEvent'
 
 export async function createPost(content: string) {
+  const start = Date.now()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -26,14 +28,17 @@ export async function createPost(content: string) {
   })
 
   if (error) {
+    await logEvent({ endpoint: 'posts.createPost', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
     return { error: error.message }
   }
 
+  await logEvent({ endpoint: 'posts.createPost', status: 'success', durationMs: Date.now() - start, userId: user.id })
   revalidatePath('/feed')
   return { success: true }
 }
 
 export async function toggleLike(postId: string) {
+  const start = Date.now()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not logged in' }
@@ -52,13 +57,19 @@ export async function toggleLike(postId: string) {
       .eq('user_id', user.id)
       .eq('post_id', postId)
 
-    if (error) return { error: error.message }
+    if (error) {
+      await logEvent({ endpoint: 'posts.toggleLike', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
+      return { error: error.message }
+    }
   } else {
     const { error } = await supabase
       .from('post_likes')
       .insert({ user_id: user.id, post_id: postId })
 
-    if (error) return { error: error.message }
+    if (error) {
+      await logEvent({ endpoint: 'posts.toggleLike', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
+      return { error: error.message }
+    }
   }
 
   const { data: post } = await supabase
@@ -67,20 +78,27 @@ export async function toggleLike(postId: string) {
     .eq('id', postId)
     .single()
 
+  await logEvent({ endpoint: 'posts.toggleLike', status: 'success', durationMs: Date.now() - start, userId: user.id })
   revalidatePath('/feed')
   return { liked: !existing, likesCount: post?.likes_count ?? 0 }
 }
 
 export async function getComments(postId: string) {
+  const start = Date.now()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
-  const { data: comments } = await supabase
+  const { data: comments, error } = await supabase
     .from('comments')
     .select('id, content, created_at, author_id')
     .eq('post_id', postId)
     .order('created_at', { ascending: true })
+
+  if (error) {
+    await logEvent({ endpoint: 'posts.getComments', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
+    return []
+  }
 
   if (!comments || comments.length === 0) return []
 
@@ -103,6 +121,7 @@ export async function getComments(postId: string) {
 }
 
 export async function addComment(postId: string, content: string) {
+  const start = Date.now()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not logged in' }
@@ -117,13 +136,18 @@ export async function addComment(postId: string, content: string) {
     content: content.trim(),
   })
 
-  if (error) return { error: error.message }
+  if (error) {
+    await logEvent({ endpoint: 'posts.addComment', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
+    return { error: error.message }
+  }
 
+  await logEvent({ endpoint: 'posts.addComment', status: 'success', durationMs: Date.now() - start, userId: user.id })
   revalidatePath('/feed')
   return { success: true }
 }
 
 export async function deleteComment(commentId: string) {
+  const start = Date.now()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not logged in' }
@@ -134,8 +158,12 @@ export async function deleteComment(commentId: string) {
     .eq('id', commentId)
     .eq('author_id', user.id)
 
-  if (error) return { error: error.message }
+  if (error) {
+    await logEvent({ endpoint: 'posts.deleteComment', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
+    return { error: error.message }
+  }
 
+  await logEvent({ endpoint: 'posts.deleteComment', status: 'success', durationMs: Date.now() - start, userId: user.id })
   revalidatePath('/feed')
   return { success: true }
 }
