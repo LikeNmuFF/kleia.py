@@ -49,8 +49,8 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
       return
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Image must be less than 5MB')
+    if (file.size > 1 * 1024 * 1024) {
+      setError('Image must be under 1MB')
       return
     }
 
@@ -193,7 +193,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
           </div>
           <div>
             <p className="font-medium" style={{ color: 'var(--text-primary)' }}>Change avatar</p>
-            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>JPG, PNG or GIF. Max 5MB.</p>
+            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>JPG, PNG or GIF. Max 1MB.</p>
             {uploading && (
               <p className="text-sm text-violet-400 flex items-center gap-1 mt-1">
                 <Loader2 className="w-3 h-3 animate-spin" /> Uploading...
