@@ -92,9 +92,9 @@ export default function AdminCTFClient({ challenges }: { challenges: Challenge[]
       points: parseInt(form.get('points') as string),
       flag: (form.get('flag') as string) || undefined,
       hint: form.get('hint') as string || undefined,
-      file_url: (form.get('file_url') as string) || null,
-      link_url: (form.get('link_url') as string) || null,
-      author: (form.get('author') as string) || null,
+      file_url: (form.get('file_url') as string) || undefined,
+      link_url: (form.get('link_url') as string) || undefined,
+      author: (form.get('author') as string) || undefined,
     })
 
     if (result.error) setError(result.error)
