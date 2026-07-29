@@ -69,6 +69,13 @@ export default async function MainLayout({
             >
               Study
             </Link>
+            <Link
+              href="/ctf"
+              className="px-4 py-2 text-sm rounded-lg transition-all"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              CTF
+            </Link>
           </div>
 
           {/* User Menu */}
@@ -113,6 +120,15 @@ export default async function MainLayout({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
             <span className="text-xs">Study</span>
+          </Link>
+          <Link href="/ctf" className="flex flex-col items-center gap-1 transition-colors" style={{ color: 'var(--text-secondary)' }}>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3v4c0 2.21 1.79 4 4 4h4" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21v-4c0-2.21-1.79-4-4-4h-4" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 21h4c2.21 0 4-1.79 4-4v-4" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 3h-4c-2.21 0-4 1.79-4 4v4" />
+            </svg>
+            <span className="text-xs">CTF</span>
           </Link>
         </div>
       </nav>

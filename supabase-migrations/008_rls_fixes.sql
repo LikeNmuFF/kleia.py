@@ -62,23 +62,28 @@ CREATE POLICY "Notes are viewable by authenticated users"
   );
 
 -- 6. MEDIUM: Add DELETE policies for GDPR compliance
+DROP POLICY IF EXISTS "Users can delete own profile" ON profiles;
 CREATE POLICY "Users can delete own profile"
   ON profiles FOR DELETE
   USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can delete own groups" ON study_groups;
 CREATE POLICY "Users can delete own groups"
   ON study_groups FOR DELETE
   USING (auth.uid() = creator_id);
 
 -- 7. MEDIUM: Add DELETE policies for user self-management
+DROP POLICY IF EXISTS "Users can remove themselves from conversations" ON conversation_members;
 CREATE POLICY "Users can remove themselves from conversations"
   ON conversation_members FOR DELETE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own messages" ON messages;
 CREATE POLICY "Users can delete own messages"
   ON messages FOR DELETE
   USING (auth.uid() = sender_id);
 
+DROP POLICY IF EXISTS "Users can delete own RSVP" ON event_attendees;
 CREATE POLICY "Users can delete own RSVP"
   ON event_attendees FOR DELETE
   USING (auth.uid() = user_id);
