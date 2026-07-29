@@ -22,9 +22,9 @@ export default async function ChallengePage({ params }: { params: { id: string }
 
   const { data: challenge } = await supabase
     .from('ctf_challenges')
-    .select('id, title, description, category, difficulty, points, hint, file_url, link_url, created_at')
+    .select('id, title, description, category, difficulty, points, hint, file_url, link_url, author, created_at')
     .eq('id', params.id)
-    .eq('is_active', true)
+    .eq('status', 'approved')
     .single()
 
   if (!challenge) notFound()
@@ -70,6 +70,11 @@ export default async function ChallengePage({ params }: { params: { id: string }
             <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
               {challenge.title}
             </h1>
+            {challenge.author && (
+              <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+                by {challenge.author}
+              </p>
+            )}
           </div>
           <div className="text-right">
             <div className="text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>

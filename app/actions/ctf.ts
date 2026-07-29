@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { logEvent } from '@/lib/logEvent'
 import { hashFlag } from '@/lib/utils/ctf'
@@ -43,7 +44,7 @@ export async function submitFlag(challengeId: string, submittedFlag: string) {
     .from('ctf_challenges')
     .select('id, flag_hash')
     .eq('id', challengeId)
-    .eq('is_active', true)
+    .eq('status', 'approved')
     .single()
 
   if (!challenge) {
@@ -90,6 +91,7 @@ export async function createChallenge(data: {
   hint?: string
   file_url?: string
   link_url?: string
+  author?: string
 }) {
   const start = Date.now()
   const supabase = await createClient()
@@ -119,6 +121,8 @@ export async function createChallenge(data: {
       hint: data.hint?.trim() || null,
       file_url: data.file_url?.trim() || null,
       link_url: data.link_url?.trim() || null,
+      author: data.author?.trim() || null,
+      status: 'approved',
       created_by: user!.id,
     })
 
@@ -128,6 +132,101 @@ export async function createChallenge(data: {
   }
 
   await logEvent({ endpoint: 'ctf.createChallenge', status: 'success', durationMs: Date.now() - start, userId: user?.id })
+  revalidatePath('/ctf')
+  return { success: true }
+}
+
+export async function submitChallenge(formData: FormData) {
+  const start = Date.now()
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const title = formData.get('title') as string
+  const description = formData.get('description') as string
+  const category = formData.get('category') as string
+  const difficulty = formData.get('difficulty') as string
+  const points = parseInt(formData.get('points') as string)
+  const flag = formData.get('flag') as string
+  const hint = formData.get('hint') as string
+  const author = formData.get('author') as string
+  const link_url = formData.get('link_url') as string
+  const file_url = formData.get('file_url') as string
+
+  if (!title?.trim()) redirect('/ctf/submit?error=Title is required')
+  if (!description?.trim()) redirect('/ctf/submit?error=Description is required')
+  if (!isValidCategory(category)) redirect('/ctf/submit?error=Invalid category')
+  if (!isValidDifficulty(difficulty)) redirect('/ctf/submit?error=Invalid difficulty')
+  if (!Number.isInteger(points) || points < 1) redirect('/ctf/submit?error=Points must be a positive integer')
+  if (!flag?.trim()) redirect('/ctf/submit?error=Flag is required')
+
+  const { error } = await supabase
+    .from('ctf_challenges')
+    .insert({
+      title: title.trim(),
+      description: description.trim(),
+      category,
+      difficulty,
+      points,
+      flag_hash: hashFlag(flag.trim()),
+      hint: hint?.trim() || null,
+      file_url: file_url?.trim() || null,
+      link_url: link_url?.trim() || null,
+      author: author?.trim() || null,
+      status: 'pending',
+      created_by: user.id,
+    })
+
+  if (error) {
+    await logEvent({ endpoint: 'ctf.submitChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
+    redirect('/ctf/submit?error=' + encodeURIComponent(error.message))
+  }
+
+  await logEvent({ endpoint: 'ctf.submitChallenge', status: 'success', durationMs: Date.now() - start, userId: user.id })
+  revalidatePath('/ctf')
+  redirect('/ctf/submit?success=true')
+}
+
+export async function approveChallenge(id: string) {
+  const start = Date.now()
+  const supabase = await createClient()
+  if (!(await checkAdmin(supabase))) {
+    return { error: 'Unauthorized' }
+  }
+
+  const { error } = await supabase
+    .from('ctf_challenges')
+    .update({ status: 'approved' })
+    .eq('id', id)
+
+  if (error) {
+    await logEvent({ endpoint: 'ctf.approveChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: error.message })
+    return { error: error.message }
+  }
+
+  await logEvent({ endpoint: 'ctf.approveChallenge', status: 'success', durationMs: Date.now() - start })
+  revalidatePath('/ctf')
+  return { success: true }
+}
+
+export async function rejectChallenge(id: string) {
+  const start = Date.now()
+  const supabase = await createClient()
+  if (!(await checkAdmin(supabase))) {
+    return { error: 'Unauthorized' }
+  }
+
+  const { error } = await supabase
+    .from('ctf_challenges')
+    .update({ status: 'rejected' })
+    .eq('id', id)
+
+  if (error) {
+    await logEvent({ endpoint: 'ctf.rejectChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: error.message })
+    return { error: error.message }
+  }
+
+  await logEvent({ endpoint: 'ctf.rejectChallenge', status: 'success', durationMs: Date.now() - start })
   revalidatePath('/ctf')
   return { success: true }
 }
@@ -144,6 +243,8 @@ export async function updateChallenge(
     hint?: string
     file_url?: string
     link_url?: string
+    author?: string
+    status?: string
     is_active?: boolean
   }
 ) {
@@ -189,6 +290,12 @@ export async function updateChallenge(
   }
   if (data.link_url !== undefined) {
     updateData.link_url = data.link_url?.trim() || null
+  }
+  if (data.author !== undefined) {
+    updateData.author = data.author?.trim() || null
+  }
+  if (data.status !== undefined) {
+    updateData.status = data.status
   }
   if (data.is_active !== undefined) {
     updateData.is_active = data.is_active
@@ -241,8 +348,8 @@ export async function getChallenges() {
 
   let query = supabase
     .from('ctf_challenges')
-    .select('id, title, category, difficulty, points, hint, created_at')
-    .eq('is_active', true)
+    .select('id, title, category, difficulty, points, hint, author, created_at')
+    .eq('status', 'approved')
     .order('category', { ascending: true })
 
   const { data: challenges } = await query
@@ -273,9 +380,9 @@ export async function getChallenge(id: string) {
 
   const { data: challenge } = await supabase
     .from('ctf_challenges')
-    .select('id, title, description, category, difficulty, points, hint, created_at, created_by')
+    .select('id, title, description, category, difficulty, points, hint, file_url, link_url, author, created_at, created_by')
     .eq('id', id)
-    .eq('is_active', true)
+    .eq('status', 'approved')
     .single()
 
   if (!challenge) return null

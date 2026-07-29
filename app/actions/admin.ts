@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { logEvent } from '@/lib/logEvent'
 
 const FREE_TIER_BYTES = 500 * 1024 * 1024 // 500MB
 
@@ -149,5 +150,29 @@ export async function getCloudinaryUsage() {
     }
   } catch {
     return { storage: null, bandwidth: null, transformations: null, error: 'Failed to reach Cloudinary API' }
+  }
+}
+
+export async function getSecurityReports() {
+  const supabase = await createClient()
+  await checkAdmin(supabase)
+
+  const [latestResult, historyResult] = await Promise.all([
+    supabase
+      .from('security_reports')
+      .select('id, summary_markdown, critical_count, high_count, medium_count, low_count, created_at')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single(),
+    supabase
+      .from('security_reports')
+      .select('id, critical_count, high_count, medium_count, low_count, created_at')
+      .order('created_at', { ascending: false })
+      .limit(20),
+  ])
+
+  return {
+    latest: latestResult.data ?? null,
+    history: historyResult.data ?? [],
   }
 }

@@ -1,0 +1,50 @@
+name: Security Scan
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: npm audit
+        run: npm audit --json > audit-report.json || true
+        continue-on-error: true
+
+      - name: Install Semgrep
+        run: pip install semgrep
+
+      - name: Semgrep scan
+        run: semgrep --config=auto --json --output=semgrep-report.json . || true
+        continue-on-error: true
+
+      - name: Combine reports
+        run: |
+          node -e "
+          const fs = require('fs');
+          const audit = JSON.parse(fs.readFileSync('audit-report.json', 'utf8'));
+          const semgrep = JSON.parse(fs.readFileSync('semgrep-report.json', 'utf8'));
+          fs.writeFileSync('combined-report.json', JSON.stringify({ audit, semgrep }, null, 2));
+          "
+
+      - name: AI Summarize
+        run: npx tsx scripts/summarize-security-report.ts
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

@@ -19,8 +19,8 @@ async function getChallengeData(userId?: string) {
 
   const { data: challenges } = await supabase
     .from('ctf_challenges')
-    .select('id, title, category, difficulty, points, hint, created_at')
-    .eq('is_active', true)
+    .select('id, title, category, difficulty, points, hint, author, created_at')
+    .eq('status', 'approved')
     .order('category', { ascending: true })
 
   if (!challenges) return []
@@ -83,6 +83,13 @@ export default async function CTFPage() {
         >
           Leaderboard
         </a>
+        <a
+          href="/ctf/submit"
+          className="ml-auto px-4 py-2 rounded-lg font-medium text-sm border transition-all hover:scale-[1.02]"
+          style={{ borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}
+        >
+          + Submit Challenge
+        </a>
       </div>
 
       <div className="space-y-8">
@@ -129,6 +136,7 @@ export default async function CTFPage() {
                           {challenge.difficulty}
                         </span>
                         {challenge.hint && <span>💡 hint available</span>}
+                        {challenge.author && <span>by {challenge.author}</span>}
                       </div>
                     </div>
                     <div className="text-right">

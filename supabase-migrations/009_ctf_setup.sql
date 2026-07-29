@@ -61,7 +61,7 @@ SELECT
   COALESCE(SUM(cc.points), 0)::int AS total_points
 FROM profiles p
 LEFT JOIN ctf_submissions cs ON cs.user_id = p.id AND cs.is_correct = true
-LEFT JOIN ctf_challenges cc ON cc.id = cs.challenge_id AND cc.is_active = true
+LEFT JOIN ctf_challenges cc ON cc.id = cs.challenge_id AND cc.status = 'approved'
 WHERE p.role = 'user'
 GROUP BY p.id, p.username, p.avatar_url
 ORDER BY total_points DESC, solved_challenges DESC;

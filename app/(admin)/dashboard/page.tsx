@@ -1,7 +1,9 @@
 'use client'
 
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getDashboardStats, getDatabaseUsage, getCloudinaryUsage } from '@/app/actions/admin'
+import SecurityTab from '@/components/admin/SecurityTab'
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B'
@@ -22,7 +24,48 @@ function textColor(percent: number): string {
   return 'text-emerald-400'
 }
 
+type Tab = 'overview' | 'security'
+
+const tabs: { key: Tab; label: string }[] = [
+  { key: 'overview', label: 'Overview' },
+  { key: 'security', label: 'Security' },
+]
+
 export default function AdminDashboard() {
+  const [activeTab, setActiveTab] = useState<Tab>('overview')
+
+  return (
+    <div className="max-w-5xl mx-auto py-8 px-4">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+          Admin Dashboard
+        </h1>
+
+        {/* Tab Navigation */}
+        <div className="flex gap-1 mt-4 rounded-xl p-1" style={{ backgroundColor: 'var(--input-bg)' }}>
+          {tabs.map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                activeTab === tab.key
+                  ? 'bg-gradient-to-r from-violet-600 to-cyan-600 text-white shadow-lg shadow-violet-500/25'
+                  : 'text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-cyan-400 hover:from-violet-300 hover:to-cyan-300'
+              }`}
+              style={activeTab === tab.key ? {} : { color: 'var(--text-secondary)' }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {activeTab === 'overview' ? <OverviewTab /> : <SecurityTab />}
+    </div>
+  )
+}
+
+function OverviewTab() {
   const { data: dashData } = useQuery({
     queryKey: ['admin', 'dashboard'],
     queryFn: () => getDashboardStats(),
@@ -43,36 +86,20 @@ export default function AdminDashboard() {
     refetchInterval: 5 * 60 * 1000,
   })
 
-  const isLoading = !dashData
-
-  if (isLoading) {
+  if (!dashData) {
     return (
-      <div className="max-w-5xl mx-auto py-8 px-4">
-        <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
-          Admin Dashboard
-        </h1>
-        <p style={{ color: 'var(--text-secondary)' }}>Loading stats...</p>
-      </div>
+      <p style={{ color: 'var(--text-secondary)' }}>Loading stats...</p>
     )
   }
 
   return (
-    <div className="max-w-5xl mx-auto py-8 px-4">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
-          Admin Dashboard
-        </h1>
-        <p style={{ color: 'var(--text-secondary)' }}>
-          System overview and metrics
-        </p>
-      </div>
-
+    <>
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <SummaryCard title="Users" value={dashData!.totalUsers} />
-        <SummaryCard title="Posts" value={dashData!.totalPosts} />
-        <SummaryCard title="Messages" value={dashData!.totalMessages} />
-        <SummaryCard title="CTF Submissions" value={dashData!.totalCtfSubmissions} />
+        <SummaryCard title="Users" value={dashData.totalUsers} />
+        <SummaryCard title="Posts" value={dashData.totalPosts} />
+        <SummaryCard title="Messages" value={dashData.totalMessages} />
+        <SummaryCard title="CTF Submissions" value={dashData.totalCtfSubmissions} />
       </div>
 
       {/* System Health */}
@@ -82,7 +109,7 @@ export default function AdminDashboard() {
           <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
             Database
           </h2>
-          {dbData && !dbData.error && (
+          {dbData && !dbData.error ? (
             <>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{formatBytes(dbData.totalBytes)} / {formatBytes(dbData.freeTierBytes)}</span>
@@ -109,12 +136,8 @@ export default function AdminDashboard() {
                 </div>
               )}
             </>
-          )}
-          {dbData?.error && (
-            <p className="text-sm text-red-400">{dbData.error}</p>
-          )}
-          {!dbData && (
-            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Unable to fetch database stats</p>
+          ) : (
+            <p className="text-sm text-red-400">{dbData?.error || 'Unable to fetch'}</p>
           )}
         </div>
 
@@ -142,7 +165,7 @@ export default function AdminDashboard() {
         <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
           Recent Errors
         </h2>
-        {dashData!.recentErrors.length === 0 ? (
+        {dashData.recentErrors.length === 0 ? (
           <p style={{ color: 'var(--text-muted)' }}>No errors logged</p>
         ) : (
           <div className="overflow-x-auto">
@@ -156,7 +179,7 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {dashData!.recentErrors.map((e: { id: string; endpoint: string; error_message: string | null; duration_ms: number; created_at: string }) => (
+                {dashData.recentErrors.map((e: { id: string; endpoint: string; error_message: string | null; duration_ms: number; created_at: string }) => (
                   <tr key={e.id} className="border-t" style={{ borderColor: 'var(--border-color)' }}>
                     <td className="py-2 pr-4 font-mono text-xs" style={{ color: 'var(--text-primary)' }}>{e.endpoint}</td>
                     <td className="py-2 pr-4 text-red-400">{e.error_message || 'Unknown'}</td>
@@ -175,7 +198,7 @@ export default function AdminDashboard() {
         <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
           Requests by Endpoint (last 24h)
         </h2>
-        {dashData!.endpointStats.length === 0 ? (
+        {dashData.endpointStats.length === 0 ? (
           <p style={{ color: 'var(--text-muted)' }}>No requests in the last 24 hours</p>
         ) : (
           <div className="overflow-x-auto">
@@ -188,7 +211,7 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {dashData!.endpointStats.map((s: { endpoint: string; request_count: number; avg_duration_ms: number }) => (
+                {dashData.endpointStats.map((s: { endpoint: string; request_count: number; avg_duration_ms: number }) => (
                   <tr key={s.endpoint} className="border-t" style={{ borderColor: 'var(--border-color)' }}>
                     <td className="py-2 pr-4 font-mono text-xs" style={{ color: 'var(--text-primary)' }}>{s.endpoint}</td>
                     <td className="py-2 pr-4" style={{ color: 'var(--text-secondary)' }}>{s.request_count}</td>
@@ -200,7 +223,7 @@ export default function AdminDashboard() {
           </div>
         )}
       </div>
-    </div>
+    </>
   )
 }
 
