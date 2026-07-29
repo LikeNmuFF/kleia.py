@@ -6,14 +6,17 @@ export default async function FeedPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: posts } = await supabase
+  const { data: rawPosts } = await supabase
     .from('posts')
-    .select('id, content, type, author_id, created_at, likes_count, comments_count')
+    .select('id, content, type, author_id, created_at, is_pinned, likes_count, comments_count')
+    .order('is_pinned', { ascending: false })
     .order('created_at', { ascending: false })
+
+  const posts = rawPosts || []
 
   // Batch fetch all user likes for loaded posts (1 query instead of N)
   let likedPostIds: string[] = []
-  if (user && posts && posts.length > 0) {
+  if (user && posts.length > 0) {
     const postIds = posts.map((p) => p.id)
     const { data: likes } = await supabase
       .from('post_likes')
@@ -22,6 +25,16 @@ export default async function FeedPage() {
       .in('post_id', postIds)
 
     if (likes) likedPostIds = likes.map((l) => l.post_id)
+  }
+
+  let isAdmin = false
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    isAdmin = profile?.role === 'admin'
   }
 
   return (
@@ -37,13 +50,14 @@ export default async function FeedPage() {
 
       {/* Posts List */}
       <div className="mt-6 space-y-4">
-        {posts && posts.length > 0 ? (
+        {posts.length > 0 ? (
           posts.map((post) => (
             <PostCard
               key={post.id}
               post={post}
               currentUserId={user?.id}
               initialLiked={likedPostIds.includes(post.id)}
+              isAdmin={isAdmin}
             />
           ))
         ) : (

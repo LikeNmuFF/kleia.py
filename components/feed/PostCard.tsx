@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { toggleLike } from '@/app/actions/posts'
+import { toggleLike, togglePin } from '@/app/actions/posts'
 import CommentSection from './CommentSection'
 
 interface Profile {
@@ -17,19 +17,22 @@ interface PostCardProps {
     type: string
     author_id: string
     created_at: string
+    is_pinned: boolean
     likes_count: number
     comments_count: number
   }
   currentUserId?: string
   initialLiked?: boolean
+  isAdmin?: boolean
 }
 
-export default function PostCard({ post, currentUserId, initialLiked = false }: PostCardProps) {
+export default function PostCard({ post, currentUserId, initialLiked = false, isAdmin = false }: PostCardProps) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [liked, setLiked] = useState(initialLiked)
   const [likesCount, setLikesCount] = useState(post.likes_count || 0)
   const [commentsCount, setCommentsCount] = useState(post.comments_count || 0)
   const [showComments, setShowComments] = useState(false)
+  const [pinned, setPinned] = useState(post.is_pinned)
   const isOwnPost = currentUserId === post.author_id
 
   useEffect(() => {
@@ -75,6 +78,13 @@ export default function PostCard({ post, currentUserId, initialLiked = false }: 
     }
   }
 
+  const handlePin = async () => {
+    const prev = pinned
+    setPinned(!prev)
+    const result = await togglePin(post.id)
+    if (result.error) setPinned(prev)
+  }
+
   const handleCommentChange = useCallback((count: number) => {
     setCommentsCount(count)
   }, [])
@@ -103,6 +113,11 @@ export default function PostCard({ post, currentUserId, initialLiked = false }: 
                 You
               </span>
             )}
+            {pinned && (
+              <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                Pinned
+              </span>
+            )}
           </p>
           <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
             {new Date(post.created_at).toLocaleDateString('en-US', {
@@ -112,6 +127,18 @@ export default function PostCard({ post, currentUserId, initialLiked = false }: 
             })}
           </p>
         </div>
+        {isAdmin && (
+          <button
+            onClick={handlePin}
+            className="ml-auto p-2 rounded-lg transition-colors hover:bg-white/5"
+            style={{ color: pinned ? '#f59e0b' : 'var(--text-muted)' }}
+            title={pinned ? 'Unpin post' : 'Pin post'}
+          >
+            <svg className="w-4 h-4" fill={pinned ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 4.5l-8 8-1.5 4L6 16.5l4-1.5 8-8M15 4.5l3 3" />
+            </svg>
+          </button>
+        )}
       </div>
 
       <p className="whitespace-pre-wrap leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{post.content}</p>

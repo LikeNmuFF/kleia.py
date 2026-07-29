@@ -146,6 +146,50 @@ export async function addComment(postId: string, content: string) {
   return { success: true }
 }
 
+async function checkAdmin(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return false
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  return profile?.role === 'admin'
+}
+
+export async function togglePin(postId: string) {
+  const start = Date.now()
+  const supabase = await createClient()
+  if (!(await checkAdmin(supabase))) {
+    await logEvent({ endpoint: 'posts.togglePin', status: 'error', durationMs: Date.now() - start, errorMessage: 'Unauthorized' })
+    return { error: 'Unauthorized' }
+  }
+
+  const { data: post } = await supabase
+    .from('posts')
+    .select('is_pinned')
+    .eq('id', postId)
+    .single()
+
+  const newPinned = !post?.is_pinned
+
+  const { error } = await supabase
+    .from('posts')
+    .update({ is_pinned: newPinned })
+    .eq('id', postId)
+
+  if (error) {
+    await logEvent({ endpoint: 'posts.togglePin', status: 'error', durationMs: Date.now() - start, errorMessage: error.message })
+    return { error: error.message }
+  }
+
+  await logEvent({ endpoint: 'posts.togglePin', status: 'success', durationMs: Date.now() - start })
+  revalidatePath('/feed')
+  return { pinned: newPinned }
+}
+
 export async function deleteComment(commentId: string) {
   const start = Date.now()
   const supabase = await createClient()
