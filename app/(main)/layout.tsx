@@ -30,7 +30,7 @@ export default async function MainLayout({
             <span className="text-xl font-bold tracking-tight font-logo" style={{ color: 'var(--text-primary)' }}>
               kleia
             </span>
-            <span className="ml-1.5 px-1.5 py-0.5 text-[10px] font-semibold rounded-md uppercase tracking-wider" style={{ background: 'var(--accent)', color: '#fff' }}>
+            <span className="ml-1.5 px-1.5 py-0.5 text-[10px] font-semibold rounded-md uppercase tracking-wider" style={{ background: 'var(--accent)', color: 'var(--accent-text)' }}>
               Beta
             </span>
           </Link>
@@ -78,7 +78,7 @@ export default async function MainLayout({
               style={{ color: 'var(--text-secondary)' }}
             >
               CTF
-              <span className="ml-1 px-1 py-0.5 text-[9px] font-semibold rounded uppercase tracking-wider" style={{ background: 'var(--accent)', color: '#fff' }}>
+              <span className="ml-1 px-1 py-0.5 text-[9px] font-semibold rounded uppercase tracking-wider" style={{ background: 'var(--accent)', color: 'var(--accent-text)' }}>
                 Beta
               </span>
             </Link>
@@ -142,7 +142,7 @@ export default async function MainLayout({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 3h-4c-2.21 0-4 1.79-4 4v4" />
             </svg>
             <span className="text-xs">CTF</span>
-            <span className="px-1 py-0.5 text-[8px] font-semibold rounded uppercase tracking-wider -mt-1" style={{ background: 'var(--accent)', color: '#fff' }}>
+            <span className="px-1 py-0.5 text-[8px] font-semibold rounded uppercase tracking-wider -mt-1" style={{ background: 'var(--accent)', color: 'var(--accent-text)' }}>
               Beta
             </span>
           </Link>
