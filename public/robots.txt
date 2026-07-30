@@ -11,3 +11,6 @@ Crawl-delay: 5
 Disallow: /api/
 Disallow: /auth/
 Disallow: /_next/
+Disallow: /hidden/flag_here
+
+# CTF Challenge: the flag is above — KLEIA{r0b0ts_d1s4ll0w_n0t_s0_s3cr3t}
