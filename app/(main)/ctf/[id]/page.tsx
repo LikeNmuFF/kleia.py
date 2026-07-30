@@ -52,11 +52,11 @@ export default async function ChallengePage({ params }: { params: { id: string }
         ← Back to Challenges
       </a>
 
-      <div className="rounded-xl p-6" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-lg">{CATEGORY_ICONS[challenge.category]}</span>
+        <div className="rounded-xl p-6" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
+        <div className="flex items-start gap-4 mb-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <span className="text-lg shrink-0">{CATEGORY_ICONS[challenge.category]}</span>
               <span className="text-xs font-medium uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-muted)' }}>
                 {challenge.category}
               </span>
@@ -67,7 +67,7 @@ export default async function ChallengePage({ params }: { params: { id: string }
                 {challenge.difficulty}
               </span>
             </div>
-            <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+            <h1 className="text-xl sm:text-2xl font-bold break-words" style={{ color: 'var(--text-primary)' }}>
               {challenge.title}
             </h1>
             {challenge.author && (
@@ -76,8 +76,8 @@ export default async function ChallengePage({ params }: { params: { id: string }
               </p>
             )}
           </div>
-          <div className="text-right">
-            <div className="text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>
+          <div className="text-right shrink-0">
+            <div className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>
               {challenge.points}
             </div>
             <div className="text-xs" style={{ color: 'var(--text-muted)' }}>points</div>

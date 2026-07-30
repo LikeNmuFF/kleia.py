@@ -209,7 +209,7 @@ export default function CTFClient({
                 {/* Title */}
                 <div className="px-4 py-3">
                   <h3
-                    className="font-semibold text-base leading-snug group-hover:opacity-80 transition-opacity"
+                    className="font-semibold text-base leading-snug group-hover:opacity-80 transition-opacity break-words"
                     style={{ color: 'var(--text-primary)' }}
                   >
                     {solved && (

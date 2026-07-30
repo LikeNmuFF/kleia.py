@@ -263,17 +263,17 @@ export default function AdminCTFClient({ challenges }: { challenges: Challenge[]
               <div>
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{ch.title}</span>
-                      <span className="text-xs px-1.5 py-0.5 rounded-full capitalize" style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-muted)' }}>
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className="font-medium truncate max-w-[200px]" style={{ color: 'var(--text-primary)' }}>{ch.title}</span>
+                      <span className="text-xs px-1.5 py-0.5 rounded-full capitalize shrink-0" style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-muted)' }}>
                         {ch.category}
                       </span>
-                      <span className="text-xs px-1.5 py-0.5 rounded-full capitalize" style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-muted)' }}>
+                      <span className="text-xs px-1.5 py-0.5 rounded-full capitalize shrink-0" style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-muted)' }}>
                         {ch.difficulty}
                       </span>
-                      <span className="text-xs font-bold" style={{ color: 'var(--text-secondary)' }}>{ch.points}pts</span>
+                      <span className="text-xs font-bold shrink-0" style={{ color: 'var(--text-secondary)' }}>{ch.points}pts</span>
                       {ch.status !== 'approved' && (
-                        <span className={`text-xs px-1.5 py-0.5 rounded-full capitalize ${
+                        <span className={`text-xs px-1.5 py-0.5 rounded-full capitalize shrink-0 ${
                           ch.status === 'pending' ? 'bg-amber-500/10 text-amber-400' :
                           ch.status === 'rejected' ? 'bg-red-500/10 text-red-400' :
                           'bg-gray-500/10 text-gray-400'

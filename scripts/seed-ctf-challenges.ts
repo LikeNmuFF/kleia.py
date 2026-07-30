@@ -38,7 +38,7 @@ Hint: Hex decoding — every two characters = one byte. Try \`echo <hex> | xxd -
     title: 'Binary Whispers',
     description: `The flag is hidden in these binary digits:
 
-01001011 01001100 01000101 01001001 01000001 01111011 01100010 01101001 01101110 00110001 01110010 01111001 01011111 01101101 00110100 01101011 00110101 01110011 01011111 01110011 00110011 01101110 01110011 00110011 01111101
+01001011 01001100 01000101 01001001 01000001 01111011 01100010 01101001 01101110 00110001 01110010 01111001 01011111 01101101 00110100 01101011 00110011 01110011 01011111 01110011 00110011 01101110 01110011 00110011 01111101
 
 Hint: 8 bits = 1 character. Convert each binary byte to its ASCII value.`,
     category: 'misc',
@@ -51,7 +51,7 @@ Hint: 8 bits = 1 character. Convert each binary byte to its ASCII value.`,
     title: 'ROT13 Fun',
     description: `Apply ROT13 to this string:
 
-XRYVN{e0g_1f_s0_rnfl_s0_sha}
+XYRVN{e0g_1f_f0_rnfl_f0_sha}
 
 ROT13 shifts each letter by 13 positions (A→N, B→O, etc.). It is symmetric — applying it twice gives the original.`,
     category: 'misc',
@@ -96,14 +96,14 @@ Shift each letter backward by 3 to decrypt. A→X, B→Y, C→Z, D→A, etc.`,
     category: 'misc',
     difficulty: 'medium',
     points: 175,
-    flag: 'KLEIA{caesar_1v_terrible}',
+    flag: 'KLEIA{caesar_1s_terrible}',
     hint: 'Caesar cipher shifts the alphabet. With shift 3: D→A, E→B, F→C, etc.',
   },
   {
     title: 'Base32 Detective',
     description: `Decode this Base32 string:
 
-JBSWY3DPEBXGSZJANF2XU===
+JNGEKSKBPNRDGMS7NU2GWM3TL5WDA3THPU======
 
 Base32 uses A-Z and 2-7 (32 characters). Each 5 bits becomes one character.`,
     category: 'misc',
@@ -129,7 +129,7 @@ URL encoding uses % followed by two hex digits to represent special characters.`
     title: 'Cascade',
     description: `Multi-layer decoding required. Start from this:
 
-U0dWc2JHOGdSbWxzY3lCUVlXcHZJR0Z1WkNCU1pXeHBaR1VnZDJsMElITjFZbXBsWTNRZ2FXMXBJR0ZzYVdkdVp5QnVZVzFs
+NTg1OTUyNTY0ZTdiN2EzNDYxNmM1Zjc5MzQ2YzMzNjU2NjVmNmYzMzY3NjczMzY1NWY2NjMzNzA2ODY1MzE2NzZjN2Q=
 
 Layer 1: Base64 → gives hex
 Layer 2: Hex → gives ROT13
