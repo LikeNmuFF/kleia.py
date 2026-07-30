@@ -76,6 +76,9 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://www.kleia.site',
   },
+  verification: {
+    google: 'ZNr8oGp_Aq8A_VgxRYkcGc-WA4jvs1uEDIZ8OrgqiiQ',
+  },
 }
 
 export default function RootLayout({
