@@ -1,3 +1,10 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Terms of Service',
+  description: 'Terms and conditions for using Kleia — the social study platform.',
+}
+
 export default function TermsPage() {
   return (
     <div className="max-w-3xl mx-auto py-12 px-4">

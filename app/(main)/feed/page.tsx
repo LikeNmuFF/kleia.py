@@ -1,6 +1,12 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import PostCard from '@/components/feed/PostCard'
 import CreatePost from '@/components/feed/CreatePost'
+
+export const metadata: Metadata = {
+  title: 'Feed',
+  description: 'Share updates, ask questions, and connect with the Kleia study community.',
+}
 
 export default async function FeedPage() {
   const supabase = await createClient()

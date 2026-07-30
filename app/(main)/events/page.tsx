@@ -1,6 +1,12 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import EventCard from '@/components/events/EventCard'
 import CreateEvent from '@/components/events/CreateEvent'
+
+export const metadata: Metadata = {
+  title: 'Events',
+  description: 'Browse and RSVP to community study events, workshops, and meetups. Create your own events for the Kleia community.',
+}
 
 export default async function EventsPage() {
   const supabase = await createClient()

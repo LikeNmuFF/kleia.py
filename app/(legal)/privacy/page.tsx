@@ -1,3 +1,10 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Privacy Policy',
+  description: 'Privacy policy for Kleia — how we collect, use, and protect your data.',
+}
+
 export default function PrivacyPage() {
   return (
     <div className="max-w-3xl mx-auto py-12 px-4">

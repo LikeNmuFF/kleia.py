@@ -1,3 +1,10 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Security',
+  description: 'Security practices and vulnerability disclosure for Kleia.',
+}
+
 export default function SecurityPage() {
   return (
     <div className="max-w-3xl mx-auto py-12 px-4">

@@ -1,6 +1,12 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import MemberCard from '@/components/members/MemberCard'
 import SearchBar from '@/components/members/SearchBar'
+
+export const metadata: Metadata = {
+  title: 'Members',
+  description: 'Discover and connect with fellow IT and CS students in the Kleia community.',
+}
 
 export default async function MembersPage() {
   const supabase = await createClient()

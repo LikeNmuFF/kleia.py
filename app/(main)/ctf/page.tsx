@@ -1,5 +1,11 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import CTFClient from './CTFClient'
+
+export const metadata: Metadata = {
+  title: 'CTF Challenges',
+  description: 'Solve capture-the-flag challenges across web, crypto, forensics, binary exploitation, and misc categories. Compete on the leaderboard.',
+}
 
 async function getChallengeData(userId?: string) {
   const supabase = await createClient()

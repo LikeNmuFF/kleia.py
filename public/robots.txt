@@ -1,7 +1,7 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://www.kleia.py/sitemap.xml
+Sitemap: https://www.kleia.site/sitemap.xml
 
 # Crawl delay
 Crawl-delay: 5

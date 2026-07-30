@@ -1,7 +1,13 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import NotesEditor from '@/components/study/NotesEditor'
 import ProgressTracker from '@/components/study/ProgressTracker'
 import PlaylistManager from '@/components/study/PlaylistManager'
+
+export const metadata: Metadata = {
+  title: 'Study',
+  description: 'Track your study progress, take notes, and manage your learning playlists.',
+}
 
 export default async function StudyPage() {
   const supabase = await createClient()

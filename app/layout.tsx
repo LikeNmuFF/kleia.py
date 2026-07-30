@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, JetBrains_Mono } from 'next/font/google'
+import Script from 'next/script'
 import './globals.css'
 import Providers from '@/components/Providers'
 
@@ -85,6 +86,39 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth dark" suppressHydrationWarning>
       <body className={`${inter.className} ${jetBrainsMono.variable}`}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebSite',
+              name: 'Kleia',
+              url: 'https://www.kleia.site',
+              description: 'A social study platform for IT and CS students with feeds, chat, events, CTF challenges, and leaderboards.',
+              potentialAction: {
+                '@type': 'SearchAction',
+                target: {
+                  '@type': 'EntryPoint',
+                  urlTemplate: 'https://www.kleia.site/search?q={search_term_string}',
+                },
+                'query-input': 'required name=search_term_string',
+              },
+            }),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Organization',
+              name: 'Kleia',
+              url: 'https://www.kleia.site',
+              logo: 'https://www.kleia.site/logo.png',
+              sameAs: [],
+            }),
+          }}
+        />
         <Providers>
           {children}
         </Providers>
