@@ -16,14 +16,15 @@ const CATEGORY_ICONS: Record<string, string> = {
   misc: '📌',
 }
 
-export default async function ChallengePage({ params }: { params: { id: string } }) {
+export default async function ChallengePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   const { data: challenge } = await supabase
     .from('ctf_challenges')
     .select('id, title, description, category, difficulty, points, hint, file_url, link_url, author, created_at')
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('status', 'approved')
     .single()
 
@@ -35,7 +36,7 @@ export default async function ChallengePage({ params }: { params: { id: string }
       .from('ctf_submissions')
       .select('id')
       .eq('user_id', user.id)
-      .eq('challenge_id', params.id)
+      .eq('challenge_id', id)
       .eq('is_correct', true)
       .maybeSingle()
 

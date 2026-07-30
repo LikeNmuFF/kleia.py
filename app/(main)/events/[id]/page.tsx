@@ -2,14 +2,15 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import EventDetailClient from './EventDetailClient'
 
-export default async function EventDetailPage({ params }: { params: { id: string } }) {
+export default async function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   const { data: event } = await supabase
     .from('events')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
 
   if (!event) notFound()
@@ -27,7 +28,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
       user_id,
       profiles!inner(id, username, avatar_url)
     `)
-    .eq('event_id', params.id)
+    .eq('event_id', id)
     .order('status', { ascending: true })
     .order('created_at', { ascending: true })
 
@@ -42,7 +43,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
     const { data: rsvp } = await supabase
       .from('event_attendees')
       .select('status')
-      .eq('event_id', params.id)
+      .eq('event_id', id)
       .eq('user_id', user.id)
       .maybeSingle()
 
