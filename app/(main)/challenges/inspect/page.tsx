@@ -9,11 +9,7 @@ export default function InspectChallengePage() {
           Or is there? Look closer.
         </p>
       </div>
-      {/* 
-        Congratulations! You found the hidden flag.
-        Flag: KLEIA{v13w_s0urc3_1s_y0ur_fr13nd}
-        Submit it on the CTF challenges page to earn your points.
-      */}
+      <div dangerouslySetInnerHTML={{ __html: '<!-- Flag: KLEIA{v13w_s0urc3_1s_y0ur_fr13nd} -->' }} />
     </div>
   )
 }
