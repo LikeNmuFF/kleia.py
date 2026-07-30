@@ -85,7 +85,7 @@ export default async function ChallengePage({ params }: { params: Promise<{ id: 
           </div>
         </div>
 
-        <div className="my-6 pt-4 border-t whitespace-pre-wrap leading-relaxed" style={{ borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}>
+        <div className="my-6 pt-4 border-t whitespace-pre-wrap break-all leading-relaxed" style={{ borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}>
           {challenge.description}
         </div>
 
