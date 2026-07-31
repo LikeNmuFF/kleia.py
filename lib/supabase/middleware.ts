@@ -27,7 +27,14 @@ export async function updateSession(request: NextRequest) {
 
   if (hasAuthCookie) {
     const { data: { user } } = await supabase.auth.getUser()
-    if (user) return supabaseResponse
+    if (user) {
+      if (request.nextUrl.pathname === '/') {
+        const url = request.nextUrl.clone()
+        url.pathname = '/feed'
+        return NextResponse.redirect(url)
+      }
+      return supabaseResponse
+    }
   }
 
   if (
@@ -40,7 +47,13 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/auth') ||
     request.nextUrl.pathname.startsWith('/security') ||
     request.nextUrl.pathname.startsWith('/privacy') ||
-    request.nextUrl.pathname.startsWith('/terms')
+    request.nextUrl.pathname.startsWith('/terms') ||
+    request.nextUrl.pathname.startsWith('/feed') ||
+    request.nextUrl.pathname.startsWith('/chat') ||
+    request.nextUrl.pathname.startsWith('/events') ||
+    request.nextUrl.pathname.startsWith('/members') ||
+    request.nextUrl.pathname.startsWith('/study') ||
+    request.nextUrl.pathname.startsWith('/challenges')
   ) {
     return supabaseResponse
   }
