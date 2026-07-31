@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import AnnouncementBanner from '@/components/AnnouncementBanner'
 
 export default async function LeaderboardPage() {
   const supabase = await createClient()
@@ -11,6 +12,7 @@ export default async function LeaderboardPage() {
 
   return (
     <div className="max-w-3xl mx-auto py-8 px-4">
+      <AnnouncementBanner />
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
           Leaderboard

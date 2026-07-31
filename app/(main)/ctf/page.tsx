@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import AnnouncementBanner from '@/components/AnnouncementBanner'
 import CTFClient from './CTFClient'
 
 export const metadata: Metadata = {
@@ -40,5 +41,12 @@ export default async function CTFPage() {
 
   const { challenges, solvedIds } = await getChallengeData(user?.id)
 
-  return <CTFClient challenges={challenges} solvedIds={solvedIds} />
+  return (
+    <>
+      <div className="max-w-6xl mx-auto px-4 pt-8">
+        <AnnouncementBanner />
+      </div>
+      <CTFClient challenges={challenges} solvedIds={solvedIds} />
+    </>
+  )
 }
