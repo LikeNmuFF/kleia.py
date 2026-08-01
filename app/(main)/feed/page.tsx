@@ -29,14 +29,14 @@ export default async function FeedPage() {
 
   // Batch fetch author profiles for all posts (1 query instead of N)
   const authorIds = Array.from(new Set(posts.map(p => p.author_id)))
-  let authorMap: Record<string, { username: string; avatar_url: string | null }> = {}
+  let authorMap: Record<string, { username: string; avatar_url: string | null; role?: string }> = {}
   if (authorIds.length > 0) {
     const { data: profiles } = await supabase
       .from('profiles')
-      .select('id, username, avatar_url')
+      .select('id, username, avatar_url, role')
       .in('id', authorIds)
     for (const p of profiles || []) {
-      authorMap[p.id] = { username: p.username, avatar_url: p.avatar_url }
+      authorMap[p.id] = { username: p.username, avatar_url: p.avatar_url, role: p.role }
     }
   }
 

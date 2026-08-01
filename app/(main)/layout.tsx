@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import LogoutButton from '@/components/auth/LogoutButton'
 import PresenceTracker from '@/components/PresenceTracker'
 import ThemeToggle from '@/components/ThemeToggle'
+import SpecialUserLayout from '@/components/special/SpecialUserLayout'
 
 export default async function MainLayout({
   children,
@@ -157,7 +158,9 @@ export default async function MainLayout({
       <PresenceTracker />
 
       {/* Main Content */}
-      <main>{children}</main>
+      <SpecialUserLayout>
+        <main>{children}</main>
+      </SpecialUserLayout>
 
       {/* Footer */}
       <footer className="border-t py-6 mt-12" style={{ borderColor: 'var(--border-color)' }}>

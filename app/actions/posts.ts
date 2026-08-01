@@ -120,11 +120,11 @@ export async function getComments(postId: string) {
   const authorIds = Array.from(new Set(comments.map(c => c.author_id)))
   const { data: profiles } = await supabase
     .from('profiles')
-    .select('id, username, avatar_url')
+    .select('id, username, avatar_url, role')
     .in('id', authorIds)
-  const authorMap: Record<string, { username: string; avatar_url: string | null }> = {}
+  const authorMap: Record<string, { username: string; avatar_url: string | null; role?: string }> = {}
   for (const p of profiles || []) {
-    authorMap[p.id] = { username: p.username, avatar_url: p.avatar_url }
+    authorMap[p.id] = { username: p.username, avatar_url: p.avatar_url, role: p.role }
   }
 
   return comments.map(c => ({

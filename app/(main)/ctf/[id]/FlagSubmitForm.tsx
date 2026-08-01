@@ -3,6 +3,10 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { submitFlag } from '@/app/actions/ctf'
+import { useSpecialUser } from '@/lib/context/SpecialUserContext'
+import dynamic from 'next/dynamic'
+
+const TulipConfetti = dynamic(() => import('@/components/special/TulipConfetti'), { ssr: false })
 
 export default function FlagSubmitForm({
   challengeId,
@@ -12,9 +16,11 @@ export default function FlagSubmitForm({
   alreadySolved?: boolean
 }) {
   const router = useRouter()
+  const { isSpecial } = useSpecialUser()
   const [flag, setFlag] = useState('')
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null)
   const [loading, setLoading] = useState(false)
+  const [showConfetti, setShowConfetti] = useState(false)
 
   if (alreadySolved) {
     return (
@@ -28,6 +34,7 @@ export default function FlagSubmitForm({
       >
         <span>✅</span>
         Challenge solved — nice work!
+        {isSpecial && <span className="ml-1">🌷</span>}
       </div>
     )
   }
@@ -48,6 +55,10 @@ export default function FlagSubmitForm({
       })
       if (result.isCorrect) {
         setFlag('')
+        if (isSpecial) {
+          setShowConfetti(true)
+          setTimeout(() => setShowConfetti(false), 4000)
+        }
         router.refresh()
       }
     } else {
@@ -59,6 +70,7 @@ export default function FlagSubmitForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
+      {showConfetti && <TulipConfetti onComplete={() => setShowConfetti(false)} />}
       <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
         Submit Flag
       </label>
@@ -99,6 +111,9 @@ export default function FlagSubmitForm({
           }}
         >
           {message.text}
+          {message.type === 'success' && isSpecial && (
+            <span className="ml-2">🌷 A tulip for your victory!</span>
+          )}
         </div>
       )}
     </form>

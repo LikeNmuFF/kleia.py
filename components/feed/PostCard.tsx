@@ -6,10 +6,12 @@ import { toggleLike, togglePin, updatePost, deletePost } from '@/app/actions/pos
 import CommentSection from './CommentSection'
 import LinkPreviewCard from './LinkPreviewCard'
 import Avatar from '@/components/Avatar'
+import TulipBadge from '@/components/special/TulipBadge'
 
 interface Profile {
   username: string
   avatar_url: string | null
+  role?: string
 }
 
 interface LinkPreviewData {
@@ -138,6 +140,7 @@ export default function PostCard({ post, currentUserId, initialLiked = false, is
         <div>
           <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>
             {profile?.username || 'Member'}
+            {profile?.role === 'special' && <TulipBadge className="ml-1.5 -mt-0.5" />}
             {isOwnPost && (
               <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
                 You

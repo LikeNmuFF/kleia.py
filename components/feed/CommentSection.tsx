@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { getComments, addComment, deleteComment } from '@/app/actions/posts'
 import Avatar from '@/components/Avatar'
+import TulipBadge from '@/components/special/TulipBadge'
 
 interface Comment {
   id: string
@@ -12,6 +13,7 @@ interface Comment {
   author: {
     username: string
     avatar_url: string | null
+    role?: string
   }
 }
 
@@ -82,6 +84,7 @@ export default function CommentSection({ postId, currentUserId, onCountChange }:
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                     {comment.author.username}
+                    {comment.author.role === 'special' && <TulipBadge className="ml-1 -mt-0.5" />}
                   </span>
                   <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
                     {new Date(comment.created_at).toLocaleDateString('en-US', {
