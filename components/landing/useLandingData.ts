@@ -36,6 +36,7 @@ export function useLandingData() {
         supabase
           .from('profiles')
           .select('id, username, avatar_url, current_streak, longest_streak')
+          .eq('role', 'user')
           .gt('current_streak', 0)
           .order('current_streak', { ascending: false })
           .limit(8),

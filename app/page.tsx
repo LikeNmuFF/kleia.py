@@ -292,6 +292,9 @@ export default function Home() {
             </div>
             <div className="flex gap-6 text-sm text-gray-500">
               <a href="mailto:me@kleia.site" className="hover:text-white transition-colors">Contact</a>
+              <Link href="/security" className="hover:text-white transition-colors">Security</Link>
+              <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+              <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
               <Link href="/login" className="hover:text-white transition-colors">Login</Link>
             </div>
           </div>
