@@ -53,7 +53,8 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/events') ||
     request.nextUrl.pathname.startsWith('/members') ||
     request.nextUrl.pathname.startsWith('/study') ||
-    request.nextUrl.pathname.startsWith('/challenges')
+    request.nextUrl.pathname.startsWith('/challenges') ||
+    request.nextUrl.pathname.startsWith('/api')
   ) {
     return supabaseResponse
   }
