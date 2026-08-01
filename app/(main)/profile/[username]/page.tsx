@@ -41,7 +41,7 @@ export default async function MemberProfilePage({ params }: PageProps) {
     .eq('user_id', profile.id)
     .single()
 
-  const showCtf = profile.role === 'user' && !!ctfStats
+  const showCtf = (profile.role === 'user' || profile.role === 'special') && !!ctfStats
 
   return (
     <div className="max-w-3xl mx-auto py-8 px-4">
