@@ -117,7 +117,7 @@ export default async function ChallengePage({ params }: { params: Promise<{ id: 
           <div className="flex flex-wrap gap-3 mb-6 pt-4 border-t" style={{ borderColor: 'var(--border-color)' }}>
             {challenge.file_url && (
               <a
-                href={`/api/file-proxy?url=${encodeURIComponent(challenge.file_url)}`}
+                href={challenge.file_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:scale-[1.02]"
