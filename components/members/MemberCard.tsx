@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { Flame } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getStatusInfo } from '@/lib/utils/time'
@@ -69,7 +70,8 @@ export default function MemberCard({ member: initialMember }: { member: Member }
   }, [])
 
   return (
-    <div className="card">
+    <Link href={`/profile/${member.username}`} className="block">
+      <div className="card">
       <div className="flex items-center gap-4">
         <div className="relative">
           <div className="w-12 h-12 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
@@ -124,6 +126,7 @@ export default function MemberCard({ member: initialMember }: { member: Member }
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </Link>
   )
 }

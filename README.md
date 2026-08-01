@@ -154,6 +154,38 @@
       <sub>Stay consistent and track your study streaks</sub>
     </td>
   </tr>
+  <tr>
+    <td align="center" width="200">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/profile-icon.svg">
+        <img src="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/profile-icon.svg" width="40" alt="Profiles">
+      </picture>
+      <br/>
+      <b>Member Profiles</b>
+      <br/>
+      <sub>See bios, streaks, and CTF stats at a glance</sub>
+    </td>
+    <td align="center" width="200">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/search-icon.svg">
+        <img src="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/search-icon.svg" width="40" alt="Search">
+      </picture>
+      <br/>
+      <b>Member Search</b>
+      <br/>
+      <sub>Find members by name, username, or bio</sub>
+    </td>
+    <td align="center" width="200">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/activity-icon.svg">
+        <img src="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/activity-icon.svg" width="40" alt="Activity">
+      </picture>
+      <br/>
+      <b>Activity Leaderboard</b>
+      <br/>
+      <sub>Ranked by streak, study hours, and posts</sub>
+    </td>
+  </tr>
 </table>
 
 <br/>

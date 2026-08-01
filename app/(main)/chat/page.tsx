@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import ChatSidebar from '@/components/chat/ChatSidebar'
 import ChatWindow from '@/components/chat/ChatWindow'
@@ -18,6 +19,7 @@ export default function ChatPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
   const [showNewChat, setShowNewChat] = useState(false)
+  const searchParams = useSearchParams()
   const supabase = createClient()
 
   const fetchConversations = async () => {
@@ -50,6 +52,14 @@ export default function ChatPage() {
   useEffect(() => {
     fetchConversations()
   }, [])
+
+  // Open a conversation passed via ?conversation=<id> (e.g. from a member profile)
+  useEffect(() => {
+    const conversationParam = searchParams.get('conversation')
+    if (conversationParam) {
+      setSelectedId(conversationParam)
+    }
+  }, [searchParams])
 
   const handleNewChat = (conversationId: string) => {
     setShowNewChat(false)

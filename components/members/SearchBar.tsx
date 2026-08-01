@@ -3,14 +3,17 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
-export default function SearchBar() {
-  const [search, setSearch] = useState('')
+export default function SearchBar({ initialQ = '' }: { initialQ?: string }) {
+  const [search, setSearch] = useState(initialQ)
   const router = useRouter()
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    if (search.trim()) {
-      router.push(`/members?q=${encodeURIComponent(search)}`)
+    const term = search.trim()
+    if (term) {
+      router.push(`/members?q=${encodeURIComponent(term)}`)
+    } else {
+      router.push('/members')
     }
   }
 
