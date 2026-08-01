@@ -133,14 +133,7 @@ export default async function ChallengePage({ params }: { params: Promise<{ id: 
           </details>
         )}
 
-        {solved ? (
-          <div className="flex items-center gap-2 p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-            <span className="text-emerald-400 text-lg">✓</span>
-            <span className="text-emerald-400 font-medium">Challenge solved!</span>
-          </div>
-        ) : (
-          <FlagSubmitForm challengeId={challenge.id} />
-        )}
+        <FlagSubmitForm challengeId={challenge.id} />
       </div>
     </div>
   )

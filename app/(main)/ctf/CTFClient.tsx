@@ -38,8 +38,6 @@ export default function CTFClient({
 }) {
   const [activeCategory, setActiveCategory] = useState('all')
 
-  const solvedSet = useMemo(() => new Set(solvedIds), [solvedIds])
-
   const filtered = useMemo(() => {
     if (activeCategory === 'all') return challenges
     return challenges.filter(c => c.category === activeCategory)
@@ -47,15 +45,9 @@ export default function CTFClient({
 
   const stats = useMemo(() => {
     const total = challenges.length
-    const solved = challenges.filter(c => solvedSet.has(c.id)).length
     const totalPts = challenges.reduce((sum, c) => sum + c.points, 0)
-    const earnedPts = challenges
-      .filter(c => solvedSet.has(c.id))
-      .reduce((sum, c) => sum + c.points, 0)
-    return { total, solved, totalPts, earnedPts }
-  }, [challenges, solvedSet])
-
-  const activeSolvedCount = filtered.filter(c => solvedSet.has(c.id)).length
+    return { total, totalPts }
+  }, [challenges])
 
   return (
     <div className="max-w-6xl mx-auto py-8 px-4">
@@ -93,25 +85,17 @@ export default function CTFClient({
         style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}
       >
         <div>
-          <span style={{ color: 'var(--text-muted)' }}>Solved </span>
+          <span style={{ color: 'var(--text-muted)' }}>Challenges </span>
           <span style={{ color: 'var(--text-primary)' }} className="font-semibold">
-            {stats.solved}/{stats.total}
+            {stats.total}
           </span>
         </div>
         <div>
-          <span style={{ color: 'var(--text-muted)' }}>Points </span>
+          <span style={{ color: 'var(--text-muted)' }}>Total Points </span>
           <span style={{ color: 'var(--text-primary)' }} className="font-semibold">
-            {stats.earnedPts}/{stats.totalPts}
+            {stats.totalPts}
           </span>
         </div>
-        {activeCategory !== 'all' && (
-          <div>
-            <span style={{ color: 'var(--text-muted)' }}>Showing </span>
-            <span style={{ color: 'var(--text-primary)' }} className="font-semibold">
-              {activeSolvedCount}/{filtered.length}
-            </span>
-          </div>
-        )}
       </div>
 
       {/* Category filter */}
@@ -168,7 +152,6 @@ export default function CTFClient({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map(challenge => {
-            const solved = solvedSet.has(challenge.id)
             const diff = DIFFICULTY_STYLES[challenge.difficulty]
             const cat = CATEGORIES.find(c => c.key === challenge.category)
 
@@ -179,9 +162,7 @@ export default function CTFClient({
                 className="group block rounded-xl transition-all hover:scale-[1.02] hover:shadow-lg"
                 style={{
                   backgroundColor: 'var(--card-bg)',
-                  border: solved
-                    ? '2px solid #22c55e'
-                    : '1px solid var(--border-color)',
+                  border: '1px solid var(--border-color)',
                   overflow: 'hidden',
                 }}
               >
@@ -212,11 +193,6 @@ export default function CTFClient({
                     className="font-semibold text-base leading-snug group-hover:opacity-80 transition-opacity break-words"
                     style={{ color: 'var(--text-primary)' }}
                   >
-                    {solved && (
-                      <svg className="w-4 h-4 inline -mt-0.5 mr-1.5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
                     {challenge.title}
                   </h3>
                 </div>
@@ -226,14 +202,6 @@ export default function CTFClient({
                   className="flex items-center gap-3 px-4 py-2.5 text-xs border-t"
                   style={{ borderColor: 'var(--border-color)', color: 'var(--text-muted)' }}
                 >
-                  {solved && (
-                    <span className="flex items-center gap-1 text-emerald-400 font-medium">
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                      </svg>
-                      Solved
-                    </span>
-                  )}
                   {challenge.hint && (
                     <span className="flex items-center gap-1">
                       <span>💡</span>
