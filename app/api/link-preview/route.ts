@@ -8,6 +8,9 @@ interface LinkPreview {
   siteName: string | null
 }
 
+// ============================================================
+// HTML entity decoder
+// ============================================================
 function decodeHtmlEntities(text: string): string {
   return text
     .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
@@ -21,60 +24,94 @@ function decodeHtmlEntities(text: string): string {
     .replace(/&nbsp;/g, ' ')
 }
 
-function getMetaContent(html: string, attributeName: 'property' | 'name', value: string): string | null {
-  // Escape the value for safe use in regex
-  const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+// ============================================================
+// Hardcoded regex patterns — no dynamic RegExp construction
+// Each property has patterns for:
+//   1. property/name attr first, then content attr
+//   2. content attr first, then property/name attr
+// ============================================================
 
-  // Pattern 1: <meta property="value" content="...">
-  const p1 = new RegExp(`<meta[^>]*${attributeName}=["']${escaped}["'][^>]*content=["']([^"']+)["']`, 'i')
-  const m1 = html.match(p1)
-  if (m1) return decodeHtmlEntities(m1[1])
+// og:title
+const OG_TITLE_1 = /<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i
+const OG_TITLE_2 = /<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:title["']/i
 
-  // Pattern 2: <meta content="..." property="value">
-  const p2 = new RegExp(`<meta[^>]*content=["']([^"']+)["'][^>]*${attributeName}=["']${escaped}["']`, 'i')
-  const m2 = html.match(p2)
-  if (m2) return decodeHtmlEntities(m2[1])
+// og:description
+const OG_DESC_1 = /<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["']/i
+const OG_DESC_2 = /<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:description["']/i
 
-  return null
+// og:image
+const OG_IMAGE_1 = /<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i
+const OG_IMAGE_2 = /<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/i
+
+// og:site_name
+const OG_SITE_1 = /<meta[^>]*property=["']og:site_name["'][^>]*content=["']([^"']+)["']/i
+const OG_SITE_2 = /<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:site_name["']/i
+
+// meta name="description"
+const META_DESC_1 = /<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i
+const META_DESC_2 = /<meta[^>]*content=["']([^"']+)["'][^>]*name=["']description["']/i
+
+// twitter:image
+const TW_IMAGE_1 = /<meta[^>]*name=["']twitter:image["'][^>]*content=["']([^"']+)["']/i
+const TW_IMAGE_2 = /<meta[^>]*content=["']([^"']+)["'][^>]*name=["']twitter:image["']/i
+
+// ============================================================
+// Extraction helpers
+// ============================================================
+
+function extractOgTitle(html: string): string | null {
+  const raw = html.match(OG_TITLE_1)?.[1] || html.match(OG_TITLE_2)?.[1]
+  return raw ? decodeHtmlEntities(raw) : null
+}
+
+function extractOgDescription(html: string): string | null {
+  const raw = html.match(OG_DESC_1)?.[1] || html.match(OG_DESC_2)?.[1]
+  return raw ? decodeHtmlEntities(raw) : null
+}
+
+function extractOgImage(html: string): string | null {
+  return html.match(OG_IMAGE_1)?.[1] || html.match(OG_IMAGE_2)?.[1] || null
+}
+
+function extractOgSiteName(html: string): string | null {
+  const raw = html.match(OG_SITE_1)?.[1] || html.match(OG_SITE_2)?.[1]
+  return raw ? decodeHtmlEntities(raw) : null
+}
+
+function extractMetaDescription(html: string): string | null {
+  const raw = html.match(META_DESC_1)?.[1] || html.match(META_DESC_2)?.[1]
+  return raw ? decodeHtmlEntities(raw) : null
+}
+
+function extractTwitterImage(html: string): string | null {
+  return html.match(TW_IMAGE_1)?.[1] || html.match(TW_IMAGE_2)?.[1] || null
 }
 
 function extractTitle(html: string): string | null {
-  const ogTitle = getMetaContent(html, 'property', 'og:title')
-  if (ogTitle) return ogTitle
-
-  const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i)
-  if (titleMatch) return decodeHtmlEntities(titleMatch[1].trim())
-
-  return null
+  return extractOgTitle(html) || (() => {
+    const m = html.match(/<title[^>]*>([^<]+)<\/title>/i)
+    return m ? decodeHtmlEntities(m[1].trim()) : null
+  })()
 }
 
 function extractDescription(html: string): string | null {
-  return getMetaContent(html, 'property', 'og:description')
-    || getMetaContent(html, 'name', 'description')
+  return extractOgDescription(html) || extractMetaDescription(html)
 }
 
 function extractImage(html: string, baseUrl: string): string | null {
-  const ogImage = getMetaContent(html, 'property', 'og:image')
-  if (ogImage) return resolveUrl(ogImage, baseUrl)
-
-  const twImage = getMetaContent(html, 'name', 'twitter:image')
-  if (twImage) return resolveUrl(twImage, baseUrl)
-
-  return null
-}
-
-function resolveUrl(url: string, baseUrl: string): string {
-  if (url.startsWith('http://') || url.startsWith('https://')) return url
-  try {
-    return new URL(url, baseUrl).href
-  } catch {
-    return url
-  }
+  const raw = extractOgImage(html) || extractTwitterImage(html)
+  if (!raw) return null
+  if (raw.startsWith('http://') || raw.startsWith('https://')) return raw
+  try { return new URL(raw, baseUrl).href } catch { return raw }
 }
 
 function extractSiteName(html: string): string | null {
-  return getMetaContent(html, 'property', 'og:site_name')
+  return extractOgSiteName(html)
 }
+
+// ============================================================
+// API handler
+// ============================================================
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
