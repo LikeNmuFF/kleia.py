@@ -21,39 +21,27 @@ function decodeHtmlEntities(text: string): string {
     .replace(/&nbsp;/g, ' ')
 }
 
-function extractMeta(html: string, property: string): string | null {
-  let raw: string | null = null
+function getMetaContent(html: string, attributeName: 'property' | 'name', value: string): string | null {
+  // Escape the value for safe use in regex
+  const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
-  // Check og: tags
-  const ogMatch = html.match(new RegExp(`<meta[^>]*property=["']${property}["'][^>]*content=["']([^"']+)["']`, 'i'))
-  if (ogMatch) raw = ogMatch[1]
+  // Pattern 1: <meta property="value" content="...">
+  const p1 = new RegExp(`<meta[^>]*${attributeName}=["']${escaped}["'][^>]*content=["']([^"']+)["']`, 'i')
+  const m1 = html.match(p1)
+  if (m1) return decodeHtmlEntities(m1[1])
 
-  // Check reverse order: content before property
-  if (!raw) {
-    const ogMatch2 = html.match(new RegExp(`<meta[^>]*content=["']([^"']+)["'][^>]*property=["']${property}["']`, 'i'))
-    if (ogMatch2) raw = ogMatch2[1]
-  }
+  // Pattern 2: <meta content="..." property="value">
+  const p2 = new RegExp(`<meta[^>]*content=["']([^"']+)["'][^>]*${attributeName}=["']${escaped}["']`, 'i')
+  const m2 = html.match(p2)
+  if (m2) return decodeHtmlEntities(m2[1])
 
-  // Check name= tags (twitter:card, etc.)
-  if (!raw) {
-    const nameMatch = html.match(new RegExp(`<meta[^>]*name=["']${property}["'][^>]*content=["']([^"']+)["']`, 'i'))
-    if (nameMatch) raw = nameMatch[1]
-  }
-
-  if (!raw) {
-    const nameMatch2 = html.match(new RegExp(`<meta[^>]*content=["']([^"']+)["'][^>]*name=["']${property}["']`, 'i'))
-    if (nameMatch2) raw = nameMatch2[1]
-  }
-
-  return raw ? decodeHtmlEntities(raw) : null
+  return null
 }
 
 function extractTitle(html: string): string | null {
-  // Try OG title first
-  const ogTitle = extractMeta(html, 'og:title')
+  const ogTitle = getMetaContent(html, 'property', 'og:title')
   if (ogTitle) return ogTitle
 
-  // Try <title> tag
   const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i)
   if (titleMatch) return decodeHtmlEntities(titleMatch[1].trim())
 
@@ -61,24 +49,15 @@ function extractTitle(html: string): string | null {
 }
 
 function extractDescription(html: string): string | null {
-  // Try OG description first
-  const ogDesc = extractMeta(html, 'og:description')
-  if (ogDesc) return ogDesc
-
-  // Try meta description
-  const descMatch = extractMeta(html, 'description')
-  if (descMatch) return descMatch
-
-  return null
+  return getMetaContent(html, 'property', 'og:description')
+    || getMetaContent(html, 'name', 'description')
 }
 
 function extractImage(html: string, baseUrl: string): string | null {
-  // Try OG image
-  const ogImage = extractMeta(html, 'og:image')
+  const ogImage = getMetaContent(html, 'property', 'og:image')
   if (ogImage) return resolveUrl(ogImage, baseUrl)
 
-  // Try twitter:image
-  const twImage = extractMeta(html, 'twitter:image')
+  const twImage = getMetaContent(html, 'name', 'twitter:image')
   if (twImage) return resolveUrl(twImage, baseUrl)
 
   return null
@@ -94,7 +73,7 @@ function resolveUrl(url: string, baseUrl: string): string {
 }
 
 function extractSiteName(html: string): string | null {
-  return extractMeta(html, 'og:site_name')
+  return getMetaContent(html, 'property', 'og:site_name')
 }
 
 export async function GET(request: NextRequest) {
@@ -105,7 +84,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'URL parameter required' }, { status: 400 })
   }
 
-  // Validate URL
   let parsed: URL
   try {
     parsed = new URL(url)
@@ -113,12 +91,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid URL' }, { status: 400 })
   }
 
-  // Only allow HTTPS
   if (parsed.protocol !== 'https:') {
     return NextResponse.json({ error: 'Only HTTPS links are allowed' }, { status: 400 })
   }
 
-  // Block local/private IPs
   const hostname = parsed.hostname.toLowerCase()
   if (
     hostname === 'localhost' ||
@@ -189,7 +165,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json(preview)
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch URL' }, { status: 502 })
   }
 }

@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+const MAX_URL_LENGTH = 2048
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const url = searchParams.get('url')
@@ -8,7 +11,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'URL required' }, { status: 400 })
   }
 
-  // Validate URL
+  if (url.length > MAX_URL_LENGTH) {
+    return NextResponse.json({ error: 'URL too long' }, { status: 400 })
+  }
+
   let parsed: URL
   try {
     parsed = new URL(url)
@@ -16,9 +22,20 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid URL' }, { status: 400 })
   }
 
-  // Only allow HTTPS
   if (parsed.protocol !== 'https:') {
     return NextResponse.json({ error: 'Only HTTPS allowed' }, { status: 400 })
+  }
+
+  const hostname = parsed.hostname.toLowerCase()
+  if (
+    hostname === 'localhost' ||
+    hostname.startsWith('127.') ||
+    hostname.startsWith('192.168.') ||
+    hostname.startsWith('10.') ||
+    hostname === '0.0.0.0' ||
+    hostname.endsWith('.local')
+  ) {
+    return NextResponse.json({ error: 'Private URLs not allowed' }, { status: 400 })
   }
 
   try {
@@ -40,8 +57,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch image' }, { status: 502 })
     }
 
+    const contentLength = parseInt(response.headers.get('content-length') || '0', 10)
+    if (contentLength > MAX_IMAGE_SIZE) {
+      return NextResponse.json({ error: 'Image too large' }, { status: 400 })
+    }
+
     const contentType = response.headers.get('content-type') || 'image/jpeg'
+
+    // Only allow image content types
+    if (!contentType.startsWith('image/')) {
+      return NextResponse.json({ error: 'URL is not an image' }, { status: 400 })
+    }
+
     const body = await response.arrayBuffer()
+
+    if (body.byteLength > MAX_IMAGE_SIZE) {
+      return NextResponse.json({ error: 'Image too large' }, { status: 400 })
+    }
 
     return new NextResponse(body, {
       headers: {
