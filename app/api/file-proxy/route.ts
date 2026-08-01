@@ -1,8 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createHash } from 'crypto'
 
 const MAX_URL_LENGTH = 2048
 const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
 const ALLOWED_HOSTS = ['res.cloudinary.com']
+
+function signCloudinaryUrl(url: string): string {
+  const apiSecret = process.env.CLOUDINARY_API_SECRET
+  const apiKey = process.env.CLOUDINARY_API_KEY
+  if (!apiSecret || !apiKey) return url
+
+  const parsed = new URL(url)
+  const host = parsed.hostname
+
+  // Extract public_id from path: /raw/upload/v1234/file.pdf -> file.pdf
+  const pathMatch = parsed.pathname.match(/\/raw\/upload\/(?:v\d+\/)?(.+)$/)
+  if (!pathMatch) return url
+
+  const publicId = pathMatch[1]
+  const timestamp = Math.floor(Date.now() / 1000) + 3600
+
+  const signature = createHash('sha1')
+    .update(`public_id=${publicId}&timestamp=${timestamp}${apiSecret}`)
+    .digest('hex')
+
+  const params = new URLSearchParams({
+    public_id: publicId,
+    timestamp: timestamp.toString(),
+    api_key: apiKey,
+    signature,
+  })
+
+  return `https://${host}/raw/upload?${params.toString()}`
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -31,11 +61,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Host not allowed' }, { status: 400 })
   }
 
+  // Sign the Cloudinary URL if it's a raw upload
+  const fetchUrl = parsed.pathname.includes('/raw/upload/')
+    ? signCloudinaryUrl(url)
+    : url
+
   try {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 15000)
 
-    const response = await fetch(url, {
+    const response = await fetch(fetchUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; KleiaBot/1.0)',
       },
@@ -46,7 +81,7 @@ export async function GET(request: NextRequest) {
     clearTimeout(timeout)
 
     if (!response.ok) {
-      return NextResponse.json({ error: 'Failed to fetch file' }, { status: 502 })
+      return NextResponse.json({ error: 'Failed to fetch file', status: response.status }, { status: 502 })
     }
 
     const contentLength = parseInt(response.headers.get('content-length') || '0', 10)
