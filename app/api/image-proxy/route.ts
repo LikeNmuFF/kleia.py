@@ -15,9 +15,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'URL too long' }, { status: 400 })
   }
 
+  // Decode HTML entities that get encoded in URLs (&amp; → &)
+  const decodedUrl = url.replace(/&amp;/g, '&')
+
   let parsed: URL
   try {
-    parsed = new URL(url)
+    parsed = new URL(decodedUrl)
   } catch {
     return NextResponse.json({ error: 'Invalid URL' }, { status: 400 })
   }
@@ -42,7 +45,7 @@ export async function GET(request: NextRequest) {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 10000)
 
-    const response = await fetch(url, {
+    const response = await fetch(decodedUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; KleiaBot/1.0)',
         'Accept': 'image/*',
