@@ -122,6 +122,38 @@
       <sub>Log study hours & visualize growth</sub>
     </td>
   </tr>
+  <tr>
+    <td align="center" width="200">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/ctf-icon.svg">
+        <img src="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/ctf-icon.svg" width="40" alt="CTF">
+      </picture>
+      <br/>
+      <b>CTF Challenges</b>
+      <br/>
+      <sub>Solve capture-the-flag across web, crypto, pwn, forensics & misc</sub>
+    </td>
+    <td align="center" width="200">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/leaderboard-icon.svg">
+        <img src="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/leaderboard-icon.svg" width="40" alt="Leaderboard">
+      </picture>
+      <br/>
+      <b>CTF Leaderboard</b>
+      <br/>
+      <sub>Earn points and rank against the community</sub>
+    </td>
+    <td align="center" width="200">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/streaks-icon.svg">
+        <img src="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/streaks-icon.svg" width="40" alt="Streaks">
+      </picture>
+      <br/>
+      <b>Daily Streaks</b>
+      <br/>
+      <sub>Stay consistent and track your study streaks</sub>
+    </td>
+  </tr>
 </table>
 
 <br/>
