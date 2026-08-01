@@ -128,6 +128,27 @@
 
 ---
 
+## 🏴 Capture The Flag
+
+Kleia ships with a built-in CTF platform where anyone can practice offensive security skills. Challenges span five categories:
+
+| Category | Icon | Description |
+|----------|------|-------------|
+| **Web** | 🌐 | Inspect source, robots.txt, and other web tricks |
+| **Crypto** | 🔐 | Ciphers, encodings, and cryptanalysis |
+| **PWN** | 💥 | Binary exploitation |
+| **Forensics** | 🔍 | Analyze files and artifacts |
+| **Misc** | 📌 | Everything that doesn't fit a box |
+
+- **Flag format:** `KLEIA{...}` — solved flags are submitted and validated server-side.
+- Earn points per challenge and climb the **leaderboard**.
+- Community members can **submit their own challenges**, which enter a review queue.
+- Web challenges (like `robots.txt` and a view-source challenge) live right in the deployed site.
+
+<br/>
+
+---
+
 ## ⚡ Tech Stack
 
 <p align="center">
@@ -136,7 +157,7 @@
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/-TypeScript-3178c6?style=flat-square&logo=typescript&logoColor=white" height="30" alt="TypeScript"></a>
   <a href="https://supabase.com/"><img src="https://img.shields.io/badge/-Supabase-3dcf8e?style=flat-square&logo=supabase&logoColor=white" height="30" alt="Supabase"></a>
   <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/-Tailwind_CSS-38bdf8?style=flat-square&logo=tailwind-css&logoColor=black" height="30" alt="Tailwind CSS"></a>
-  <a href="https://www.prisma.io/"><img src="https://img.shields.io/badge/-PostgreSQL-4169e1?style=flat-square&logo=postgresql&logoColor=white" height="30" alt="PostgreSQL"></a>
+  <a href="https://www.postgresql.org/"><img src="https://img.shields.io/badge/-PostgreSQL-4169e1?style=flat-square&logo=postgresql&logoColor=white" height="30" alt="PostgreSQL"></a>
   <a href="https://framer.com/motion"><img src="https://img.shields.io/badge/-Framer_Motion-0055ff?style=flat-square&logo=framer&logoColor=white" height="30" alt="Framer Motion"></a>
   <a href="https://cloudinary.com/"><img src="https://img.shields.io/badge/-Cloudinary-3448c5?style=flat-square&logo=cloudinary&logoColor=white" height="30" alt="Cloudinary"></a>
   <a href="https://vercel.com/"><img src="https://img.shields.io/badge/-Vercel-000000?style=flat-square&logo=vercel&logoColor=white" height="30" alt="Vercel"></a>
@@ -150,7 +171,7 @@
 | **Database** | [Supabase](https://supabase.com/) (PostgreSQL) |
 | **Auth** | [Supabase Auth](https://supabase.com/auth) (Google + GitHub OAuth) |
 | **ORM/DB** | [Supabase](https://supabase.com/) with RLS + Triggers |
-| **Realtime** | [Supabase Realtime](https://supabase.com/realtime) & [Socket.IO](https://socket.io/) |
+| **Realtime** | [Supabase Realtime](https://supabase.com/realtime) |
 | **Animations** | [Framer Motion](https://www.framer.com/motion/) |
 | **Uploads** | [Cloudinary](https://cloudinary.com/) |
 | **Deployment** | [Vercel](https://vercel.com/) |
