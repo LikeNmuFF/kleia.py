@@ -46,15 +46,18 @@ export default async function LeaderboardPage() {
         <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border-color)' }}>
           {/* Table header */}
           <div
-            className="flex items-center gap-4 px-4 py-3 text-xs font-medium uppercase tracking-wider"
+            className="flex items-center gap-2 sm:gap-4 px-3 sm:px-4 py-3 text-xs font-medium uppercase tracking-wider"
             style={{ backgroundColor: 'var(--card-bg)', color: 'var(--text-muted)' }}
           >
-            <div className="w-10 text-center">#</div>
+            <div className="w-8 sm:w-10 text-center">#</div>
             <div className="flex-1">Member</div>
-            <div className="w-16 text-center">Streak</div>
-            <div className="w-20 text-center">Hours</div>
-            <div className="w-16 text-center">Posts</div>
-            <div className="w-20 text-right">Score</div>
+            <div className="w-10 sm:w-16 text-center">
+              <span className="hidden sm:inline">Streak</span>
+              <Flame className="w-3.5 h-3.5 sm:hidden text-orange-400" />
+            </div>
+            <div className="hidden sm:block w-20 text-center">Hours</div>
+            <div className="hidden sm:block w-16 text-center">Posts</div>
+            <div className="w-14 sm:w-20 text-right">Score</div>
           </div>
 
           {/* Table rows */}
@@ -64,13 +67,13 @@ export default async function LeaderboardPage() {
               <Link
                 key={entry.user_id}
                 href={`/profile/${entry.username}`}
-                className="flex items-center gap-4 px-4 py-3 border-t transition-colors"
+                className="flex items-center gap-2 sm:gap-4 px-3 sm:px-4 py-3 border-t transition-colors"
                 style={{
                   borderColor: 'var(--border-color)',
                   backgroundColor: isMe ? 'rgba(139, 92, 246, 0.08)' : undefined,
                 }}
               >
-                <div className="w-10 text-center">
+                <div className="w-8 sm:w-10 text-center">
                   {i === 0 ? (
                     <span className="text-lg">🥇</span>
                   ) : i === 1 ? (
@@ -82,7 +85,7 @@ export default async function LeaderboardPage() {
                   )}
                 </div>
 
-                <div className="flex-1 flex items-center gap-3 min-w-0">
+                <div className="flex-1 flex items-center gap-2 sm:gap-3 min-w-0">
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
                     {entry.avatar_url ? (
                       <Avatar src={entry.avatar_url} size={32} />
@@ -92,33 +95,33 @@ export default async function LeaderboardPage() {
                       </span>
                     )}
                   </div>
-                  <span className="font-medium truncate" style={{ color: 'var(--text-primary)' }}>
+                  <span className="font-medium truncate text-sm sm:text-base" style={{ color: 'var(--text-primary)' }}>
                     {entry.username}
                     {isMe && (
-                      <span className="ml-2 text-xs px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-300">
+                      <span className="ml-1.5 text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-300">
                         you
                       </span>
                     )}
                   </span>
                 </div>
 
-                <div className="w-16 text-center">
+                <div className="w-10 sm:w-16 text-center">
                   <span className="inline-flex items-center gap-1 text-sm font-mono" style={{ color: 'var(--text-secondary)' }}>
                     <Flame className="w-3.5 h-3.5 text-orange-400" />
                     {entry.current_streak}
                   </span>
                 </div>
 
-                <div className="w-20 text-center text-sm font-mono" style={{ color: 'var(--text-secondary)' }}>
+                <div className="hidden sm:block w-20 text-center text-sm font-mono" style={{ color: 'var(--text-secondary)' }}>
                   {Number(entry.total_hours).toFixed(1)}
                 </div>
 
-                <div className="w-16 text-center text-sm font-mono" style={{ color: 'var(--text-secondary)' }}>
+                <div className="hidden sm:block w-16 text-center text-sm font-mono" style={{ color: 'var(--text-secondary)' }}>
                   {entry.post_count}
                 </div>
 
-                <div className="w-20 text-right">
-                  <span className="font-bold" style={{ color: 'var(--text-primary)' }}>
+                <div className="w-14 sm:w-20 text-right">
+                  <span className="font-bold text-sm sm:text-base" style={{ color: 'var(--text-primary)' }}>
                     {entry.activity_score}
                   </span>
                 </div>
