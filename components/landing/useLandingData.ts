@@ -9,6 +9,7 @@ export interface StreakMember {
   avatar_url: string | null
   current_streak: number
   longest_streak: number
+  role?: string
 }
 
 export interface LandingData {
@@ -35,8 +36,8 @@ export function useLandingData() {
         supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('status', 'online'),
         supabase
           .from('profiles')
-          .select('id, username, avatar_url, current_streak, longest_streak')
-          .eq('role', 'user')
+          .select('id, username, avatar_url, current_streak, longest_streak, role')
+          .in('role', ['user', 'special'])
           .gt('current_streak', 0)
           .order('current_streak', { ascending: false })
           .limit(8),
