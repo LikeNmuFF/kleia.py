@@ -17,7 +17,7 @@ async function getChallengeData(userId?: string) {
     .eq('status', 'approved')
     .order('created_at', { ascending: false })
 
-  if (!challenges) return { challenges: [], solvedIds: [] }
+  if (!challenges) return { challenges: [], solvedIds: [], solvesById: {} }
 
   let solvedIds: string[] = []
   if (userId) {
@@ -32,21 +32,30 @@ async function getChallengeData(userId?: string) {
     }
   }
 
-  return { challenges, solvedIds }
+  const { data: stats } = await supabase
+    .from('ctf_challenge_solves')
+    .select('challenge_id, solves')
+
+  const solvesById: Record<string, number> = {}
+  for (const s of stats ?? []) {
+    solvesById[s.challenge_id] = s.solves
+  }
+
+  return { challenges, solvedIds, solvesById }
 }
 
 export default async function CTFPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { challenges, solvedIds } = await getChallengeData(user?.id)
+  const { challenges, solvedIds, solvesById } = await getChallengeData(user?.id)
 
   return (
     <>
       <div className="max-w-6xl mx-auto px-4 pt-8">
         <AnnouncementBanner />
       </div>
-      <CTFClient challenges={challenges} solvedIds={solvedIds} />
+      <CTFClient challenges={challenges} solvedIds={solvedIds} solvesById={solvesById} />
     </>
   )
 }

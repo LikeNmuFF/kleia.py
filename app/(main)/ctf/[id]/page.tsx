@@ -43,6 +43,14 @@ export default async function ChallengePage({ params }: { params: Promise<{ id: 
     solved = !!sub
   }
 
+  const { data: solveStats } = await supabase
+    .from('ctf_challenge_solves')
+    .select('solves')
+    .eq('challenge_id', id)
+    .maybeSingle()
+
+  const solves = solveStats?.solves ?? 0
+
   return (
     <div className="max-w-3xl mx-auto py-8 px-4">
       <a
@@ -82,8 +90,25 @@ export default async function ChallengePage({ params }: { params: Promise<{ id: 
               {challenge.points}
             </div>
             <div className="text-xs" style={{ color: 'var(--text-muted)' }}>points</div>
+            <div className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+              {solves} {solves === 1 ? 'player' : 'players'} solved
+            </div>
           </div>
         </div>
+
+        {solved && (
+          <div
+            className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium mb-4"
+            style={{
+              backgroundColor: 'rgba(34, 197, 94, 0.1)',
+              color: '#22c55e',
+              border: '1px solid rgba(34, 197, 94, 0.25)',
+            }}
+          >
+            <span>✓</span>
+            You solved this challenge
+          </div>
+        )}
 
         <div className="my-6 pt-4 border-t whitespace-pre-wrap break-all leading-relaxed" style={{ borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}>
           {challenge.description}
@@ -133,7 +158,7 @@ export default async function ChallengePage({ params }: { params: Promise<{ id: 
           </details>
         )}
 
-        <FlagSubmitForm challengeId={challenge.id} />
+        <FlagSubmitForm challengeId={challenge.id} alreadySolved={solved} />
       </div>
     </div>
   )

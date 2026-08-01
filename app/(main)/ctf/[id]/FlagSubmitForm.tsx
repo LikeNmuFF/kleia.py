@@ -1,12 +1,36 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { submitFlag } from '@/app/actions/ctf'
 
-export default function FlagSubmitForm({ challengeId }: { challengeId: string }) {
+export default function FlagSubmitForm({
+  challengeId,
+  alreadySolved,
+}: {
+  challengeId: string
+  alreadySolved?: boolean
+}) {
+  const router = useRouter()
   const [flag, setFlag] = useState('')
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null)
   const [loading, setLoading] = useState(false)
+
+  if (alreadySolved) {
+    return (
+      <div
+        className="flex items-center gap-2 p-4 rounded-lg text-sm font-medium"
+        style={{
+          backgroundColor: 'rgba(34, 197, 94, 0.1)',
+          color: '#22c55e',
+          border: '1px solid rgba(34, 197, 94, 0.25)',
+        }}
+      >
+        <span>✅</span>
+        Challenge solved — nice work!
+      </div>
+    )
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -24,6 +48,7 @@ export default function FlagSubmitForm({ challengeId }: { challengeId: string })
       })
       if (result.isCorrect) {
         setFlag('')
+        router.refresh()
       }
     } else {
       setMessage({ text: (result as { error: string }).error || 'Something went wrong', type: 'error' })
