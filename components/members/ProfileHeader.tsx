@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Calendar, Flame } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Avatar from '@/components/Avatar'
+import TulipSVG from '@/components/special/TulipSVG'
 import { getStatusInfo } from '@/lib/utils/time'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -50,7 +51,7 @@ function FloatingPetal({ delay, left }: { delay: number; left: number }) {
       }}
       transition={{ duration, delay, repeat: Infinity, ease: 'linear' }}
     >
-      <img src="/tulip.svg" alt="" width={size} height={size * 1.2} style={{ objectFit: 'contain' }} />
+      <TulipSVG variant="petal" size={size} opacity={0.5} />
     </motion.div>
   )
 }
@@ -153,7 +154,7 @@ export default function ProfileHeader({ profile: initialProfile }: ProfileHeader
                 animate={{ rotate: [0, 10, -10, 0] }}
                 transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
               >
-                <img src="/tulip.svg" alt="" width="22" height="22" style={{ objectFit: 'contain' }} />
+                <TulipSVG variant="flower" size={22} />
               </motion.span>
             )}
           </h1>

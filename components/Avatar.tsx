@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import TulipSVG from './special/TulipSVG'
 
 interface AvatarProps {
   src: string | null
@@ -9,9 +10,10 @@ interface AvatarProps {
 }
 
 export default function Avatar({ src, alt = '', size = 40, className = '', isSpecial = false }: AvatarProps) {
+  const badgeSize = Math.max(size * 0.3, 12)
+
   return (
     <div className={`relative flex-shrink-0 ${className}`} style={{ width: size, height: size }}>
-      {/* Purple glow ring for special users */}
       {isSpecial && (
         <div
           className="absolute inset-[-3px] rounded-full animate-spin-slow"
@@ -39,16 +41,18 @@ export default function Avatar({ src, alt = '', size = 40, className = '', isSpe
           style={{ width: '100%', height: '100%' }}
         />
       </div>
-      {/* Tulip badge */}
       {isSpecial && (
-        <img
-          src="/tulip.svg"
-          alt=""
-          className="absolute -bottom-0.5 -right-0.5 rounded-full"
-          width={size * 0.35}
-          height={size * 0.35}
-          style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))', objectFit: 'contain', background: '#1e1b4b' }}
-        />
+        <div
+          className="absolute -bottom-0.5 -right-0.5 rounded-full flex items-center justify-center"
+          style={{
+            width: badgeSize + 4,
+            height: badgeSize + 4,
+            background: '#1e1b4b',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+          }}
+        >
+          <TulipSVG variant="flower" size={badgeSize} />
+        </div>
       )}
     </div>
   )

@@ -1,10 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-
-function TulipSVG({ className }: { className?: string }) {
-  return <img src="/tulip.svg" alt="" className={className} style={{ objectFit: 'contain' }} />
-}
+import TulipSVG from './TulipSVG'
 
 function FloatingPetal({ delay, left }: { delay: number; left: number }) {
   const duration = 6 + Math.random() * 4
@@ -23,7 +20,7 @@ function FloatingPetal({ delay, left }: { delay: number; left: number }) {
       }}
       transition={{ duration, delay, repeat: Infinity, ease: 'linear' }}
     >
-      <img src="/tulip.svg" alt="" width={size} height={size * 1.3} style={{ objectFit: 'contain' }} />
+      <TulipSVG variant="petal" size={size} opacity={0.5} />
     </motion.div>
   )
 }
@@ -40,7 +37,6 @@ export default function SpecialProfileBanner() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      {/* Floating petals */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {Array.from({ length: 5 }).map((_, i) => (
           <FloatingPetal key={i} delay={i * 1.2} left={8 + i * 18} />
@@ -52,7 +48,7 @@ export default function SpecialProfileBanner() {
           animate={{ y: [0, -4, 0], rotate: [0, 5, -5, 0] }}
           transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
         >
-          <TulipSVG className="w-12 h-16" />
+          <TulipSVG variant="full" size={48} />
         </motion.div>
 
         <div>

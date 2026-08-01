@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { Flame } from 'lucide-react'
+import TulipSVG from '@/components/special/TulipSVG'
 import type { StreakMember } from './useLandingData'
 
 const getStreakLevel = (streak: number) => {
@@ -32,7 +33,7 @@ function FloatingPetal({ delay, left }: { delay: number; left: number }) {
       }}
       transition={{ duration, delay, repeat: Infinity, ease: 'linear' }}
     >
-      <img src="/tulip.svg" alt="" width={size} height={size * 1.3} style={{ objectFit: 'contain' }} />
+      <TulipSVG variant="petal" size={size} opacity={0.5} />
     </motion.div>
   )
 }
@@ -66,7 +67,7 @@ function SpecialMemberCard({ member, rank }: { member: StreakMember; rank: numbe
         animate={{ rotate: [0, 8, -8, 0], y: [0, -2, 0] }}
         transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
       >
-        <img src="/tulip.svg" alt="" width="18" height="24" style={{ objectFit: 'contain' }} />
+        <TulipSVG variant="flower" size={20} />
       </motion.div>
 
       <div className="relative z-10 flex items-center gap-4">
