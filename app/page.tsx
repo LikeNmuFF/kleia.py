@@ -1,8 +1,18 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import StreakDisplay from '@/components/StreakDisplay'
+import TypeWriter from '@/components/TypeWriter'
+import StatsBar from '@/components/landing/StatsBar'
+import StreaksCarousel from '@/components/landing/StreaksCarousel'
+import TerminalDemo from '@/components/landing/TerminalDemo'
+import { useLandingData } from '@/components/landing/useLandingData'
+
+const ThreeBackground = dynamic(() => import('@/components/landing/ThreeBackground'), {
+  ssr: false,
+  loading: () => null,
+})
 
 const container = {
   hidden: { opacity: 0 },
@@ -81,13 +91,29 @@ const features = [
 ]
 
 export default function Home() {
+  const { data, loading } = useLandingData()
+
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white overflow-hidden">
+    <div className="min-h-screen bg-[#0a0a0f] text-white overflow-hidden relative">
+      <ThreeBackground />
+
       {/* Background gradient orbs */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-violet-600/20 rounded-full blur-3xl" />
-        <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-cyan-600/15 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-pink-600/10 rounded-full blur-3xl" />
+        <motion.div
+          animate={{ y: [0, -20, 0], x: [0, 10, 0] }}
+          transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute top-0 left-1/4 w-96 h-96 bg-violet-600/20 rounded-full blur-3xl"
+        />
+        <motion.div
+          animate={{ y: [0, 20, 0], x: [0, -10, 0] }}
+          transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute top-1/3 right-1/4 w-80 h-80 bg-cyan-600/15 rounded-full blur-3xl"
+        />
+        <motion.div
+          animate={{ y: [0, -15, 0], x: [0, 8, 0] }}
+          transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-pink-600/10 rounded-full blur-3xl"
+        />
       </div>
 
       {/* Nav */}
@@ -126,7 +152,7 @@ export default function Home() {
         animate="show"
         className="relative z-10"
       >
-        <section className="max-w-5xl mx-auto px-6 pt-32 pb-20 text-center">
+        <section className="max-w-5xl mx-auto px-6 pt-32 pb-16 text-center">
           <motion.div variants={item} className="mb-6">
             <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-white/5 text-sm text-gray-400">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -141,7 +167,10 @@ export default function Home() {
             Learn Together,
             <br />
             <span className="bg-gradient-to-r from-violet-400 via-cyan-400 to-pink-400 bg-clip-text text-transparent">
-              Grow Together
+              <TypeWriter
+                texts={['Grow Together', 'Code Together', 'Compete Together', 'Stay Consistent']}
+                className=""
+              />
             </span>
           </motion.h1>
 
@@ -167,14 +196,16 @@ export default function Home() {
                Sign In
              </Link>
            </motion.div>
-
-          <motion.div
-            variants={item}
-            className="mt-12"
-          >
-            <StreakDisplay />
-          </motion.div>
          </section>
+
+        {/* Live Stats */}
+        <StatsBar
+          memberCount={data?.memberCount ?? 0}
+          postCount={data?.postCount ?? 0}
+          challengeCount={data?.challengeCount ?? 0}
+          onlineCount={data?.onlineCount ?? 0}
+          loading={loading}
+        />
 
         {/* Features Grid */}
         <section className="max-w-6xl mx-auto px-6 py-24">
@@ -218,6 +249,12 @@ export default function Home() {
             ))}
           </div>
         </section>
+
+        {/* Top Streaks */}
+        <StreaksCarousel members={data?.topStreaks ?? []} loading={loading} />
+
+        {/* Terminal CTF Demo */}
+        <TerminalDemo />
 
         {/* CTA Section */}
         <section className="max-w-4xl mx-auto px-6 py-24 text-center">
