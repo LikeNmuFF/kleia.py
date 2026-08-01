@@ -12,13 +12,19 @@
     <img src="https://img.shields.io/badge/Live-www.kleia.site-8b5cf6?style=for-the-badge&logo=vercel&logoColor=white" alt="Live">
   </a>
   <a href="https://nextjs.org/">
-    <img src="https://img.shields.io/badge/Next.js-14-000000?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js">
+    <img src="https://img.shields.io/badge/Next.js-16-000000?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js">
   </a>
   <a href="https://supabase.com/">
     <img src="https://img.shields.io/badge/Supabase-3dcf8e?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase">
   </a>
   <a href="https://tailwindcss.com/">
     <img src="https://img.shields.io/badge/Tailwind_CSS-38bdf8?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind">
+  </a>
+  <a href="https://github.com/LikeNmuFF/kleia.py/blob/main/LICENSE.md">
+    <img src="https://img.shields.io/badge/License-MIT-4caf50?style=for-the-badge" alt="License: MIT">
+  </a>
+  <a href="https://github.com/LikeNmuFF/kleia.py/blob/main/CONTRIBUTING.md">
+    <img src="https://img.shields.io/badge/Contributions-Welcome-8b5cf6?style=for-the-badge" alt="Contributions Welcome">
   </a>
 </p>
 
@@ -125,8 +131,8 @@
 ## ⚡ Tech Stack
 
 <p align="center">
-  <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/-Next.js_14-000000?style=flat-square&logo=next.js&logoColor=white" height="30" alt="Next.js 14"></a>
-  <a href="https://react.dev/"><img src="https://img.shields.io/badge/-React_18-61dafb?style=flat-square&logo=react&logoColor=black" height="30" alt="React 18"></a>
+  <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/-Next.js_16-000000?style=flat-square&logo=next.js&logoColor=white" height="30" alt="Next.js 16"></a>
+  <a href="https://react.dev/"><img src="https://img.shields.io/badge/-React_19-61dafb?style=flat-square&logo=react&logoColor=black" height="30" alt="React 19"></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/-TypeScript-3178c6?style=flat-square&logo=typescript&logoColor=white" height="30" alt="TypeScript"></a>
   <a href="https://supabase.com/"><img src="https://img.shields.io/badge/-Supabase-3dcf8e?style=flat-square&logo=supabase&logoColor=white" height="30" alt="Supabase"></a>
   <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/-Tailwind_CSS-38bdf8?style=flat-square&logo=tailwind-css&logoColor=black" height="30" alt="Tailwind CSS"></a>
@@ -138,7 +144,7 @@
 
 | Layer | Technology |
 |-------|-----------|
-| **Framework** | [Next.js 14](https://nextjs.org/) (App Router) |
+| **Framework** | [Next.js 16](https://nextjs.org/) (App Router) |
 | **Language** | [TypeScript](https://www.typescriptlang.org/) |
 | **Styling** | [Tailwind CSS](https://tailwindcss.com/) |
 | **Database** | [Supabase](https://supabase.com/) (PostgreSQL) |
@@ -156,7 +162,7 @@
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js 18+
+- Node.js 20.9+ (Node 22 recommended)
 - A Supabase project (free tier works)
 - Cloudinary account (for avatar uploads)
 
@@ -198,7 +204,19 @@ Apply the migrations in `supabase-migrations/` to your Supabase project via the 
 
 ## 🤝 Contributing
 
-This is a community project — contributions, ideas, and bug reports are welcome! Feel free to open an issue or submit a pull request.
+This is a community project — contributions, ideas, and bug reports are all welcome! Check out the **[Contributing Guide](CONTRIBUTING.md)** to get started (setup, code style, and how to submit CTF challenges).
+
+For how to responsibly report a security vulnerability, see **[SECURITY.md](SECURITY.md)**.
+
+<br/>
+
+---
+
+## 📄 License
+
+This project is open source and licensed under the **[MIT License](LICENSE.md)**.
+
+Copyright © 2026 Kleia (LikeNmuFF)
 
 <br/>
 
