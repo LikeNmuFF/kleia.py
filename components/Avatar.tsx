@@ -9,13 +9,19 @@ interface AvatarProps {
 
 export default function Avatar({ src, alt = '', size = 40, className = '' }: AvatarProps) {
   return (
-    <Image
-      src={src || ''}
-      alt={alt}
-      width={size}
-      height={size}
-      unoptimized
-      className={`rounded-full object-cover ${className}`}
-    />
+    <div
+      className={`rounded-full overflow-hidden flex-shrink-0 ${className}`}
+      style={{ width: size, height: size }}
+    >
+      <Image
+        src={src || ''}
+        alt={alt}
+        width={size}
+        height={size}
+        unoptimized
+        className="rounded-full object-cover"
+        style={{ width: '100%', height: '100%' }}
+      />
+    </div>
   )
 }
