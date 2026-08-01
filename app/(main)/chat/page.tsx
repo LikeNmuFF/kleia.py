@@ -19,6 +19,7 @@ export default function ChatPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
   const [showNewChat, setShowNewChat] = useState(false)
+  const [mobileShowChat, setMobileShowChat] = useState(false)
   const searchParams = useSearchParams()
   const supabase = createClient()
 
@@ -27,7 +28,6 @@ export default function ChatPage() {
     if (!user) return
     setUserId(user.id)
 
-    // Get user's conversation memberships
     const { data: memberships } = await supabase
       .from('conversation_members')
       .select('conversation_id')
@@ -53,32 +53,51 @@ export default function ChatPage() {
     fetchConversations()
   }, [])
 
-  // Open a conversation passed via ?conversation=<id> (e.g. from a member profile)
   useEffect(() => {
     const conversationParam = searchParams.get('conversation')
     if (conversationParam) {
       setSelectedId(conversationParam)
+      setMobileShowChat(true)
     }
   }, [searchParams])
+
+  const handleSelect = (id: string) => {
+    setSelectedId(id)
+    setMobileShowChat(true)
+  }
+
+  const handleBack = () => {
+    setMobileShowChat(false)
+  }
 
   const handleNewChat = (conversationId: string) => {
     setShowNewChat(false)
     fetchConversations()
     setSelectedId(conversationId)
+    setMobileShowChat(true)
   }
 
   return (
     <div className="flex h-[calc(100vh-64px)]">
-      <ChatSidebar
-        conversations={conversations}
-        selectedId={selectedId}
-        onSelect={setSelectedId}
-        onNewChat={() => setShowNewChat(true)}
-        currentUserId={userId || ''}
-      />
-      <div className="flex-1">
+      {/* Sidebar — hidden on mobile when chat is open */}
+      <div className={`${mobileShowChat ? 'hidden' : 'block'} md:block`}>
+        <ChatSidebar
+          conversations={conversations}
+          selectedId={selectedId}
+          onSelect={handleSelect}
+          onNewChat={() => setShowNewChat(true)}
+          currentUserId={userId || ''}
+        />
+      </div>
+
+      {/* Chat window — hidden on mobile when sidebar is showing */}
+      <div className={`flex-1 ${mobileShowChat ? 'block' : 'hidden'} md:block`}>
         {selectedId && userId ? (
-          <ChatWindow conversationId={selectedId} currentUserId={userId} />
+          <ChatWindow
+            conversationId={selectedId}
+            currentUserId={userId}
+            onBack={handleBack}
+          />
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-gray-500 gap-4">
             <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">

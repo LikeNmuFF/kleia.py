@@ -20,9 +20,10 @@ interface SenderInfo {
 interface ChatWindowProps {
   conversationId: string
   currentUserId: string
+  onBack?: () => void
 }
 
-export default function ChatWindow({ conversationId, currentUserId }: ChatWindowProps) {
+export default function ChatWindow({ conversationId, currentUserId, onBack }: ChatWindowProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [senderMap, setSenderMap] = useState<Record<string, SenderInfo>>({})
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -99,6 +100,22 @@ export default function ChatWindow({ conversationId, currentUserId }: ChatWindow
 
   return (
     <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      {/* Mobile back button */}
+      {onBack && (
+        <div className="md:hidden p-2 flex items-center" style={{ borderBottom: '1px solid var(--border-color)' }}>
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors hover:bg-white/5"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            <span className="text-sm font-medium">Back</span>
+          </button>
+        </div>
+      )}
+
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 ? (
