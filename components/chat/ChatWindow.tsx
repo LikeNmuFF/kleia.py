@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import MessageInput from './MessageInput'
+import Avatar from '@/components/Avatar'
 
 interface Message {
   id: string
@@ -117,7 +118,7 @@ export default function ChatWindow({ conversationId, currentUserId }: ChatWindow
                 {!isOwn && (
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center flex-shrink-0 mr-2 mt-1">
                     {sender?.avatar_url ? (
-                      <img src={sender.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+                      <Avatar src={sender.avatar_url} size={32} />
                     ) : (
                       <span className="text-white text-xs font-medium">
                         {sender?.username?.[0]?.toUpperCase() || '?'}

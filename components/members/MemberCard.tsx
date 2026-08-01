@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Flame } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getStatusInfo } from '@/lib/utils/time'
+import Avatar from '@/components/Avatar'
 
 interface Member {
   id: string
@@ -68,11 +69,7 @@ export default function MemberCard({ member: initialMember }: { member: Member }
         <div className="relative">
           <div className="w-12 h-12 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
             {member.avatar_url ? (
-              <img
-                src={member.avatar_url}
-                alt=""
-                className="w-12 h-12 rounded-full object-cover"
-              />
+              <Avatar src={member.avatar_url} size={48} />
             ) : (
               <span className="text-white font-semibold text-lg">
                 {member.username[0].toUpperCase()}

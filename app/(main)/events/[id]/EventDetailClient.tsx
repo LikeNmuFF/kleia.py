@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Avatar from '@/components/Avatar'
 import { rsvpEvent, deleteEvent, updateEvent } from '@/app/actions/events'
 
 interface Attendee {
@@ -251,7 +252,7 @@ export default function EventDetailClient({
                 >
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
                     {a.profiles.avatar_url ? (
-                      <img src={a.profiles.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+                      <Avatar src={a.profiles.avatar_url} size={32} />
                     ) : (
                       a.profiles.username?.charAt(0).toUpperCase() || '?'
                     )}
@@ -280,7 +281,7 @@ export default function EventDetailClient({
                 >
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
                     {a.profiles.avatar_url ? (
-                      <img src={a.profiles.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+                      <Avatar src={a.profiles.avatar_url} size={32} />
                     ) : (
                       a.profiles.username?.charAt(0).toUpperCase() || '?'
                     )}

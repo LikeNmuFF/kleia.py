@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getStatusInfo } from '@/lib/utils/time'
+import Avatar from '@/components/Avatar'
 
 interface Conversation {
   id: string
@@ -109,7 +110,7 @@ export default function ChatSidebar({ conversations, selectedId, onSelect, onNew
                   <div className="relative">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
                       {member?.avatar_url ? (
-                        <img src={member.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover" />
+                        <Avatar src={member.avatar_url} size={40} />
                       ) : (
                         <span className="text-white font-medium text-sm">
                           {member?.username?.[0]?.toUpperCase() || '?'}

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import AnnouncementBanner from '@/components/AnnouncementBanner'
+import Avatar from '@/components/Avatar'
 
 export default async function LeaderboardPage() {
   const supabase = await createClient()
@@ -78,7 +79,7 @@ export default async function LeaderboardPage() {
                 <div className="flex-1 flex items-center gap-3 min-w-0">
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
                     {entry.avatar_url ? (
-                      <img src={entry.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+                      <Avatar src={entry.avatar_url} size={32} />
                     ) : (
                       <span className="text-white text-xs font-medium">
                         {entry.username?.[0]?.toUpperCase() || '?'}

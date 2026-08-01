@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { toggleLike, togglePin, updatePost, deletePost } from '@/app/actions/posts'
 import CommentSection from './CommentSection'
 import LinkPreviewCard from './LinkPreviewCard'
+import Avatar from '@/components/Avatar'
 
 interface Profile {
   username: string
@@ -127,11 +128,7 @@ export default function PostCard({ post, currentUserId, initialLiked = false, is
       <div className="flex items-center gap-3 mb-4">
         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
           {profile?.avatar_url ? (
-            <img
-              src={profile.avatar_url}
-              alt=""
-              className="w-10 h-10 rounded-full object-cover"
-            />
+              <Avatar src={profile.avatar_url} size={40} />
           ) : (
             <span className="text-white font-semibold text-sm">
               {profile?.username?.[0]?.toUpperCase() || 'U'}

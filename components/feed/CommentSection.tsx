@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { getComments, addComment, deleteComment } from '@/app/actions/posts'
+import Avatar from '@/components/Avatar'
 
 interface Comment {
   id: string
@@ -70,7 +71,7 @@ export default function CommentSection({ postId, currentUserId, onCountChange }:
             <div key={comment.id} className="flex gap-3">
               <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
                 {comment.author.avatar_url ? (
-                  <img src={comment.author.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
+                  <Avatar src={comment.author.avatar_url} size={28} />
                 ) : (
                   <span className="text-white text-xs font-medium">
                     {comment.author.username[0].toUpperCase()}

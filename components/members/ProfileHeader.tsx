@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Calendar, Flame } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import Avatar from '@/components/Avatar'
 import { getStatusInfo } from '@/lib/utils/time'
 
 interface Profile {
@@ -75,7 +76,7 @@ export default function ProfileHeader({ profile: initialProfile }: ProfileHeader
         <div className="relative">
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
             {profile.avatar_url ? (
-              <img src={profile.avatar_url} alt="" className="w-20 h-20 rounded-full object-cover" />
+              <Avatar src={profile.avatar_url} size={80} />
             ) : (
               <span className="text-white font-semibold text-3xl">
                 {profile.username[0].toUpperCase()}
