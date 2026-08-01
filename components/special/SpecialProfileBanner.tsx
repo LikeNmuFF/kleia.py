@@ -3,16 +3,7 @@
 import { motion } from 'framer-motion'
 
 function TulipSVG({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 40 55" className={className} fill="none">
-      <path d="M20 22 C14 16 6 8 10 2 C14 -1 18 3 20 10 C22 3 26 -1 30 2 C34 8 26 16 20 22Z" fill="#a855f7" opacity="0.85" />
-      <path d="M20 22 C15 17 9 10 12 4 C15 1 18 5 20 12" fill="#c084fc" opacity="0.5" />
-      <path d="M20 22 C25 17 31 10 28 4 C25 1 22 5 20 12" fill="#9333ea" opacity="0.4" />
-      <rect x="18.5" y="22" width="3" height="18" rx="1.5" fill="#16a34a" opacity="0.8" />
-      <path d="M20 30 C15 28 10 30 8 34 C10 32 15 31 20 33" fill="#22c55e" opacity="0.6" />
-      <path d="M20 36 C25 34 30 36 32 40 C30 38 25 37 20 39" fill="#22c55e" opacity="0.6" />
-    </svg>
-  )
+  return <img src="/tulip.svg" alt="" className={className} style={{ objectFit: 'contain' }} />
 }
 
 function FloatingPetal({ delay, left }: { delay: number; left: number }) {
@@ -32,13 +23,7 @@ function FloatingPetal({ delay, left }: { delay: number; left: number }) {
       }}
       transition={{ duration, delay, repeat: Infinity, ease: 'linear' }}
     >
-      <svg viewBox="0 0 14 18" width={size} height={size * 1.3} fill="none">
-        <path
-          d="M7 1.5 C4.5 1.5 2.5 4 3 7.5 C3.5 10 5.5 12 7 15 C8.5 12 10.5 10 11 7.5 C11.5 4 9.5 1.5 7 1.5Z"
-          fill="#a855f7"
-          opacity="0.6"
-        />
-      </svg>
+      <img src="/tulip.svg" alt="" width={size} height={size * 1.3} style={{ objectFit: 'contain' }} />
     </motion.div>
   )
 }

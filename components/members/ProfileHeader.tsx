@@ -50,13 +50,7 @@ function FloatingPetal({ delay, left }: { delay: number; left: number }) {
       }}
       transition={{ duration, delay, repeat: Infinity, ease: 'linear' }}
     >
-      <svg viewBox="0 0 16 20" width={size} height={size * 1.2} fill="none">
-        <path
-          d="M8 2 C5 2 2.5 5 3 9 C3.5 12 6 14 8 17.5 C10 14 12.5 12 13 9 C13.5 5 11 2 8 2Z"
-          fill="#a855f7"
-          opacity="0.65"
-        />
-      </svg>
+      <img src="/tulip.svg" alt="" width={size} height={size * 1.2} style={{ objectFit: 'contain' }} />
     </motion.div>
   )
 }
@@ -159,10 +153,7 @@ export default function ProfileHeader({ profile: initialProfile }: ProfileHeader
                 animate={{ rotate: [0, 10, -10, 0] }}
                 transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
               >
-                <svg viewBox="0 0 20 20" fill="none" width="22" height="22">
-                  <path d="M10 3 C7 3 4.5 5.5 5 9 C5.5 11.5 8 13.5 10 16 C12 13.5 14.5 11.5 15 9 C15.5 5.5 13 3 10 3Z" fill="#a855f7" opacity="0.9" />
-                  <rect x="9.5" y="15" width="1" height="3" rx="0.5" fill="#22c55e" opacity="0.8" />
-                </svg>
+                <img src="/tulip.svg" alt="" width="22" height="22" style={{ objectFit: 'contain' }} />
               </motion.span>
             )}
           </h1>

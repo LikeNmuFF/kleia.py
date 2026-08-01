@@ -24,16 +24,7 @@ const COMPLIMENTS = [
 const PETAL_COUNT = 8
 
 function TulipSVG({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 60 80" className={className} fill="none">
-      <path d="M30 35 C20 25 10 15 15 5 C20 0 25 5 30 15 C35 5 40 0 45 5 C50 15 40 25 30 35Z" fill="#a855f7" opacity="0.9" />
-      <path d="M30 35 C22 28 14 18 18 8 C22 3 27 8 30 18" fill="#c084fc" opacity="0.6" />
-      <path d="M30 35 C38 28 46 18 42 8 C38 3 33 8 30 18" fill="#9333ea" opacity="0.5" />
-      <rect x="28" y="35" width="4" height="25" rx="2" fill="#16a34a" />
-      <path d="M30 45 C24 42 18 45 16 50 C18 48 24 46 30 48" fill="#22c55e" opacity="0.7" />
-      <path d="M30 50 C36 47 42 50 44 55 C42 53 36 51 30 53" fill="#22c55e" opacity="0.7" />
-    </svg>
-  )
+  return <img src="/tulip.svg" alt="" className={className} style={{ objectFit: 'contain' }} />
 }
 
 function Petal({ delay }: { delay: number }) {
@@ -59,13 +50,7 @@ function Petal({ delay }: { delay: number }) {
         ease: 'linear',
       }}
     >
-      <svg viewBox="0 0 20 20" width="16" height="16" fill="none">
-        <path
-          d="M10 2 C6 2 3 5 4 9 C5 12 8 14 10 18 C12 14 15 12 16 9 C17 5 14 2 10 2Z"
-          fill="#a855f7"
-          opacity="0.7"
-        />
-      </svg>
+      <img src="/tulip.svg" alt="" width="16" height="16" style={{ objectFit: 'contain' }} />
     </motion.div>
   )
 }

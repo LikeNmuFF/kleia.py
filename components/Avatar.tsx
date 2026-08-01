@@ -41,22 +41,14 @@ export default function Avatar({ src, alt = '', size = 40, className = '', isSpe
       </div>
       {/* Tulip badge */}
       {isSpecial && (
-        <svg
-          viewBox="0 0 20 20"
-          fill="none"
-          className="absolute -bottom-0.5 -right-0.5"
+        <img
+          src="/tulip.svg"
+          alt=""
+          className="absolute -bottom-0.5 -right-0.5 rounded-full"
           width={size * 0.35}
           height={size * 0.35}
-          style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))' }}
-        >
-          <circle cx="10" cy="10" r="9" fill="#1e1b4b" />
-          <path
-            d="M10 4 C7.5 4 5.5 6 6 9 C6.5 11 8.5 13 10 15.5 C11.5 13 13.5 11 14 9 C14.5 6 12.5 4 10 4Z"
-            fill="#a855f7"
-            opacity="0.9"
-          />
-          <rect x="9.5" y="14" width="1" height="2.5" rx="0.5" fill="#22c55e" opacity="0.8" />
-        </svg>
+          style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))', objectFit: 'contain', background: '#1e1b4b' }}
+        />
       )}
     </div>
   )

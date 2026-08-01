@@ -32,13 +32,7 @@ function FloatingPetal({ delay, left }: { delay: number; left: number }) {
       }}
       transition={{ duration, delay, repeat: Infinity, ease: 'linear' }}
     >
-      <svg viewBox="0 0 14 18" width={size} height={size * 1.3} fill="none">
-        <path
-          d="M7 1.5 C4.5 1.5 2.5 4 3 7.5 C3.5 10 5.5 12 7 15 C8.5 12 10.5 10 11 7.5 C11.5 4 9.5 1.5 7 1.5Z"
-          fill="#a855f7"
-          opacity="0.6"
-        />
-      </svg>
+      <img src="/tulip.svg" alt="" width={size} height={size * 1.3} style={{ objectFit: 'contain' }} />
     </motion.div>
   )
 }
@@ -72,10 +66,7 @@ function SpecialMemberCard({ member, rank }: { member: StreakMember; rank: numbe
         animate={{ rotate: [0, 8, -8, 0], y: [0, -2, 0] }}
         transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
       >
-        <svg viewBox="0 0 20 26" width="18" height="24" fill="none">
-          <path d="M10 8 C7 8 4.5 10.5 5 14 C5.5 16.5 8 18.5 10 21 C12 18.5 14.5 16.5 15 14 C15.5 10.5 13 8 10 8Z" fill="#a855f7" opacity="0.85" />
-          <rect x="9.5" y="20" width="1" height="4" rx="0.5" fill="#22c55e" opacity="0.8" />
-        </svg>
+        <img src="/tulip.svg" alt="" width="18" height="24" style={{ objectFit: 'contain' }} />
       </motion.div>
 
       <div className="relative z-10 flex items-center gap-4">
