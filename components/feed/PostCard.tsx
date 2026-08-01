@@ -1,8 +1,8 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { toggleLike, togglePin } from '@/app/actions/posts'
+import { toggleLike, togglePin, updatePost, deletePost } from '@/app/actions/posts'
 import CommentSection from './CommentSection'
 import LinkPreviewCard from './LinkPreviewCard'
 
@@ -43,6 +43,12 @@ export default function PostCard({ post, currentUserId, initialLiked = false, is
   const [commentsCount, setCommentsCount] = useState(post.comments_count || 0)
   const [showComments, setShowComments] = useState(false)
   const [pinned, setPinned] = useState(post.is_pinned)
+  const [editing, setEditing] = useState(false)
+  const [editContent, setEditContent] = useState(post.content)
+  const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const editRef = useRef<HTMLTextAreaElement>(null)
   const isOwnPost = currentUserId === post.author_id
 
   useEffect(() => {
@@ -72,6 +78,13 @@ export default function PostCard({ post, currentUserId, initialLiked = false, is
     fetchCommentCount()
   }, [post.id])
 
+  useEffect(() => {
+    if (editing && editRef.current) {
+      editRef.current.focus()
+      editRef.current.setSelectionRange(editRef.current.value.length, editRef.current.value.length)
+    }
+  }, [editing])
+
   const handleLike = async () => {
     const prevLiked = liked
     const prevCount = likesCount
@@ -93,6 +106,42 @@ export default function PostCard({ post, currentUserId, initialLiked = false, is
     setPinned(!prev)
     const result = await togglePin(post.id)
     if (result.error) setPinned(prev)
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editContent.trim() || editContent.trim() === post.content) {
+      setEditing(false)
+      setEditContent(post.content)
+      return
+    }
+
+    setSaving(true)
+    const result = await updatePost(post.id, editContent)
+    setSaving(false)
+
+    if (result.error) {
+      setEditContent(post.content)
+    }
+    setEditing(false)
+  }
+
+  const handleCancelEdit = () => {
+    setEditContent(post.content)
+    setEditing(false)
+  }
+
+  const handleDelete = async () => {
+    setDeleting(true)
+    const result = await deletePost(post.id)
+    if (result.error) {
+      setDeleting(false)
+      setShowDeleteConfirm(false)
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') handleCancelEdit()
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSaveEdit()
   }
 
   const handleCommentChange = useCallback((count: number) => {
@@ -137,24 +186,108 @@ export default function PostCard({ post, currentUserId, initialLiked = false, is
             })}
           </p>
         </div>
-        {isAdmin && (
-          <button
-            onClick={handlePin}
-            className="ml-auto p-2 rounded-lg transition-colors hover:bg-white/5"
-            style={{ color: pinned ? '#f59e0b' : 'var(--text-muted)' }}
-            title={pinned ? 'Unpin post' : 'Pin post'}
-          >
-            <svg className="w-4 h-4" fill={pinned ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 4.5l-8 8-1.5 4L6 16.5l4-1.5 8-8M15 4.5l3 3" />
-            </svg>
-          </button>
-        )}
+
+        {/* Admin pin + Owner edit/delete */}
+        <div className="ml-auto flex items-center gap-1">
+          {isAdmin && (
+            <button
+              onClick={handlePin}
+              className="p-2 rounded-lg transition-colors hover:bg-white/5"
+              style={{ color: pinned ? '#f59e0b' : 'var(--text-muted)' }}
+              title={pinned ? 'Unpin post' : 'Pin post'}
+            >
+              <svg className="w-4 h-4" fill={pinned ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 4.5l-8 8-1.5 4L6 16.5l4-1.5 8-8M15 4.5l3 3" />
+              </svg>
+            </button>
+          )}
+          {isOwnPost && !editing && (
+            <>
+              <button
+                onClick={() => setEditing(true)}
+                className="p-2 rounded-lg transition-colors hover:bg-white/5"
+                style={{ color: 'var(--text-muted)' }}
+                title="Edit post"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="p-2 rounded-lg transition-colors hover:bg-white/5"
+                style={{ color: 'var(--text-muted)' }}
+                title="Delete post"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
-      <p className="whitespace-pre-wrap leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{post.content}</p>
+      {/* Post content or edit mode */}
+      {editing ? (
+        <div>
+          <textarea
+            ref={editRef}
+            value={editContent}
+            onChange={(e) => setEditContent(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="input-field resize-none w-full min-h-[80px]"
+            rows={3}
+          />
+          <div className="flex items-center gap-2 mt-2">
+            <button
+              onClick={handleSaveEdit}
+              disabled={saving || !editContent.trim()}
+              className="px-3 py-1.5 bg-violet-600 text-white rounded-lg text-xs font-medium transition-colors hover:bg-violet-500 disabled:opacity-50"
+            >
+              {saving ? 'Saving...' : 'Save'}
+            </button>
+            <button
+              onClick={handleCancelEdit}
+              className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-white/5"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              Cancel
+            </button>
+            <span className="text-[10px] ml-auto" style={{ color: 'var(--text-muted)' }}>
+              Esc to cancel · Ctrl+Enter to save
+            </span>
+          </div>
+        </div>
+      ) : (
+        <p className="whitespace-pre-wrap leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{post.content}</p>
+      )}
 
-      {post.link_preview && (
+      {post.link_preview && !editing && (
         <LinkPreviewCard preview={post.link_preview} />
+      )}
+
+      {/* Delete confirmation */}
+      {showDeleteConfirm && (
+        <div className="mt-3 p-3 rounded-lg border" style={{ borderColor: '#ef444440', backgroundColor: '#ef444410' }}>
+          <p className="text-sm mb-2" style={{ color: 'var(--text-primary)' }}>Delete this post?</p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-medium transition-colors hover:bg-red-500 disabled:opacity-50"
+            >
+              {deleting ? 'Deleting...' : 'Delete'}
+            </button>
+            <button
+              onClick={() => setShowDeleteConfirm(false)}
+              className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-white/5"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Like + Comment buttons */}

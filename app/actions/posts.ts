@@ -226,3 +226,73 @@ export async function deleteComment(commentId: string) {
   revalidatePath('/feed')
   return { success: true }
 }
+
+export async function updatePost(postId: string, content: string) {
+  const start = Date.now()
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not logged in' }
+
+  if (!content.trim()) {
+    return { error: 'Content cannot be empty' }
+  }
+
+  if (content.trim().length > 5000) {
+    return { error: 'Content too long (max 5000 characters)' }
+  }
+
+  const { data: post } = await supabase
+    .from('posts')
+    .select('author_id')
+    .eq('id', postId)
+    .single()
+
+  if (!post || post.author_id !== user.id) {
+    return { error: 'You can only edit your own posts' }
+  }
+
+  const { error } = await supabase
+    .from('posts')
+    .update({ content: content.trim() })
+    .eq('id', postId)
+
+  if (error) {
+    await logEvent({ endpoint: 'posts.updatePost', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
+    return { error: error.message }
+  }
+
+  await logEvent({ endpoint: 'posts.updatePost', status: 'success', durationMs: Date.now() - start, userId: user.id })
+  revalidatePath('/feed')
+  return { success: true }
+}
+
+export async function deletePost(postId: string) {
+  const start = Date.now()
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not logged in' }
+
+  const { data: post } = await supabase
+    .from('posts')
+    .select('author_id')
+    .eq('id', postId)
+    .single()
+
+  if (!post || post.author_id !== user.id) {
+    return { error: 'You can only delete your own posts' }
+  }
+
+  const { error } = await supabase
+    .from('posts')
+    .delete()
+    .eq('id', postId)
+
+  if (error) {
+    await logEvent({ endpoint: 'posts.deletePost', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
+    return { error: error.message }
+  }
+
+  await logEvent({ endpoint: 'posts.deletePost', status: 'success', durationMs: Date.now() - start, userId: user.id })
+  revalidatePath('/feed')
+  return { success: true }
+}
