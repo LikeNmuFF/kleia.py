@@ -8,23 +8,44 @@ interface LinkPreview {
   siteName: string | null
 }
 
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)))
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+}
+
 function extractMeta(html: string, property: string): string | null {
+  let raw: string | null = null
+
   // Check og: tags
   const ogMatch = html.match(new RegExp(`<meta[^>]*property=["']${property}["'][^>]*content=["']([^"']+)["']`, 'i'))
-  if (ogMatch) return ogMatch[1]
+  if (ogMatch) raw = ogMatch[1]
 
   // Check reverse order: content before property
-  const ogMatch2 = html.match(new RegExp(`<meta[^>]*content=["']([^"']+)["'][^>]*property=["']${property}["']`, 'i'))
-  if (ogMatch2) return ogMatch2[1]
+  if (!raw) {
+    const ogMatch2 = html.match(new RegExp(`<meta[^>]*content=["']([^"']+)["'][^>]*property=["']${property}["']`, 'i'))
+    if (ogMatch2) raw = ogMatch2[1]
+  }
 
   // Check name= tags (twitter:card, etc.)
-  const nameMatch = html.match(new RegExp(`<meta[^>]*name=["']${property}["'][^>]*content=["']([^"']+)["']`, 'i'))
-  if (nameMatch) return nameMatch[1]
+  if (!raw) {
+    const nameMatch = html.match(new RegExp(`<meta[^>]*name=["']${property}["'][^>]*content=["']([^"']+)["']`, 'i'))
+    if (nameMatch) raw = nameMatch[1]
+  }
 
-  const nameMatch2 = html.match(new RegExp(`<meta[^>]*content=["']([^"']+)["'][^>]*name=["']${property}["']`, 'i'))
-  if (nameMatch2) return nameMatch2[1]
+  if (!raw) {
+    const nameMatch2 = html.match(new RegExp(`<meta[^>]*content=["']([^"']+)["'][^>]*name=["']${property}["']`, 'i'))
+    if (nameMatch2) raw = nameMatch2[1]
+  }
 
-  return null
+  return raw ? decodeHtmlEntities(raw) : null
 }
 
 function extractTitle(html: string): string | null {
@@ -34,7 +55,7 @@ function extractTitle(html: string): string | null {
 
   // Try <title> tag
   const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i)
-  if (titleMatch) return titleMatch[1].trim()
+  if (titleMatch) return decodeHtmlEntities(titleMatch[1].trim())
 
   return null
 }

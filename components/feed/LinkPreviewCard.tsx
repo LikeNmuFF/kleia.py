@@ -28,7 +28,7 @@ export default function LinkPreviewCard({ preview }: { preview: LinkPreviewData 
       {preview.image && (
         <div className="relative w-full h-48 overflow-hidden bg-black/20">
           <img
-            src={preview.image}
+            src={`/api/image-proxy?url=${encodeURIComponent(preview.image)}`}
             alt=""
             className="w-full h-full object-cover"
             onError={(e) => {
