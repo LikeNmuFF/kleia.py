@@ -7,7 +7,6 @@ const CATEGORIES = [
   { key: 'all', icon: '🏴', label: 'All' },
   { key: 'web', icon: '🌐', label: 'Web' },
   { key: 'crypto', icon: '🔐', label: 'Crypto' },
-  { key: 'pwn', icon: '💥', label: 'PWN' },
   { key: 'forensics', icon: '🔍', label: 'Forensics' },
   { key: 'misc', icon: '📌', label: 'Misc' },
 ] as const

@@ -22,7 +22,7 @@ interface Challenge {
   created_at: string
 }
 
-const CATEGORIES = ['web', 'crypto', 'pwn', 'forensics', 'misc']
+const CATEGORIES = ['web', 'crypto', 'forensics', 'misc']
 const DIFFICULTIES = ['easy', 'medium', 'hard']
 const TABS = ['all', 'pending', 'approved', 'rejected', 'draft']
 

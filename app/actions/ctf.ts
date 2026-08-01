@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { logEvent } from '@/lib/logEvent'
 import { hashFlag } from '@/lib/utils/ctf'
 
-const VALID_CATEGORIES = ['web', 'crypto', 'pwn', 'forensics', 'misc']
+const VALID_CATEGORIES = ['web', 'crypto', 'forensics', 'misc']
 const VALID_DIFFICULTIES = ['easy', 'medium', 'hard']
 
 async function checkAdmin(supabase: Awaited<ReturnType<typeof createClient>>) {

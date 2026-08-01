@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 
 const LINES: Array<[string, string, string]> = [
   ['$', 'nc ctf.kleia.site 1337', 'text-violet-400'],
-  ['»', 'Connected to Kleia CTF — web / crypto / pwn / forensics / misc', 'text-gray-500'],
+  ['»', 'Connected to Kleia CTF — web / crypto / forensics / misc', 'text-gray-500'],
   ['»', 'Submit flag:', 'text-gray-500'],
   ['>', 'KLEIA{learn_together_grow_together}', 'text-cyan-300'],
   ['✔', 'Correct! +250 pts — you are now #7 on the leaderboard', 'text-emerald-400'],
@@ -58,7 +58,7 @@ export default function TerminalDemo() {
           <span className="bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">right in</span>
         </h2>
         <p className="text-gray-500 max-w-xl mx-auto">
-          Web, crypto, pwn, forensics & misc — with a live leaderboard and your own community submissions.
+          Web, crypto, forensics & misc — with a live leaderboard and your own community submissions.
         </p>
       </motion.div>
 

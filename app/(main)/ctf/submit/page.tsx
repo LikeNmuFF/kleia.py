@@ -1,7 +1,7 @@
 import { submitChallenge } from '@/app/actions/ctf'
 import Link from 'next/link'
 
-const CATEGORIES = ['web', 'crypto', 'pwn', 'forensics', 'misc']
+const CATEGORIES = ['web', 'crypto', 'forensics', 'misc']
 const DIFFICULTIES = ['easy', 'medium', 'hard']
 
 export default function SubmitChallengePage({

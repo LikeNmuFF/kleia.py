@@ -11,7 +11,6 @@ const DIFFICULTY_COLORS: Record<string, string> = {
 const CATEGORY_ICONS: Record<string, string> = {
   web: '🌐',
   crypto: '🔐',
-  pwn: '💥',
   forensics: '🔍',
   misc: '📌',
 }
