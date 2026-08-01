@@ -4,8 +4,6 @@ import LogoutButton from '@/components/auth/LogoutButton'
 import PresenceTracker from '@/components/PresenceTracker'
 import ThemeToggle from '@/components/ThemeToggle'
 
-export const dynamic = 'force-dynamic'
-
 export default async function MainLayout({
   children,
 }: {

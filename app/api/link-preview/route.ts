@@ -201,7 +201,11 @@ export async function GET(request: NextRequest) {
       siteName: extractSiteName(html),
     }
 
-    return NextResponse.json(preview)
+    return NextResponse.json(preview, {
+      headers: {
+        'Cache-Control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400',
+      },
+    })
   } catch {
     return NextResponse.json({ error: 'Failed to fetch URL' }, { status: 502 })
   }

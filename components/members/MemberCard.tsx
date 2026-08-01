@@ -61,14 +61,6 @@ export default function MemberCard({ member: initialMember }: { member: Member }
     }
   }, [member.id])
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setMember((prev) => ({ ...prev }))
-    }, 60000)
-
-    return () => clearInterval(interval)
-  }, [])
-
   return (
     <Link href={`/profile/${member.username}`} className="block">
       <div className="card">

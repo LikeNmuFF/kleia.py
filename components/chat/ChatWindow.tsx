@@ -44,18 +44,14 @@ export default function ChatWindow({ conversationId, currentUserId }: ChatWindow
         setMessages(data)
 
         const senderIds: string[] = Array.from(new Set(data.map((m: { sender_id: string }) => m.sender_id)))
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, username, avatar_url')
+          .in('id', senderIds)
         const map: Record<string, SenderInfo> = {}
-
-        for (const id of senderIds) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('username, avatar_url')
-            .eq('id', id)
-            .single()
-
-          if (profile) map[id] = profile
+        for (const p of profiles || []) {
+          map[p.id] = { username: p.username, avatar_url: p.avatar_url }
         }
-
         setSenderMap(map)
       }
     }

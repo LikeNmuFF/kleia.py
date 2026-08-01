@@ -11,7 +11,7 @@ export function RouterLoader() {
 
   useEffect(() => {
     setIsLoading(true);
-    const timer = setTimeout(() => setIsLoading(false), 500); // Minimum loading time
+    const timer = setTimeout(() => setIsLoading(false), 100);
     return () => clearTimeout(timer);
   }, [pathname, searchParams, setIsLoading]);
 

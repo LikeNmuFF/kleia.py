@@ -1,7 +1,9 @@
 'use client'
 
 import React, { createContext, useContext, useState, ReactNode } from "react";
-import KleiaLoader from "@/components/KleiaLoader";
+import dynamic from "next/dynamic";
+
+const KleiaLoader = dynamic(() => import("@/components/KleiaLoader"));
 
 interface LoadingContextType {
   isLoading: boolean;

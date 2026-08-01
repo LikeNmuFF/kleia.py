@@ -15,40 +15,41 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
 
   if (!event) notFound()
 
-  const { data: creator } = await supabase
-    .from('profiles')
-    .select('id, username, avatar_url')
-    .eq('id', event.creator_id)
-    .single()
+  const [creatorResult, attendeesResult, rsvpResult] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('id, username, avatar_url')
+      .eq('id', event.creator_id)
+      .single(),
+    supabase
+      .from('event_attendees')
+      .select(`
+        status,
+        user_id,
+        profiles!inner(id, username, avatar_url)
+      `)
+      .eq('event_id', id)
+      .order('status', { ascending: true })
+      .order('created_at', { ascending: true }),
+    user
+      ? supabase
+          .from('event_attendees')
+          .select('status')
+          .eq('event_id', id)
+          .eq('user_id', user.id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ])
 
-  const { data: rawAttendees } = await supabase
-    .from('event_attendees')
-    .select(`
-      status,
-      user_id,
-      profiles!inner(id, username, avatar_url)
-    `)
-    .eq('event_id', id)
-    .order('status', { ascending: true })
-    .order('created_at', { ascending: true })
-
+  const creator = creatorResult.data
+  const rawAttendees = attendeesResult.data
   const attendees = (rawAttendees || []).map((a: any) => ({
     status: a.status as string,
     user_id: a.user_id as string,
     profiles: Array.isArray(a.profiles) ? a.profiles[0] : a.profiles,
   }))
 
-  let userRsvp: string | null = null
-  if (user) {
-    const { data: rsvp } = await supabase
-      .from('event_attendees')
-      .select('status')
-      .eq('event_id', id)
-      .eq('user_id', user.id)
-      .maybeSingle()
-
-    if (rsvp) userRsvp = rsvp.status
-  }
+  const userRsvp = rsvpResult.data?.status ?? null
 
   return (
     <EventDetailClient

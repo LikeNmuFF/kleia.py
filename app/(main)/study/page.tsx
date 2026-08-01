@@ -13,21 +13,25 @@ export default async function StudyPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: notes } = await supabase
-    .from('shared_notes')
-    .select('id, title, content, tags, updated_at')
-    .order('updated_at', { ascending: false })
+  const [notesResult, progressResult, playlistsResult] = await Promise.all([
+    supabase
+      .from('shared_notes')
+      .select('id, title, content, tags, updated_at')
+      .order('updated_at', { ascending: false }),
+    supabase
+      .from('progress_tracking')
+      .select('id, subject, hours_studied, date')
+      .eq('user_id', user?.id || '')
+      .order('date', { ascending: false }),
+    supabase
+      .from('playlists')
+      .select('id, title, url, type')
+      .order('created_at', { ascending: false }),
+  ])
 
-  const { data: progress } = await supabase
-    .from('progress_tracking')
-    .select('id, subject, hours_studied, date')
-    .eq('user_id', user?.id || '')
-    .order('date', { ascending: false })
-
-  const { data: playlists } = await supabase
-    .from('playlists')
-    .select('id, title, url, type')
-    .order('created_at', { ascending: false })
+  const notes = notesResult.data
+  const progress = progressResult.data
+  const playlists = playlistsResult.data
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">

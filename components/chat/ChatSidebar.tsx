@@ -31,29 +31,37 @@ export default function ChatSidebar({ conversations, selectedId, onSelect, onNew
 
   useEffect(() => {
     const fetchMembers = async () => {
-      const map: Record<string, MemberInfo> = {}
+      const convIds = conversations.map(c => c.id)
+      const { data: allMemberships } = await supabase
+        .from('conversation_members')
+        .select('conversation_id, user_id')
+        .in('conversation_id', convIds)
+        .neq('user_id', currentUserId)
 
-      for (const conv of conversations) {
-        const { data: memberships } = await supabase
-          .from('conversation_members')
-          .select('user_id')
-          .eq('conversation_id', conv.id)
-          .neq('user_id', currentUserId)
-
-        if (memberships && memberships.length > 0) {
-          const otherId = memberships[0].user_id
-          if (!map[conv.id]) {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('username, avatar_url, status, last_seen')
-              .eq('id', otherId)
-              .single()
-
-            if (profile) map[conv.id] = profile
-          }
+      const otherIds = new Set<string>()
+      const convToOther: Record<string, string> = {}
+      for (const m of allMemberships || []) {
+        if (!convToOther[m.conversation_id]) {
+          convToOther[m.conversation_id] = m.user_id
+          otherIds.add(m.user_id)
         }
       }
 
+      if (otherIds.size === 0) { setMemberMap({}); return }
+
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, username, avatar_url, status, last_seen')
+        .in('id', Array.from(otherIds))
+
+      const map: Record<string, MemberInfo> = {}
+      for (const conv of conversations) {
+        const otherId = convToOther[conv.id]
+        if (otherId) {
+          const profile = (profiles || []).find((p: { id: string }) => p.id === otherId)
+          if (profile) map[conv.id] = profile
+        }
+      }
       setMemberMap(map)
     }
 

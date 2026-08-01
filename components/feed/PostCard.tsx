@@ -34,10 +34,11 @@ interface PostCardProps {
   currentUserId?: string
   initialLiked?: boolean
   isAdmin?: boolean
+  initialProfile?: Profile | null
 }
 
-export default function PostCard({ post, currentUserId, initialLiked = false, isAdmin = false }: PostCardProps) {
-  const [profile, setProfile] = useState<Profile | null>(null)
+export default function PostCard({ post, currentUserId, initialLiked = false, isAdmin = false, initialProfile = null }: PostCardProps) {
+  const [profile, setProfile] = useState<Profile | null>(initialProfile)
   const [liked, setLiked] = useState(initialLiked)
   const [likesCount, setLikesCount] = useState(post.likes_count || 0)
   const [commentsCount, setCommentsCount] = useState(post.comments_count || 0)
@@ -50,33 +51,6 @@ export default function PostCard({ post, currentUserId, initialLiked = false, is
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const editRef = useRef<HTMLTextAreaElement>(null)
   const isOwnPost = currentUserId === post.author_id
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      const supabase = createClient()
-      const { data } = await supabase
-        .from('profiles')
-        .select('username, avatar_url')
-        .eq('id', post.author_id)
-        .single()
-
-      if (data) setProfile(data)
-    }
-
-    fetchProfile()
-  }, [post.author_id])
-
-  useEffect(() => {
-    const fetchCommentCount = async () => {
-      const supabase = createClient()
-      const { count } = await supabase
-        .from('comments')
-        .select('id', { count: 'exact', head: true })
-        .eq('post_id', post.id)
-      if (count !== null) setCommentsCount(count)
-    }
-    fetchCommentCount()
-  }, [post.id])
 
   useEffect(() => {
     if (editing && editRef.current) {
