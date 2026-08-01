@@ -4,10 +4,19 @@ import { useCallback, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { toggleLike, togglePin } from '@/app/actions/posts'
 import CommentSection from './CommentSection'
+import LinkPreviewCard from './LinkPreviewCard'
 
 interface Profile {
   username: string
   avatar_url: string | null
+}
+
+interface LinkPreviewData {
+  url: string
+  title: string | null
+  description: string | null
+  image: string | null
+  siteName: string | null
 }
 
 interface PostCardProps {
@@ -20,6 +29,7 @@ interface PostCardProps {
     is_pinned: boolean
     likes_count: number
     comments_count: number
+    link_preview?: LinkPreviewData | null
   }
   currentUserId?: string
   initialLiked?: boolean
@@ -142,6 +152,10 @@ export default function PostCard({ post, currentUserId, initialLiked = false, is
       </div>
 
       <p className="whitespace-pre-wrap leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{post.content}</p>
+
+      {post.link_preview && (
+        <LinkPreviewCard preview={post.link_preview} />
+      )}
 
       {/* Like + Comment buttons */}
       <div className="flex items-center gap-4 mt-4 pt-3 border-t" style={{ borderColor: 'var(--border-color)' }}>

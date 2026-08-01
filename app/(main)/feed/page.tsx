@@ -14,7 +14,7 @@ export default async function FeedPage() {
 
   const { data: rawPosts } = await supabase
     .from('posts')
-    .select('id, content, type, author_id, created_at, is_pinned, likes_count, comments_count')
+    .select('id, content, type, author_id, created_at, is_pinned, likes_count, comments_count, link_preview')
     .order('is_pinned', { ascending: false })
     .order('created_at', { ascending: false })
 

@@ -4,7 +4,15 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { logEvent } from '@/lib/logEvent'
 
-export async function createPost(content: string) {
+interface LinkPreviewData {
+  url: string
+  title: string | null
+  description: string | null
+  image: string | null
+  siteName: string | null
+}
+
+export async function createPost(content: string, linkPreview?: LinkPreviewData) {
   const start = Date.now()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -21,11 +29,18 @@ export async function createPost(content: string) {
     return { error: 'Content too long (max 5000 characters)' }
   }
 
-  const { error } = await supabase.from('posts').insert({
+  const insertData: Record<string, unknown> = {
     author_id: user.id,
     content: content.trim(),
     type: 'text',
-  })
+  }
+
+  if (linkPreview) {
+    insertData.link_preview = linkPreview
+    insertData.type = 'resource'
+  }
+
+  const { error } = await supabase.from('posts').insert(insertData)
 
   if (error) {
     await logEvent({ endpoint: 'posts.createPost', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
