@@ -144,10 +144,6 @@ export default function ProfileHeader({ profile: initialProfile }: ProfileHeader
               </span>
             )}
           </div>
-          <span
-            className={`absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full border-2 ${liveOnline ? 'bg-emerald-400' : statusInfo.color}`}
-            style={{ borderColor: 'var(--bg-secondary)' }}
-          />
         </div>
 
         <div className="min-w-0 flex-1">
