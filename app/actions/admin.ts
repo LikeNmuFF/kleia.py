@@ -176,3 +176,153 @@ export async function getSecurityReports() {
     history: historyResult.data ?? [],
   }
 }
+
+export async function getAdminAnalytics() {
+  const supabase = await createClient()
+  await checkAdmin(supabase)
+
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString()
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
+
+  const [
+    { count: totalUsers },
+    { count: totalPosts },
+    { count: totalComments },
+    { count: totalMessages },
+    { count: postsToday },
+    { count: newUsersThisWeek },
+    { count: totalChallenges },
+    { count: totalSolves },
+    { data: recentPosts },
+    { data: topStreaks },
+  ] = await Promise.all([
+    supabase.from('profiles').select('*', { count: 'exact', head: true }),
+    supabase.from('posts').select('*', { count: 'exact', head: true }),
+    supabase.from('comments').select('*', { count: 'exact', head: true }),
+    supabase.from('messages').select('*', { count: 'exact', head: true }),
+    supabase.from('posts').select('*', { count: 'exact', head: true }).gte('created_at', today),
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', weekAgo),
+    supabase.from('ctf_challenges').select('*', { count: 'exact', head: true }).eq('is_active', true),
+    supabase.from('ctf_submissions').select('*', { count: 'exact', head: true }).eq('correct', true),
+    supabase.from('posts').select('id, content, created_at, author:profiles!posts_author_id_fkey(username, avatar_url)').order('created_at', { ascending: false }).limit(5),
+    supabase.from('profiles').select('id, username, avatar_url, current_streak, longest_streak').gt('current_streak', 0).order('current_streak', { ascending: false }).limit(5),
+  ])
+
+  return {
+    totalUsers: totalUsers ?? 0,
+    totalPosts: totalPosts ?? 0,
+    totalComments: totalComments ?? 0,
+    totalMessages: totalMessages ?? 0,
+    postsToday: postsToday ?? 0,
+    newUsersThisWeek: newUsersThisWeek ?? 0,
+    totalChallenges: totalChallenges ?? 0,
+    totalSolves: totalSolves ?? 0,
+    recentPosts: recentPosts ?? [],
+    topStreaks: topStreaks ?? [],
+  }
+}
+
+export async function getAdminUsers() {
+  const supabase = await createClient()
+  const user = await checkAdmin(supabase)
+
+  const { data: users } = await supabase
+    .from('profiles')
+    .select('id, username, full_name, avatar_url, role, status, last_seen, current_streak, longest_streak, created_at')
+    .order('created_at', { ascending: false })
+
+  return { users: users ?? [], currentUserId: user.id }
+}
+
+export async function updateUserRole(userId: string, role: string) {
+  const supabase = await createClient()
+  await checkAdmin(supabase)
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ role })
+    .eq('id', userId)
+
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
+export async function resetUserStreak(userId: string) {
+  const supabase = await createClient()
+  await checkAdmin(supabase)
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ current_streak: 0 })
+    .eq('id', userId)
+
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
+export async function adjustUserScore(userId: string, score: number) {
+  const supabase = await createClient()
+  await checkAdmin(supabase)
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ score_override: score })
+    .eq('id', userId)
+
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
+export async function deleteUser(userId: string) {
+  const supabase = await createClient()
+  await checkAdmin(supabase)
+
+  const { error } = await supabase.auth.admin.deleteUser(userId)
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
+export async function getAdminPosts() {
+  const supabase = await createClient()
+  await checkAdmin(supabase)
+
+  const { data: posts } = await supabase
+    .from('posts')
+    .select('id, content, created_at, author:profiles!posts_author_id_fkey(id, username, avatar_url)')
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  return { posts: posts ?? [] }
+}
+
+export async function deletePost(postId: string) {
+  const supabase = await createClient()
+  await checkAdmin(supabase)
+
+  const { error } = await supabase.from('posts').delete().eq('id', postId)
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
+export async function getAdminComments() {
+  const supabase = await createClient()
+  await checkAdmin(supabase)
+
+  const { data: comments } = await supabase
+    .from('comments')
+    .select('id, content, created_at, author:profiles!comments_author_id_fkey(id, username, avatar_url), post:posts(id, content)')
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  return { comments: comments ?? [] }
+}
+
+export async function deleteComment(commentId: string) {
+  const supabase = await createClient()
+  await checkAdmin(supabase)
+
+  const { error } = await supabase.from('comments').delete().eq('id', commentId)
+  if (error) return { error: error.message }
+  return { success: true }
+}
