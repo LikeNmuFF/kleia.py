@@ -29,6 +29,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url || '')
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState(profile.avatar_url || '')
+  const [avatarChanged, setAvatarChanged] = useState(false)
   const [cropModalOpen, setCropModalOpen] = useState(false)
   const [cropImageSrc, setCropImageSrc] = useState('')
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle')
@@ -73,6 +74,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
   const handleCropComplete = (file: File, preview: string) => {
     setAvatarFile(file)
     setAvatarPreview(preview)
+    setAvatarChanged(true)
     setCropModalOpen(false)
     setCropImageSrc('')
   }
@@ -86,6 +88,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
     setAvatarUrl(src)
     setAvatarPreview(src)
     setAvatarFile(null)
+    setAvatarChanged(true)
     setError('')
   }
 
@@ -167,7 +170,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
       username: username !== profile.username ? username : undefined,
       full_name: displayName,
       bio,
-      avatar_url: newAvatarUrl !== avatarUrl ? newAvatarUrl : undefined,
+      avatar_url: avatarChanged ? newAvatarUrl : undefined,
     })
 
     if (result.error) {
@@ -178,6 +181,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
 
     setAvatarUrl(newAvatarUrl)
     setAvatarFile(null)
+    setAvatarChanged(false)
     setLoading(false)
     setSuccess(true)
     setTimeout(() => setSuccess(false), 3000)
