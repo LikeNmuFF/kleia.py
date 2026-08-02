@@ -13,3 +13,4 @@ scripts/
 !scripts/summarize-security-report.ts
 tsconfig.tsbuildinfo
 flags.env
+supabase-migrations/
