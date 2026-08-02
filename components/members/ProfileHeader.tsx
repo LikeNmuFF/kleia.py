@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import Avatar from '@/components/Avatar'
 import TulipSVG from '@/components/special/TulipSVG'
 import { getStatusInfo } from '@/lib/utils/time'
+import { useOnlineUsers } from '@/lib/hooks/useOnlineUsers'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface Profile {
@@ -82,7 +83,10 @@ function SpecialProfileDecor({ isSpecial }: { isSpecial: boolean }) {
 
 export default function ProfileHeader({ profile: initialProfile }: ProfileHeaderProps) {
   const [profile, setProfile] = useState<Profile>(initialProfile)
+  const onlineUsers = useOnlineUsers()
+  const isOnline = onlineUsers.has(profile.id)
   const statusInfo = getStatusInfo(profile.status, profile.last_seen)
+  const liveOnline = isOnline || (statusInfo.isOnline && !isOnline)
   const streak = profile.current_streak || 0
   const streakLevel = getStreakLevel(streak)
   const isSpecial = profile.role === 'special'
@@ -141,7 +145,7 @@ export default function ProfileHeader({ profile: initialProfile }: ProfileHeader
             )}
           </div>
           <span
-            className={`absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full border-2 ${statusInfo.color}`}
+            className={`absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full border-2 ${liveOnline ? 'bg-emerald-400' : statusInfo.color}`}
             style={{ borderColor: 'var(--bg-secondary)' }}
           />
         </div>
@@ -174,9 +178,9 @@ export default function ProfileHeader({ profile: initialProfile }: ProfileHeader
 
           <div className="mt-2 flex flex-wrap items-center gap-3">
             <span className="flex items-center gap-1.5 text-sm">
-              <span className={`w-2 h-2 rounded-full ${statusInfo.color}`} />
-              <span className={statusInfo.isOnline ? 'text-emerald-400' : ''} style={!statusInfo.isOnline ? { color: 'var(--text-muted)' } : undefined}>
-                {statusInfo.text}
+              <span className={`w-2 h-2 rounded-full ${liveOnline ? 'bg-emerald-400' : statusInfo.color}`} />
+              <span className={liveOnline ? 'text-emerald-400' : ''} style={!liveOnline ? { color: 'var(--text-muted)' } : undefined}>
+                {liveOnline ? 'Online' : statusInfo.text}
               </span>
             </span>
             <span className="flex items-center gap-1.5 text-sm" style={{ color: 'var(--text-muted)' }}>

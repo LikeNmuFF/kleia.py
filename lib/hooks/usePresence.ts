@@ -1,15 +1,12 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-
-interface PresenceState {
-  user_id: string
-  online_at: string
-}
+import { retrackPresence, useTrackPresence } from '@/lib/hooks/useOnlineUsers'
 
 export function usePresence(userId: string | undefined) {
-  const channelRef = useRef<ReturnType<ReturnType<typeof createClient>['channel']> | null>(null)
+  // Live presence on the shared channel (site-wide online status)
+  useTrackPresence(userId)
 
   useEffect(() => {
     if (!userId) return
@@ -22,25 +19,6 @@ export function usePresence(userId: string | undefined) {
       .update({ status: 'online', last_seen: new Date().toISOString() })
       .eq('id', userId)
 
-    // Presence channel — broadcasts via WebSocket, zero DB writes
-    const channel = supabase.channel(`presence:${userId}`, {
-      config: { presence: { key: userId } },
-    })
-    channelRef.current = channel
-
-    channel
-      .on('presence', { event: 'sync' }, () => {})
-      .on('presence', { event: 'join' }, () => {})
-      .on('presence', { event: 'leave' }, () => {})
-      .subscribe(async (status: string) => {
-        if (status === 'SUBSCRIBED') {
-          await channel.track({
-            user_id: userId,
-            online_at: new Date().toISOString(),
-          } satisfies PresenceState)
-        }
-      })
-
     // Single DB write: set offline on unload
     const handleUnload = () => {
       navigator.sendBeacon(
@@ -50,13 +28,10 @@ export function usePresence(userId: string | undefined) {
     }
     window.addEventListener('beforeunload', handleUnload)
 
-    // Tab visibility — broadcast presence only, no DB writes
+    // Tab visibility — re-publish presence when the tab becomes visible again
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
-        channel.track({
-          user_id: userId,
-          online_at: new Date().toISOString(),
-        })
+        retrackPresence(userId)
       }
     }
     document.addEventListener('visibilitychange', handleVisibility)
@@ -68,7 +43,6 @@ export function usePresence(userId: string | undefined) {
         .update({ status: 'offline', last_seen: new Date().toISOString() })
         .eq('id', userId)
 
-      channel.unsubscribe()
       window.removeEventListener('beforeunload', handleUnload)
       document.removeEventListener('visibilitychange', handleVisibility)
     }

@@ -42,7 +42,7 @@ async function initChannel(userId?: string): Promise<void> {
 
     ch.on('presence', { event: 'sync' }, () => {
       applyState(ch.presenceState() as Record<string, unknown>)
-    }).subscribe(async (status: string) => {
+    }).subscribe(async (status: REALTIME_SUBSCRIBE_STATES) => {
       if (status === 'SUBSCRIBED') {
         await ch.track({
           user_id: myId,

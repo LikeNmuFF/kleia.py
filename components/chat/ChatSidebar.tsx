@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getStatusInfo } from '@/lib/utils/time'
+import { useOnlineUsers } from '@/lib/hooks/useOnlineUsers'
 import Avatar from '@/components/Avatar'
 
 interface Conversation {
@@ -12,6 +13,7 @@ interface Conversation {
 }
 
 interface MemberInfo {
+  id: string
   username: string
   avatar_url: string | null
   status: string | null
@@ -28,6 +30,7 @@ interface ChatSidebarProps {
 
 export default function ChatSidebar({ conversations, selectedId, onSelect, onNewChat, currentUserId }: ChatSidebarProps) {
   const [memberMap, setMemberMap] = useState<Record<string, MemberInfo>>({})
+  const onlineUsers = useOnlineUsers()
   const supabase = createClient()
 
   useEffect(() => {
@@ -95,6 +98,7 @@ export default function ChatSidebar({ conversations, selectedId, onSelect, onNew
           conversations.map((conv) => {
             const member = memberMap[conv.id]
             const statusInfo = member ? getStatusInfo(member.status, member.last_seen) : null
+            const liveOnline = member ? onlineUsers.has(member.id) : false
 
             return (
               <button
@@ -118,15 +122,15 @@ export default function ChatSidebar({ conversations, selectedId, onSelect, onNew
                       )}
                     </div>
                     {statusInfo && (
-                      <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 ${statusInfo.color}`} style={{ borderColor: 'var(--bg-primary)' }} />
+                      <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 ${liveOnline ? 'bg-emerald-400' : statusInfo.color}`} style={{ borderColor: 'var(--bg-primary)' }} />
                     )}
                   </div>
                   <div className="min-w-0">
                     <p className="font-medium truncate" style={{ color: 'var(--text-primary)' }}>
                       {member?.username || 'Unknown'}
                     </p>
-                    <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
-                      {statusInfo?.text || 'Offline'}
+                    <p className={`text-xs truncate ${liveOnline ? 'text-emerald-400' : ''}`} style={!liveOnline ? { color: 'var(--text-muted)' } : undefined}>
+                      {liveOnline ? 'Online' : (statusInfo?.text || 'Offline')}
                     </p>
                   </div>
                 </div>
