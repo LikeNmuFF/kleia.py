@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Camera, Check, Loader2, Lock, User } from 'lucide-react'
 import { updateProfile, checkUsernameAvailability, updatePassword } from '@/app/actions/profile'
+import AvatarCropModal from './AvatarCropModal'
 
 interface Profile {
   id: string
@@ -19,6 +20,8 @@ interface ProfileFormProps {
 
 const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`
 
+const ILLUSTRATIONS = Array.from({ length: 13 }, (_, i) => `/illustrations/${i + 1}.png`)
+
 export default function ProfileForm({ profile }: ProfileFormProps) {
   const [displayName, setDisplayName] = useState(profile.full_name || '')
   const [username, setUsername] = useState(profile.username)
@@ -26,6 +29,8 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url || '')
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState(profile.avatar_url || '')
+  const [cropModalOpen, setCropModalOpen] = useState(false)
+  const [cropImageSrc, setCropImageSrc] = useState('')
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle')
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -49,19 +54,39 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
       return
     }
 
-    if (file.size > 1 * 1024 * 1024) {
-      setError('Image must be under 1MB')
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image must be under 5MB')
       return
     }
 
-    setAvatarFile(file)
     setError('')
-
     const reader = new FileReader()
     reader.onload = (ev) => {
-      setAvatarPreview(ev.target?.result as string)
+      setCropImageSrc(ev.target?.result as string)
+      setCropModalOpen(true)
     }
     reader.readAsDataURL(file)
+
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  const handleCropComplete = (file: File, preview: string) => {
+    setAvatarFile(file)
+    setAvatarPreview(preview)
+    setCropModalOpen(false)
+    setCropImageSrc('')
+  }
+
+  const handleCropCancel = () => {
+    setCropModalOpen(false)
+    setCropImageSrc('')
+  }
+
+  const handlePickIllustration = (src: string) => {
+    setAvatarUrl(src)
+    setAvatarPreview(src)
+    setAvatarFile(null)
+    setError('')
   }
 
   const uploadToCloudinary = async (file: File): Promise<string | null> => {
@@ -193,12 +218,40 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
           </div>
           <div>
             <p className="font-medium" style={{ color: 'var(--text-primary)' }}>Change avatar</p>
-            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>JPG, PNG or GIF. Max 1MB.</p>
+            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>JPG, PNG or GIF. Max 5MB. Circle crop on select.</p>
             {uploading && (
               <p className="text-sm text-violet-400 flex items-center gap-1 mt-1">
                 <Loader2 className="w-3 h-3 animate-spin" /> Uploading...
               </p>
             )}
+          </div>
+        </div>
+
+        <div className="mt-6">
+          <p className="text-sm font-medium mb-3" style={{ color: 'var(--text-secondary)' }}>
+            or pick a character
+          </p>
+          <div className="grid grid-cols-5 sm:grid-cols-7 gap-3">
+            {ILLUSTRATIONS.map((src, i) => (
+              <button
+                key={src}
+                type="button"
+                onClick={() => handlePickIllustration(src)}
+                title={`Character ${i + 1}`}
+                className={`relative aspect-square rounded-full overflow-hidden transition-all border-2 ${
+                  avatarUrl === src
+                    ? 'border-emerald-400 ring-2 ring-emerald-400/30'
+                    : 'border-transparent hover:scale-105'
+                }`}
+              >
+                <img src={src} alt={`Character ${i + 1}`} loading="lazy" className="w-full h-full object-cover" />
+                {avatarUrl === src && (
+                  <span className="absolute bottom-0 right-0 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
+                    <Check className="w-3 h-3 text-white" />
+                  </span>
+                )}
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -418,6 +471,14 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
           </button>
         </form>
       </div>
+
+      {cropModalOpen && cropImageSrc && (
+        <AvatarCropModal
+          imageSrc={cropImageSrc}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+        />
+      )}
     </div>
   )
 }
