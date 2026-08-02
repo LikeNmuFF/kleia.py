@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Flame } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { useOnlineUsers } from '@/lib/hooks/useOnlineUsers'
 import { getStatusInfo } from '@/lib/utils/time'
 import Avatar from '@/components/Avatar'
 
@@ -29,9 +30,13 @@ const getStreakLevel = (streak: number) => {
 
 export default function MemberCard({ member: initialMember }: { member: Member }) {
   const [member, setMember] = useState(initialMember)
+  const onlineUsers = useOnlineUsers()
+  const isOnline = onlineUsers.has(member.id)
   const statusInfo = getStatusInfo(member.status, member.last_seen)
   const streak = member.current_streak || 0
   const streakLevel = getStreakLevel(streak)
+
+  const liveOnline = isOnline || (statusInfo.isOnline && !isOnline)
 
   useEffect(() => {
     const supabase = createClient()
@@ -76,10 +81,6 @@ export default function MemberCard({ member: initialMember }: { member: Member }
               </span>
             )}
           </div>
-          <span
-            className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 ${statusInfo.color}`}
-            style={{ borderColor: 'var(--bg-secondary)' }}
-          />
         </div>
         <div className="min-w-0 flex-1">
           <p className="font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
@@ -96,10 +97,10 @@ export default function MemberCard({ member: initialMember }: { member: Member }
       <div className="mt-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span
-            className={`w-2 h-2 rounded-full ${statusInfo.color}`}
+            className={`w-2 h-2 rounded-full ${liveOnline ? 'bg-emerald-400' : statusInfo.color}`}
           />
-          <span className={`text-xs ${statusInfo.isOnline ? 'text-emerald-400' : ''}`} style={!statusInfo.isOnline ? { color: 'var(--text-muted)' } : undefined}>
-            {statusInfo.text}
+          <span className={`text-xs ${liveOnline ? 'text-emerald-400' : ''}`} style={!liveOnline ? { color: 'var(--text-muted)' } : undefined}>
+            {liveOnline ? 'Online' : statusInfo.text}
           </span>
         </div>
 
