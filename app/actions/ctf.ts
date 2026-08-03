@@ -74,6 +74,9 @@ export async function submitFlag(challengeId: string, submittedFlag: string) {
 
   await logEvent({ endpoint: 'ctf.submitFlag', status: 'success', durationMs: Date.now() - start, userId: user.id })
   revalidatePath('/ctf')
+  revalidatePath('/ctf/leaderboard')
+  revalidatePath(`/ctf/${challengeId}`)
+  revalidatePath(`/profile`)
   return {
     success: true,
     isCorrect,

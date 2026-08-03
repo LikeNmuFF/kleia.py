@@ -54,11 +54,8 @@ export default function TulipLoginGreeting({ isSpecial }: { isSpecial: boolean }
 
   useEffect(() => {
     if (!isSpecial) return
-    const hasSeenGreeting = sessionStorage.getItem('kleia_tulip_greeting')
-    if (hasSeenGreeting) return
     const idx = Math.floor(Math.random() * COMPLIMENTS.length)
     setCompliment(COMPLIMENTS[idx])
-    sessionStorage.setItem('kleia_tulip_greeting', '1')
     const timer = setTimeout(() => setShow(true), 800)
     return () => clearTimeout(timer)
   }, [isSpecial])
