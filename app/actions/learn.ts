@@ -69,6 +69,11 @@ export async function completeLesson(
     return { error: 'Failed to save progress' }
   }
 
+  const { addXp } = await import('./gamification')
+  const { completeMission } = await import('./gamification')
+  await addXp(lesson.xp_reward, 'learn')
+  await completeMission('learn')
+
   return { success: true, xpEarned: lesson.xp_reward, alreadyCompleted: false }
 }
 

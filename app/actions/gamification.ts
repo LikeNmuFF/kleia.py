@@ -1,0 +1,210 @@
+'use server'
+
+import { createClient } from '@/lib/supabase/server'
+import {
+  BADGES,
+  getDailyMissionsForDate,
+  getTodayString,
+  type BadgeDef,
+} from '@/lib/utils/gamification'
+
+export async function addXp(amount: number, reason: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not logged in' }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('total_xp')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile) return { error: 'Profile not found' }
+
+  const newTotal = (profile.total_xp || 0) + amount
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ total_xp: newTotal })
+    .eq('id', user.id)
+
+  if (error) return { error: error.message }
+
+  await checkBadges()
+  return { success: true, totalXp: newTotal }
+}
+
+export async function getBadges(userId?: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const targetId = userId || user?.id
+  if (!targetId) return []
+
+  const { data } = await supabase
+    .from('user_badges')
+    .select('badge_id, earned_at')
+    .eq('user_id', targetId)
+
+  return (data || []).map((row) => {
+    const def = BADGES.find((b) => b.id === row.badge_id)
+    return {
+      ...def,
+      earned_at: row.earned_at,
+    }
+  }).filter(Boolean)
+}
+
+export async function checkBadges() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { earned: [] }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('current_streak, longest_streak, total_xp')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile) return { earned: [] }
+
+  const { data: existingBadges } = await supabase
+    .from('user_badges')
+    .select('badge_id')
+    .eq('user_id', user.id)
+
+  const owned = new Set((existingBadges || []).map((b) => b.badge_id))
+  const newBadges: string[] = []
+
+  const { count: ctfCount } = await supabase
+    .from('ctf_submissions')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .eq('is_correct', true)
+
+  const { count: learnCount } = await supabase
+    .from('learn_progress')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+
+  const { count: postCount } = await supabase
+    .from('posts')
+    .select('*', { count: 'exact', head: true })
+    .eq('author_id', user.id)
+
+  const checks: [string, boolean][] = [
+    ['streak_7', (profile.current_streak || 0) >= 7 || (profile.longest_streak || 0) >= 7],
+    ['streak_30', (profile.longest_streak || 0) >= 30],
+    ['streak_100', (profile.longest_streak || 0) >= 100],
+    ['ctf_1', (ctfCount || 0) >= 1],
+    ['ctf_10', (ctfCount || 0) >= 10],
+    ['ctf_25', (ctfCount || 0) >= 25],
+    ['learn_1', (learnCount || 0) >= 1],
+    ['learn_10', (learnCount || 0) >= 10],
+    ['post_1', (postCount || 0) >= 1],
+    ['post_10', (postCount || 0) >= 10],
+  ]
+
+  for (const [badgeId, condition] of checks) {
+    if (condition && !owned.has(badgeId)) {
+      await supabase.from('user_badges').insert({
+        user_id: user.id,
+        badge_id: badgeId,
+      })
+      newBadges.push(badgeId)
+    }
+  }
+
+  const level = Math.floor((profile.total_xp || 0) >= 350 ? 5 : (profile.total_xp || 0) >= 1600 ? 10 : 0)
+  if (level >= 5 && !owned.has('level_5')) {
+    await supabase.from('user_badges').insert({ user_id: user.id, badge_id: 'level_5' })
+    newBadges.push('level_5')
+  }
+  if ((profile.total_xp || 0) >= 1600 && !owned.has('level_10')) {
+    await supabase.from('user_badges').insert({ user_id: user.id, badge_id: 'level_10' })
+    newBadges.push('level_10')
+  }
+
+  return { earned: newBadges }
+}
+
+export async function getDailyMissions() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const today = getTodayString()
+
+  const { data: existing } = await supabase
+    .from('daily_missions')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('date', today)
+
+  if (existing && existing.length > 0) return existing
+
+  const missionDefs = getDailyMissionsForDate(today)
+  const rows = missionDefs.map((m) => ({
+    user_id: user.id,
+    date: today,
+    mission_type: m.type,
+    description: m.description,
+    xp_reward: m.xpReward,
+    completed: false,
+  }))
+
+  const { data: inserted } = await supabase
+    .from('daily_missions')
+    .upsert(rows, { onConflict: 'user_id,date,mission_type' })
+    .select()
+
+  return inserted || rows
+}
+
+export async function completeMission(missionType: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not logged in' }
+
+  const today = getTodayString()
+
+  const { data: mission } = await supabase
+    .from('daily_missions')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('date', today)
+    .eq('mission_type', missionType)
+    .eq('completed', false)
+    .maybeSingle()
+
+  if (!mission) return { success: false }
+
+  const { error } = await supabase
+    .from('daily_missions')
+    .update({ completed: true, completed_at: new Date().toISOString() })
+    .eq('id', mission.id)
+
+  if (error) return { error: error.message }
+
+  await addXp(mission.xp_reward, `mission_${missionType}`)
+  return { success: true, xpEarned: mission.xp_reward }
+}
+
+export async function awardFirstLogin() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+
+  const { data: existing } = await supabase
+    .from('user_badges')
+    .select('badge_id')
+    .eq('user_id', user.id)
+    .eq('badge_id', 'first_login')
+    .maybeSingle()
+
+  if (!existing) {
+    await supabase.from('user_badges').insert({
+      user_id: user.id,
+      badge_id: 'first_login',
+    })
+  }
+}

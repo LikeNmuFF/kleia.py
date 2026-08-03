@@ -76,7 +76,15 @@ export async function submitFlag(challengeId: string, submittedFlag: string) {
   revalidatePath('/ctf')
   revalidatePath('/ctf/leaderboard')
   revalidatePath(`/ctf/${challengeId}`)
-  revalidatePath(`/profile`)
+  revalidatePath('/profile')
+
+  if (isCorrect) {
+    const { addXp } = await import('./gamification')
+    const { completeMission } = await import('./gamification')
+    await addXp(15, 'ctf_solve')
+    await completeMission('ctf_solve')
+  }
+
   return {
     success: true,
     isCorrect,

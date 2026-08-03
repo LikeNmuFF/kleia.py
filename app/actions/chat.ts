@@ -145,6 +145,10 @@ export async function sendMessage(conversationId: string, content: string) {
   }
 
   await logEvent({ endpoint: 'chat.sendMessage', status: 'success', durationMs: Date.now() - start, userId: user.id })
+
+  const { completeMission } = await import('./gamification')
+  await completeMission('message')
+
   return { success: true }
 }
 

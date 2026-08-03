@@ -1,11 +1,14 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { calculateLoginXp } from '@/lib/utils/gamification'
+import { addXp, completeMission, checkBadges, awardFirstLogin } from './gamification'
 
 export interface StreakResult {
   current_streak: number
   longest_streak: number
   last_active_date: string | null
+  xpEarned?: number
 }
 
 export async function checkAndUpdateStreak(): Promise<StreakResult | null> {
@@ -24,7 +27,8 @@ export async function checkAndUpdateStreak(): Promise<StreakResult | null> {
   const today = new Date().toISOString().split('T')[0]
   const lastActive = profile.last_active_date
 
-  // Same day — no update needed
+  await awardFirstLogin()
+
   if (lastActive === today) {
     return {
       current_streak: profile.current_streak,
@@ -35,9 +39,9 @@ export async function checkAndUpdateStreak(): Promise<StreakResult | null> {
 
   let newStreak = profile.current_streak
   let newLongest = profile.longest_streak
+  let xpEarned = 0
 
   if (!lastActive) {
-    // First ever visit
     newStreak = 1
   } else {
     const lastDate = new Date(lastActive)
@@ -46,16 +50,16 @@ export async function checkAndUpdateStreak(): Promise<StreakResult | null> {
       (todayDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24)
     )
 
-    if (diffDays === 1) {
-      // Consecutive day — increment
+    if (diffDays <= 2) {
       newStreak = profile.current_streak + 1
-    } else if (diffDays > 1) {
-      // Streak broken — reset to 1
+    } else {
       newStreak = 1
     }
   }
 
   newLongest = Math.max(newLongest, newStreak)
+
+  xpEarned = calculateLoginXp(newStreak)
 
   const { data: updated } = await supabase
     .from('profiles')
@@ -68,10 +72,17 @@ export async function checkAndUpdateStreak(): Promise<StreakResult | null> {
     .select('current_streak, longest_streak, last_active_date')
     .single()
 
-  return updated ?? {
-    current_streak: newStreak,
-    longest_streak: newLongest,
-    last_active_date: today,
+  await addXp(xpEarned, 'daily_login')
+  await completeMission('login')
+  await checkBadges()
+
+  return {
+    ...(updated ?? {
+      current_streak: newStreak,
+      longest_streak: newLongest,
+      last_active_date: today,
+    }),
+    xpEarned,
   }
 }
 
@@ -88,7 +99,6 @@ export async function getStreak(): Promise<StreakResult | null> {
 
   if (!profile) return null
 
-  // Check if streak needs updating
   const today = new Date().toISOString().split('T')[0]
   if (profile.last_active_date !== today) {
     return checkAndUpdateStreak()

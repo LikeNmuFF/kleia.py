@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import PostCard from '@/components/feed/PostCard'
 import CreatePost from '@/components/feed/CreatePost'
+import DailyMissions from '@/components/gamification/DailyMissions'
 
 export const metadata: Metadata = {
   title: 'Feed',
@@ -63,6 +64,13 @@ export default async function FeedPage() {
 
       {/* Create Post */}
       <CreatePost />
+
+      {/* Daily Missions */}
+      {user && (
+        <div className="mt-6">
+          <DailyMissions />
+        </div>
+      )}
 
       {/* Posts List */}
       <div className="mt-6 space-y-4">

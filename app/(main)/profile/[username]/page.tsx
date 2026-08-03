@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase/server'
 import ProfileHeader from '@/components/members/ProfileHeader'
 import MessageButton from '@/components/members/MessageButton'
 import SpecialProfileBanner from '@/components/special/SpecialProfileBanner'
+import XPBadge from '@/components/gamification/XPBadge'
+import BadgeShowcase from '@/components/gamification/BadgeShowcase'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,7 +29,7 @@ export default async function MemberProfilePage({ params }: PageProps) {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, username, full_name, avatar_url, bio, status, last_seen, current_streak, longest_streak, created_at, role')
+    .select('id, username, full_name, avatar_url, bio, status, last_seen, current_streak, longest_streak, created_at, role, total_xp')
     .eq('username', username)
     .single()
 
@@ -36,6 +38,13 @@ export default async function MemberProfilePage({ params }: PageProps) {
   const { data: { user } } = await supabase.auth.getUser()
   const isOwn = user?.id === profile.id
   const isSpecial = profile.role === 'special'
+
+  const { data: badgeRows } = await supabase
+    .from('user_badges')
+    .select('badge_id')
+    .eq('user_id', profile.id)
+
+  const earnedBadgeIds = (badgeRows || []).map((b) => b.badge_id)
 
   const { data: ctfStats } = await supabase
     .from('ctf_leaderboard')
@@ -71,6 +80,18 @@ export default async function MemberProfilePage({ params }: PageProps) {
       </div>
 
       <ProfileHeader profile={profile} />
+
+      {(profile.total_xp || 0) > 0 && (
+        <div className="mt-4">
+          <XPBadge totalXp={profile.total_xp || 0} size="md" />
+        </div>
+      )}
+
+      {earnedBadgeIds.length > 0 && (
+        <div className="mt-6 card">
+          <BadgeShowcase earnedBadgeIds={earnedBadgeIds} />
+        </div>
+      )}
 
       {showCtf && (
         <div className="mt-6 card relative overflow-hidden">
