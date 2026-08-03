@@ -30,6 +30,36 @@ function isValidDifficulty(d: string): d is (typeof VALID_DIFFICULTIES)[number] 
   return VALID_DIFFICULTIES.includes(d)
 }
 
+async function resolveLearnLink(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  topicSlug?: string | null,
+  lessonSlug?: string | null
+): Promise<{ learn_topic_slug: string | null; learn_lesson_slug: string | null }> {
+  const t = topicSlug?.trim()
+  const l = lessonSlug?.trim()
+
+  if (!t || !l) return { learn_topic_slug: null, learn_lesson_slug: null }
+
+  const { data: topic } = await supabase
+    .from('learn_topics')
+    .select('id')
+    .eq('slug', t)
+    .maybeSingle()
+
+  if (!topic) return { learn_topic_slug: null, learn_lesson_slug: null }
+
+  const { data: lesson } = await supabase
+    .from('learn_lessons')
+    .select('id')
+    .eq('topic_id', topic.id)
+    .eq('slug', l)
+    .maybeSingle()
+
+  if (!lesson) return { learn_topic_slug: null, learn_lesson_slug: null }
+
+  return { learn_topic_slug: t, learn_lesson_slug: l }
+}
+
 export async function submitFlag(challengeId: string, submittedFlag: string) {
   const start = Date.now()
   const supabase = await createClient()
@@ -103,6 +133,8 @@ export async function createChallenge(data: {
   file_url?: string
   link_url?: string
   author?: string
+  learn_topic_slug?: string
+  learn_lesson_slug?: string
 }) {
   const start = Date.now()
   const supabase = await createClient()
@@ -120,6 +152,12 @@ export async function createChallenge(data: {
 
   const { data: { user } } = await supabase.auth.getUser()
 
+  const learnLink = await resolveLearnLink(
+    supabase,
+    data.learn_topic_slug,
+    data.learn_lesson_slug
+  )
+
   const { error } = await supabase
     .from('ctf_challenges')
     .insert({
@@ -135,6 +173,7 @@ export async function createChallenge(data: {
       author: data.author?.trim() || null,
       status: 'approved',
       created_by: user!.id,
+      ...learnLink,
     })
 
   if (error) {
@@ -171,6 +210,12 @@ export async function submitChallenge(formData: FormData) {
   if (!Number.isInteger(points) || points < 1) redirect('/ctf/submit?error=Points must be a positive integer')
   if (!flag?.trim()) redirect('/ctf/submit?error=Flag is required')
 
+  const learnLink = await resolveLearnLink(
+    supabase,
+    formData.get('learn_topic_slug') as string,
+    formData.get('learn_lesson_slug') as string
+  )
+
   const { error } = await supabase
     .from('ctf_challenges')
     .insert({
@@ -186,6 +231,7 @@ export async function submitChallenge(formData: FormData) {
       author: author?.trim() || null,
       status: 'pending',
       created_by: user.id,
+      ...learnLink,
     })
 
   if (error) {
@@ -257,6 +303,8 @@ export async function updateChallenge(
     author?: string
     status?: string
     is_active?: boolean
+    learn_topic_slug?: string
+    learn_lesson_slug?: string
   }
 ) {
   const start = Date.now()
@@ -310,6 +358,15 @@ export async function updateChallenge(
   }
   if (data.is_active !== undefined) {
     updateData.is_active = data.is_active
+  }
+  if (data.learn_topic_slug !== undefined || data.learn_lesson_slug !== undefined) {
+    const learnLink = await resolveLearnLink(
+      supabase,
+      data.learn_topic_slug,
+      data.learn_lesson_slug
+    )
+    updateData.learn_topic_slug = learnLink.learn_topic_slug
+    updateData.learn_lesson_slug = learnLink.learn_lesson_slug
   }
 
   const { error } = await supabase

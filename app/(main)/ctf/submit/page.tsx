@@ -1,14 +1,26 @@
 import { submitChallenge } from '@/app/actions/ctf'
+import { createClient } from '@/lib/supabase/server'
+import LearnLinkPicker from '@/components/ctf/LearnLinkPicker'
 import Link from 'next/link'
 
 const CATEGORIES = ['web', 'crypto', 'forensics', 'misc']
 const DIFFICULTIES = ['easy', 'medium', 'hard']
 
-export default function SubmitChallengePage({
+export default async function SubmitChallengePage({
   searchParams,
 }: {
   searchParams: { error?: string; success?: string }
 }) {
+  const supabase = await createClient()
+  const { data: topics } = await supabase
+    .from('learn_topics')
+    .select('id, slug, title, icon')
+    .order('sort_order', { ascending: true })
+
+  const { data: lessons } = await supabase
+    .from('learn_lessons')
+    .select('topic_id, slug, title')
+
   if (searchParams.success) {
     return (
       <div className="max-w-3xl mx-auto py-8 px-4">
@@ -135,6 +147,10 @@ export default function SubmitChallengePage({
                 File URL (optional)
               </label>
               <input name="file_url" className="input-field w-full" placeholder="Direct download URL for attached files" />
+            </div>
+
+            <div className="col-span-2">
+              <LearnLinkPicker topics={topics || []} lessons={lessons || []} />
             </div>
           </div>
 

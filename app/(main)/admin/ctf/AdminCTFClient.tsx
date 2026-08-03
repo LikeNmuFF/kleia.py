@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createChallenge, updateChallenge, deleteChallenge, approveChallenge, rejectChallenge } from '@/app/actions/ctf'
+import LearnLinkPicker from '@/components/ctf/LearnLinkPicker'
 
 const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/raw/upload`
 
@@ -20,13 +21,36 @@ interface Challenge {
   status: string
   is_active: boolean
   created_at: string
+  learn_topic_slug: string | null
+  learn_lesson_slug: string | null
+}
+
+interface TopicLink {
+  id: string
+  slug: string
+  title: string
+  icon: string
+}
+
+interface LessonLink {
+  topic_id: string
+  slug: string
+  title: string
 }
 
 const CATEGORIES = ['web', 'crypto', 'forensics', 'misc']
 const DIFFICULTIES = ['easy', 'medium', 'hard']
 const TABS = ['all', 'pending', 'approved', 'rejected', 'draft']
 
-export default function AdminCTFClient({ challenges }: { challenges: Challenge[] }) {
+export default function AdminCTFClient({
+  challenges,
+  topics,
+  lessons,
+}: {
+  challenges: Challenge[]
+  topics: TopicLink[]
+  lessons: LessonLink[]
+}) {
   const router = useRouter()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [showCreate, setShowCreate] = useState(false)
@@ -69,6 +93,8 @@ export default function AdminCTFClient({ challenges }: { challenges: Challenge[]
       file_url: fileInputUrl || undefined,
       link_url: (form.get('link_url') as string) || undefined,
       author: (form.get('author') as string) || undefined,
+      learn_topic_slug: (form.get('learn_topic_slug') as string) || undefined,
+      learn_lesson_slug: (form.get('learn_lesson_slug') as string) || undefined,
     })
 
     if (result.error) setError(result.error)
@@ -95,6 +121,8 @@ export default function AdminCTFClient({ challenges }: { challenges: Challenge[]
       file_url: (form.get('file_url') as string) || undefined,
       link_url: (form.get('link_url') as string) || undefined,
       author: (form.get('author') as string) || undefined,
+      learn_topic_slug: (form.get('learn_topic_slug') as string) || undefined,
+      learn_lesson_slug: (form.get('learn_lesson_slug') as string) || undefined,
     })
 
     if (result.error) setError(result.error)
@@ -213,6 +241,7 @@ export default function AdminCTFClient({ challenges }: { challenges: Challenge[]
             <input name="author" placeholder="Author (optional)" className="input-field col-span-1" />
             <input name="link_url" placeholder="External link URL (optional)" className="input-field col-span-2" />
           </div>
+          <LearnLinkPicker topics={topics} lessons={lessons} />
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg text-sm" style={{ backgroundColor: 'var(--input-bg)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -254,6 +283,12 @@ export default function AdminCTFClient({ challenges }: { challenges: Challenge[]
                   <input name="file_url" defaultValue={ch.file_url || ''} placeholder="File URL" className="input-field col-span-2" />
                   <input name="link_url" defaultValue={ch.link_url || ''} placeholder="External link URL" className="input-field col-span-2" />
                 </div>
+                <LearnLinkPicker
+                  topics={topics}
+                  lessons={lessons}
+                  defaultTopicSlug={ch.learn_topic_slug}
+                  defaultLessonSlug={ch.learn_lesson_slug}
+                />
                 <div className="flex gap-2">
                   <button type="submit" className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gradient-to-r from-violet-600 to-cyan-600 text-white">Save</button>
                   <button type="button" onClick={() => setEditingId(null)} className="px-3 py-1.5 rounded-lg text-sm" style={{ color: 'var(--text-muted)' }}>Cancel</button>

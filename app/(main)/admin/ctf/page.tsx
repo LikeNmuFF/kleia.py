@@ -18,8 +18,17 @@ export default async function AdminCTFPage() {
 
   const { data: challenges } = await supabase
     .from('ctf_challenges')
-    .select('id, title, description, category, difficulty, points, hint, is_active, file_url, link_url, author, status, created_at')
+    .select('id, title, description, category, difficulty, points, hint, is_active, file_url, link_url, author, status, created_at, learn_topic_slug, learn_lesson_slug')
     .order('created_at', { ascending: false })
+
+  const { data: topics } = await supabase
+    .from('learn_topics')
+    .select('id, slug, title, icon')
+    .order('sort_order', { ascending: true })
+
+  const { data: lessons } = await supabase
+    .from('learn_lessons')
+    .select('topic_id, slug, title')
 
   return (
     <div className="max-w-5xl mx-auto py-8 px-4">
@@ -32,7 +41,11 @@ export default async function AdminCTFPage() {
         </p>
       </div>
 
-      <AdminCTFClient challenges={challenges || []} />
+      <AdminCTFClient
+        challenges={challenges || []}
+        topics={topics || []}
+        lessons={lessons || []}
+      />
     </div>
   )
 }

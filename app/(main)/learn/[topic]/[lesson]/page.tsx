@@ -3,6 +3,19 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import LessonTabs from '@/components/learn/LessonTabs'
 
+const CATEGORY_ICONS: Record<string, string> = {
+  web: '🌐',
+  crypto: '🔐',
+  forensics: '🔍',
+  misc: '📌',
+}
+
+const DIFFICULTY_COLORS: Record<string, string> = {
+  easy: '#22c55e',
+  medium: '#eab308',
+  hard: '#ef4444',
+}
+
 export default async function LessonPage({
   params,
 }: {
@@ -41,6 +54,13 @@ export default async function LessonPage({
     alreadyCompleted = !!progress
   }
 
+  const { data: relatedChallenges } = await supabase
+    .from('ctf_challenges')
+    .select('id, title, category, difficulty, points')
+    .eq('learn_topic_slug', topicSlug)
+    .eq('learn_lesson_slug', lessonSlug)
+    .eq('status', 'approved')
+
   return (
     <div className="max-w-3xl mx-auto py-8 px-4">
       <Link
@@ -65,6 +85,50 @@ export default async function LessonPage({
         topicSlug={topic.slug}
         alreadyCompleted={alreadyCompleted}
       />
+
+      {relatedChallenges && relatedChallenges.length > 0 && (
+        <div
+          className="mt-6 rounded-xl p-6"
+          style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}
+        >
+          <h2 className="text-base font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
+            🏆 Challenges that use this
+          </h2>
+          <div className="space-y-2">
+            {relatedChallenges.map((c) => (
+              <Link
+                key={c.id}
+                href={`/ctf/${c.id}`}
+                className="flex items-center justify-between rounded-lg px-4 py-3 transition-all hover:scale-[1.01] hover:shadow-lg"
+                style={{ backgroundColor: 'var(--input-bg)', border: '1px solid var(--border-color)' }}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="text-lg shrink-0">{CATEGORY_ICONS[c.category] || '📌'}</span>
+                  <div className="min-w-0">
+                    <p className="font-medium truncate" style={{ color: 'var(--text-primary)' }}>
+                      {c.title}
+                    </p>
+                    <p className="text-xs capitalize" style={{ color: 'var(--text-muted)' }}>
+                      {c.category} · {c.difficulty}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 ml-3 shrink-0">
+                  <span
+                    className="text-xs px-2 py-0.5 rounded-full"
+                    style={{
+                      color: DIFFICULTY_COLORS[c.difficulty] || 'var(--text-muted)',
+                      backgroundColor: `${DIFFICULTY_COLORS[c.difficulty] || '#888'}15`,
+                    }}
+                  >
+                    {c.points} pts
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
