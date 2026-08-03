@@ -4,12 +4,16 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getStatusInfo } from '@/lib/utils/time'
 import { useOnlineUsers } from '@/lib/hooks/useOnlineUsers'
+import { useChatUnread } from '@/components/chat/ChatUnreadProvider'
 import Avatar from '@/components/Avatar'
 
 interface Conversation {
   id: string
   name: string | null
   type: string
+  last_message_at: string | null
+  last_message_preview: string | null
+  unread_count: number
 }
 
 interface MemberInfo {
@@ -32,6 +36,18 @@ export default function ChatSidebar({ conversations, selectedId, onSelect, onNew
   const [memberMap, setMemberMap] = useState<Record<string, MemberInfo>>({})
   const onlineUsers = useOnlineUsers()
   const supabase = createClient()
+  const unreadCtx = useChatUnread()
+  const unreadCounts = unreadCtx?.conversationUnreadCounts || {}
+
+  const sorted = [...conversations].sort((a, b) => {
+    const aUnread = unreadCounts[a.id] || a.unread_count || 0
+    const bUnread = unreadCounts[b.id] || b.unread_count || 0
+    if (aUnread > 0 && bUnread === 0) return -1
+    if (aUnread === 0 && bUnread > 0) return 1
+    const aTime = a.last_message_at ? new Date(a.last_message_at).getTime() : 0
+    const bTime = b.last_message_at ? new Date(b.last_message_at).getTime() : 0
+    return bTime - aTime
+  })
 
   useEffect(() => {
     const fetchMembers = async () => {
@@ -78,16 +94,38 @@ export default function ChatSidebar({ conversations, selectedId, onSelect, onNew
     <div className="w-72 h-full flex flex-col" style={{ borderRight: '1px solid var(--border-color)', backgroundColor: 'var(--bg-primary)' }}>
       <div className="p-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-color)' }}>
         <h2 className="font-semibold" style={{ color: 'var(--text-primary)' }}>Messages</h2>
-        <button
-          onClick={onNewChat}
-          className="p-2 rounded-lg transition-all"
-          style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-secondary)' }}
-          title="New chat"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={unreadCtx?.toggleMute}
+            className="p-2 rounded-lg transition-all"
+            style={{
+              backgroundColor: 'var(--input-bg)',
+              color: unreadCtx?.isMuted ? 'var(--text-muted)' : 'var(--text-secondary)',
+            }}
+            title={unreadCtx?.isMuted ? 'Unmute sounds' : 'Mute sounds'}
+          >
+            {unreadCtx?.isMuted ? (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              </svg>
+            )}
+          </button>
+          <button
+            onClick={onNewChat}
+            className="p-2 rounded-lg transition-all"
+            style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-secondary)' }}
+            title="New chat"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+        </div>
       </div>
       <div className="flex-1 overflow-y-auto">
         {conversations.length === 0 ? (
@@ -95,10 +133,12 @@ export default function ChatSidebar({ conversations, selectedId, onSelect, onNew
             No conversations yet
           </div>
         ) : (
-          conversations.map((conv) => {
+          sorted.map((conv) => {
             const member = memberMap[conv.id]
             const statusInfo = member ? getStatusInfo(member.status, member.last_seen) : null
             const liveOnline = member ? onlineUsers.has(member.id) : false
+            const convUnread = unreadCounts[conv.id] || conv.unread_count || 0
+            const hasUnread = convUnread > 0
 
             return (
               <button
@@ -125,13 +165,26 @@ export default function ChatSidebar({ conversations, selectedId, onSelect, onNew
                       <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 ${liveOnline ? 'bg-emerald-400' : statusInfo.color}`} style={{ borderColor: 'var(--bg-primary)' }} />
                     )}
                   </div>
-                  <div className="min-w-0">
-                    <p className="font-medium truncate" style={{ color: 'var(--text-primary)' }}>
-                      {member?.username || 'Unknown'}
-                    </p>
-                    <p className={`text-xs truncate ${liveOnline ? 'text-emerald-400' : ''}`} style={!liveOnline ? { color: 'var(--text-muted)' } : undefined}>
-                      {liveOnline ? 'Online' : (statusInfo?.text || 'Offline')}
-                    </p>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className={`truncate ${hasUnread ? 'font-semibold' : 'font-medium'}`} style={{ color: 'var(--text-primary)' }}>
+                        {member?.username || 'Unknown'}
+                      </p>
+                      {hasUnread && (
+                        <span className="flex-shrink-0 min-w-[20px] h-5 flex items-center justify-center px-1.5 text-[10px] font-bold text-white bg-red-500 rounded-full">
+                          {convUnread > 99 ? '99+' : convUnread}
+                        </span>
+                      )}
+                    </div>
+                    {conv.last_message_preview ? (
+                      <p className={`text-xs truncate ${hasUnread ? 'font-medium' : ''}`} style={{ color: hasUnread ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                        {conv.last_message_preview}
+                      </p>
+                    ) : (
+                      <p className={`text-xs truncate ${liveOnline ? 'text-emerald-400' : ''}`} style={!liveOnline ? { color: 'var(--text-muted)' } : undefined}>
+                        {liveOnline ? 'Online' : (statusInfo?.text || 'Offline')}
+                      </p>
+                    )}
                   </div>
                 </div>
               </button>

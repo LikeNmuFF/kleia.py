@@ -12,6 +12,9 @@ interface Conversation {
   name: string | null
   type: string
   created_at: string
+  last_message_at: string | null
+  last_message_preview: string | null
+  unread_count: number
 }
 
 export default function ChatPage() {
@@ -42,11 +45,12 @@ export default function ChatPage() {
 
     const { data: convs } = await supabase
       .from('conversations')
-      .select('id, name, type, created_at')
+      .select('id, name, type, created_at, last_message_at, last_message_preview')
       .in('id', convIds)
+      .order('last_message_at', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false })
 
-    if (convs) setConversations(convs)
+    if (convs) setConversations((convs as Conversation[]).map((c) => ({ ...c, unread_count: 0 })))
   }
 
   useEffect(() => {

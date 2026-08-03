@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useChatUnread } from '@/components/chat/ChatUnreadProvider'
 import MessageInput from './MessageInput'
 import Avatar from '@/components/Avatar'
 
@@ -28,6 +29,12 @@ export default function ChatWindow({ conversationId, currentUserId, onBack }: Ch
   const [senderMap, setSenderMap] = useState<Record<string, SenderInfo>>({})
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
+  const unreadCtx = useChatUnread()
+
+  useEffect(() => {
+    unreadCtx?.setActiveConversation(conversationId)
+    return () => { unreadCtx?.setActiveConversation(null) }
+  }, [conversationId, unreadCtx])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -55,6 +62,8 @@ export default function ChatWindow({ conversationId, currentUserId, onBack }: Ch
           map[p.id] = { username: p.username, avatar_url: p.avatar_url }
         }
         setSenderMap(map)
+
+        unreadCtx?.markAsRead(conversationId)
       }
     }
 
@@ -73,6 +82,10 @@ export default function ChatWindow({ conversationId, currentUserId, onBack }: Ch
         async (payload: { new: Message }) => {
           const newMsg = payload.new as Message
           setMessages((prev) => [...prev, newMsg])
+
+          if (newMsg.sender_id !== currentUserId) {
+            unreadCtx?.markAsRead(conversationId)
+          }
 
           if (!senderMap[newMsg.sender_id]) {
             const { data: profile } = await supabase

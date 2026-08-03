@@ -26,11 +26,31 @@ export async function getConversations() {
 
   const { data: conversations } = await supabase
     .from('conversations')
-    .select('id, name, type, created_at')
+    .select('id, name, type, created_at, last_message_at, last_message_preview')
     .in('id', convIds)
+    .order('last_message_at', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false })
 
-  return conversations || []
+  if (!conversations) return []
+
+  const unreadCounts: Record<string, number> = {}
+  const { data: unreadRows } = await supabase
+    .from('messages')
+    .select('conversation_id')
+    .in('conversation_id', convIds)
+    .eq('read', false)
+    .neq('sender_id', user.id)
+
+  if (unreadRows) {
+    for (const row of unreadRows as { conversation_id: string }[]) {
+      unreadCounts[row.conversation_id] = (unreadCounts[row.conversation_id] || 0) + 1
+    }
+  }
+
+  return conversations.map((c) => ({
+    ...c,
+    unread_count: unreadCounts[c.id] || 0,
+  }))
 }
 
 export async function getConversationMembers(conversationId: string) {
@@ -160,4 +180,34 @@ export async function getMessages(conversationId: string) {
   }
 
   return messages || []
+}
+
+export async function markAsRead(conversationId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not logged in' }
+
+  const { error } = await supabase
+    .from('messages')
+    .update({ read: true })
+    .eq('conversation_id', conversationId)
+    .neq('sender_id', user.id)
+    .eq('read', false)
+
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
+export async function getUnreadCount() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return 0
+
+  const { count } = await supabase
+    .from('messages')
+    .select('*', { count: 'exact', head: true })
+    .eq('read', false)
+    .neq('sender_id', user.id)
+
+  return count || 0
 }

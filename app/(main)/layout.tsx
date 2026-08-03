@@ -4,6 +4,8 @@ import LogoutButton from '@/components/auth/LogoutButton'
 import PresenceTracker from '@/components/PresenceTracker'
 import ThemeToggle from '@/components/ThemeToggle'
 import SpecialUserLayout from '@/components/special/SpecialUserLayout'
+import ChatUnreadProvider from '@/components/chat/ChatUnreadProvider'
+import ChatNavLink, { ChatMobileNavLink } from '@/components/chat/ChatNavLink'
 
 export default async function MainLayout({
   children,
@@ -43,13 +45,7 @@ export default async function MainLayout({
             >
               Feed
             </Link>
-            <Link
-              href="/chat"
-              className="px-4 py-2 text-sm rounded-lg transition-all"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              Chat
-            </Link>
+            <ChatNavLink />
             <Link
               href="/events"
               className="px-4 py-2 text-sm rounded-lg transition-all"
@@ -122,12 +118,7 @@ export default async function MainLayout({
             </svg>
             <span className="text-xs">Feed</span>
           </Link>
-          <Link href="/chat" className="flex flex-col items-center gap-1 transition-colors" style={{ color: 'var(--text-secondary)' }}>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-            <span className="text-xs">Chat</span>
-          </Link>
+          <ChatMobileNavLink />
           <Link href="/events" className="flex flex-col items-center gap-1 transition-colors" style={{ color: 'var(--text-secondary)' }}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -170,10 +161,12 @@ export default async function MainLayout({
       {/* Presence Tracker (real-time online status) */}
       <PresenceTracker />
 
-      {/* Main Content */}
-      <SpecialUserLayout>
-        <main>{children}</main>
-      </SpecialUserLayout>
+      <ChatUnreadProvider userId={user?.id || null}>
+        {/* Main Content */}
+        <SpecialUserLayout>
+          <main>{children}</main>
+        </SpecialUserLayout>
+      </ChatUnreadProvider>
 
       {/* Footer */}
       <footer className="border-t py-6 mt-12" style={{ borderColor: 'var(--border-color)' }}>
