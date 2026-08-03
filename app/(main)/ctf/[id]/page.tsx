@@ -22,12 +22,32 @@ export default async function ChallengePage({ params }: { params: Promise<{ id: 
 
   const { data: challenge } = await supabase
     .from('ctf_challenges')
-    .select('id, title, description, category, difficulty, points, hint, file_url, link_url, author, created_at')
+    .select('id, title, description, category, difficulty, points, hint, file_url, link_url, author, created_at, learn_topic_slug, learn_lesson_slug')
     .eq('id', id)
     .eq('status', 'approved')
     .single()
 
   if (!challenge) notFound()
+
+  let learnLessonTitle: string | null = null
+  if (challenge.learn_topic_slug && challenge.learn_lesson_slug) {
+    const { data: topic } = await supabase
+      .from('learn_topics')
+      .select('id')
+      .eq('slug', challenge.learn_topic_slug)
+      .maybeSingle()
+
+    if (topic) {
+      const { data: lesson } = await supabase
+        .from('learn_lessons')
+        .select('title')
+        .eq('topic_id', topic.id)
+        .eq('slug', challenge.learn_lesson_slug)
+        .maybeSingle()
+
+      learnLessonTitle = lesson?.title ?? null
+    }
+  }
 
   let solved = false
   if (user) {
@@ -112,6 +132,23 @@ export default async function ChallengePage({ params }: { params: Promise<{ id: 
         <div className="my-6 pt-4 border-t whitespace-pre-wrap break-all leading-relaxed" style={{ borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}>
           {challenge.description}
         </div>
+
+        {learnLessonTitle && challenge.learn_topic_slug && challenge.learn_lesson_slug && (
+          <div className="mb-6 pt-4 border-t" style={{ borderColor: 'var(--border-color)' }}>
+            <a
+              href={`/learn/${challenge.learn_topic_slug}/${challenge.learn_lesson_slug}`}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:scale-[1.02]"
+              style={{
+                background: 'linear-gradient(90deg, rgba(124,58,237,0.15), rgba(6,182,212,0.15))',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border-color)',
+              }}
+            >
+              <span className="text-base">📖</span>
+              Learn more: {learnLessonTitle}
+            </a>
+          </div>
+        )}
 
         {(challenge.file_url || challenge.link_url) && (
           <div className="flex flex-wrap gap-3 mb-6 pt-4 border-t" style={{ borderColor: 'var(--border-color)' }}>

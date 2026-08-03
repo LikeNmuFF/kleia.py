@@ -9,6 +9,13 @@ export interface LearnQuestion {
   explanation: string
 }
 
+export interface MaterialBlock {
+  heading: string
+  text?: string
+  code?: string
+  bullets?: string[]
+}
+
 export interface LearnLesson {
   id: string
   slug: string
@@ -16,6 +23,7 @@ export interface LearnLesson {
   sort_order: number
   xp_reward: number
   questions: LearnQuestion[]
+  material?: MaterialBlock[]
 }
 
 export interface LearnTopic {

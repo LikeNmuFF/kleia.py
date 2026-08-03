@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import LessonQuiz from '@/components/learn/LessonQuiz'
+import LessonTabs from '@/components/learn/LessonTabs'
 
 export default async function LessonPage({
   params,
@@ -60,7 +60,7 @@ export default async function LessonPage({
         </p>
       </div>
 
-      <LessonQuiz
+      <LessonTabs
         lesson={lesson}
         topicSlug={topic.slug}
         alreadyCompleted={alreadyCompleted}
