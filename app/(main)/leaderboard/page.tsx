@@ -22,7 +22,7 @@ export default async function LeaderboardPage() {
           Leaderboard
         </h1>
         <p style={{ color: 'var(--text-secondary)' }}>
-          Most active members, ranked by streak, study hours, and posts
+          Most active members, ranked by streak, posts, and engagement
         </p>
       </div>
 

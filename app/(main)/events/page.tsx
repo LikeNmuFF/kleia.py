@@ -38,7 +38,7 @@ export default async function EventsPage() {
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Events</h1>
-          <p style={{ color: 'var(--text-secondary)' }}>Schedule study sessions and meetups</p>
+          <p style={{ color: 'var(--text-secondary)' }}>Schedule meetups and community events</p>
         </div>
         <CreateEvent />
       </div>
