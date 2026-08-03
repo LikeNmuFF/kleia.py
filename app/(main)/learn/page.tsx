@@ -4,8 +4,8 @@ import { getLearnData } from '@/app/actions/learn'
 import { getLevelInfo } from '@/lib/utils/learn'
 
 export const metadata: Metadata = {
-  title: 'Learn Python',
-  description: 'Learn Python step by step with interactive lessons and quizzes. Earn XP as you go.',
+  title: 'Learn',
+  description: 'Learn Python and Linux step by step with interactive lessons and quizzes. Earn XP as you go.',
 }
 
 export default async function LearnPage() {
@@ -25,10 +25,10 @@ export default async function LearnPage() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
-          Learn Python 🐍
+          Learn
         </h1>
         <p style={{ color: 'var(--text-secondary)' }}>
-          Interactive lessons and quizzes. Complete lessons to earn XP and level up.
+          Interactive lessons and quizzes on Python and Linux. Complete lessons to earn XP and level up.
         </p>
       </div>
 
