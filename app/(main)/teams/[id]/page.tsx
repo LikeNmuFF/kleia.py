@@ -14,27 +14,27 @@ async function getTeamData(id: string) {
 
   const { data: team, error } = await supabase
     .from('teams')
-    .select(`
-      id,
-      name,
-      description,
-      total_xp,
-      total_solves,
-      created_at,
-      creator_id,
-      team_members(
-        user_id,
-        role,
-        joined_at,
-        profiles:user_id(id, username, avatar_url, total_xp)
-      )
-    `)
+    .select('*')
     .eq('id', id)
     .single()
 
   if (error || !team) {
     notFound()
   }
+
+  const { data: members } = await supabase
+    .from('team_members')
+    .select('user_id, role, joined_at')
+    .eq('team_id', id)
+
+  const memberUserIds = members?.map(m => m.user_id) || []
+
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('id, username, avatar_url, total_xp')
+    .in('id', memberUserIds.length > 0 ? memberUserIds : ['00000000-0000-0000-0000-000000000000'])
+
+  const profileMap = new Map(profiles?.map(p => [p.id, p]) || [])
 
   let userMembership = null
   if (user) {
@@ -55,14 +55,17 @@ async function getTeamData(id: string) {
   return {
     team: {
       ...team,
-      members: team.team_members.map((member: any) => ({
-        user_id: member.user_id,
-        role: member.role,
-        joined_at: member.joined_at,
-        username: member.profiles?.username,
-        avatar_url: member.profiles?.avatar_url,
-        total_xp: member.profiles?.total_xp ?? 0,
-      })),
+      members: members?.map(member => {
+        const profile = profileMap.get(member.user_id)
+        return {
+          user_id: member.user_id,
+          role: member.role,
+          joined_at: member.joined_at,
+          username: profile?.username ?? 'Unknown',
+          avatar_url: profile?.avatar_url ?? null,
+          total_xp: profile?.total_xp ?? 0,
+        }
+      }) || [],
     },
     userMembership,
     teamRank: (teamRank || 0) + 1,
