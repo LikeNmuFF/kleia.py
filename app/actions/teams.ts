@@ -351,3 +351,56 @@ export async function getTeamLeaderboard() {
     member_count: team.team_members?.[0]?.count ?? 0,
   }))
 }
+
+export async function getPendingInvites() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const { data: invites } = await supabase
+    .from('team_invites')
+    .select('id, team_id, invited_by, created_at')
+    .eq('user_id', user.id)
+    .eq('status', 'pending')
+
+  if (!invites || invites.length === 0) return []
+
+  const teamIds = invites.map(i => i.team_id)
+  const inviterIds = invites.map(i => i.invited_by)
+
+  const { data: teams } = await supabase
+    .from('teams')
+    .select('id, name')
+    .in('id', teamIds)
+
+  const { data: inviters } = await supabase
+    .from('profiles')
+    .select('id, username')
+    .in('id', inviterIds)
+
+  const teamMap = new Map(teams?.map(t => [t.id, t]) || [])
+  const inviterMap = new Map(inviters?.map(i => [i.id, i]) || [])
+
+  return invites.map(invite => ({
+    id: invite.id,
+    team_id: invite.team_id,
+    team_name: teamMap.get(invite.team_id)?.name ?? 'Unknown Team',
+    invited_by: invite.invited_by,
+    inviter_name: inviterMap.get(invite.invited_by)?.username ?? 'Unknown',
+    created_at: invite.created_at,
+  }))
+}
+
+export async function getInviteCount() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return 0
+
+  const { count } = await supabase
+    .from('team_invites')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .eq('status', 'pending')
+
+  return count || 0
+}

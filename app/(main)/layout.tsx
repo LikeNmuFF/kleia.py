@@ -6,6 +6,7 @@ import ThemeToggle from '@/components/ThemeToggle'
 import SpecialUserLayout from '@/components/special/SpecialUserLayout'
 import ChatUnreadProvider from '@/components/chat/ChatUnreadProvider'
 import ChatNavLink, { ChatMobileNavLink } from '@/components/chat/ChatNavLink'
+import TeamInviteNotification from '@/components/teams/TeamInviteNotification'
 
 export default async function MainLayout({
   children,
@@ -109,6 +110,7 @@ export default async function MainLayout({
 
           {/* User Menu */}
           <div className="flex items-center gap-3">
+            <TeamInviteNotification />
             <ThemeToggle />
             <Link
               href="/profile"

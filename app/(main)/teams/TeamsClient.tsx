@@ -2,8 +2,10 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import TeamCard from '@/components/teams/TeamCard'
 import CreateTeamModal from '@/components/teams/CreateTeamModal'
+import { acceptInvite } from '@/app/actions/teams'
 
 interface Team {
   id: string
@@ -15,16 +17,49 @@ interface Team {
   member_count: number
 }
 
+interface PendingInvite {
+  id: string
+  team_id: string
+  team_name: string
+  inviter_name: string
+  created_at: string
+}
+
 export default function TeamsClient({
   teams,
+  pendingInvites,
   userTeamId,
   userId,
 }: {
   teams: Team[]
+  pendingInvites: PendingInvite[]
   userTeamId: string | null
   userId: string | null
 }) {
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [invites, setInvites] = useState(pendingInvites)
+  const [accepting, setAccepting] = useState<string | null>(null)
+  const router = useRouter()
+
+  const handleAcceptInvite = async (inviteId: string) => {
+    setAccepting(inviteId)
+    const result = await acceptInvite(inviteId)
+    if (result.success) {
+      setInvites(invites.filter(i => i.id !== inviteId))
+      router.refresh()
+    }
+    setAccepting(null)
+  }
+
+  const handleDeclineInvite = async (inviteId: string) => {
+    const { createClient } = await import('@/lib/supabase/client')
+    const supabase = createClient()
+    await supabase
+      .from('team_invites')
+      .update({ status: 'declined' })
+      .eq('id', inviteId)
+    setInvites(invites.filter(i => i.id !== inviteId))
+  }
 
   return (
     <div className="max-w-6xl mx-auto py-8 px-4">
@@ -64,6 +99,52 @@ export default function TeamsClient({
           </Link>
         </div>
       </div>
+
+      {invites.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>
+            Pending Invites
+          </h2>
+          <div className="space-y-3">
+            {invites.map(invite => (
+              <div
+                key={invite.id}
+                className="flex items-center justify-between p-4 rounded-xl"
+                style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">👥</span>
+                  <div>
+                    <p className="font-medium" style={{ color: 'var(--text-primary)' }}>
+                      {invite.team_name}
+                    </p>
+                    <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                      Invited by {invite.inviter_name}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleAcceptInvite(invite.id)}
+                    disabled={accepting === invite.id}
+                    className="px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-50"
+                    style={{ backgroundColor: '#22c55e', color: 'white' }}
+                  >
+                    {accepting === invite.id ? 'Joining...' : 'Accept'}
+                  </button>
+                  <button
+                    onClick={() => handleDeclineInvite(invite.id)}
+                    className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                    style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-secondary)' }}
+                  >
+                    Decline
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {teams.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

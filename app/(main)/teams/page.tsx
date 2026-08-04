@@ -25,6 +25,14 @@ async function getTeamsData() {
     .order('total_xp', { ascending: false })
 
   let userTeamId = null
+  let pendingInvites: Array<{
+    id: string
+    team_id: string
+    team_name: string
+    inviter_name: string
+    created_at: string
+  }> = []
+
   if (user) {
     const { data: membership } = await supabase
       .from('team_members')
@@ -32,6 +40,34 @@ async function getTeamsData() {
       .eq('user_id', user.id)
       .single()
     userTeamId = membership?.team_id || null
+
+    const { data: invites } = await supabase
+      .from('team_invites')
+      .select('id, team_id, created_at, inviter_id')
+      .eq('invitee_id', user.id)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+
+    if (invites && invites.length > 0) {
+      const teamIds = [...new Set(invites.map(i => i.team_id))]
+      const inviterIds = [...new Set(invites.map(i => i.inviter_id))]
+
+      const [teamsResult, invitersResult] = await Promise.all([
+        supabase.from('teams').select('id, name').in('id', teamIds),
+        supabase.from('profiles').select('id, username').in('id', inviterIds),
+      ])
+
+      const teamMap = new Map((teamsResult.data || []).map(t => [t.id, t.name]))
+      const inviterMap = new Map((invitersResult.data || []).map(p => [p.id, p.username]))
+
+      pendingInvites = invites.map(inv => ({
+        id: inv.id,
+        team_id: inv.team_id,
+        team_name: teamMap.get(inv.team_id) || 'Unknown',
+        inviter_name: inviterMap.get(inv.inviter_id) || 'Unknown',
+        created_at: inv.created_at,
+      }))
+    }
   }
 
   return {
@@ -39,13 +75,21 @@ async function getTeamsData() {
       ...team,
       member_count: team.team_members?.[0]?.count ?? 0,
     })),
+    pendingInvites,
     userTeamId,
     userId: user?.id || null,
   }
 }
 
 export default async function TeamsPage() {
-  const { teams, userTeamId, userId } = await getTeamsData()
+  const { teams, pendingInvites, userTeamId, userId } = await getTeamsData()
 
-  return <TeamsClient teams={teams} userTeamId={userTeamId} userId={userId} />
+  return (
+    <TeamsClient
+      teams={teams}
+      pendingInvites={pendingInvites}
+      userTeamId={userTeamId}
+      userId={userId}
+    />
+  )
 }
