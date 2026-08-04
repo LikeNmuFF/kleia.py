@@ -146,3 +146,101 @@ export async function getUserWriteup(challengeId: string) {
 
   return data
 }
+
+function getMonday(date: Date): string {
+  const d = new Date(date)
+  const day = d.getUTCDay()
+  const diff = d.getUTCDate() - day + (day === 0 ? -6 : 1)
+  d.setUTCDate(diff)
+  return d.toISOString().split('T')[0]
+}
+
+export async function getViewCost(): Promise<{ cost: number; freeViewsRemaining: number; totalViewsThisWeek: number; userXp: number }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { cost: 0, freeViewsRemaining: 1, totalViewsThisWeek: 0, userXp: 0 }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('writeup_view_count, writeup_view_week, total_xp')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile) return { cost: 0, freeViewsRemaining: 1, totalViewsThisWeek: 0, userXp: 0 }
+
+  const currentMonday = getMonday(new Date())
+  let viewCount = profile.writeup_view_count || 0
+
+  if (profile.writeup_view_week !== currentMonday) {
+    viewCount = 0
+  }
+
+  const freeViewsRemaining = Math.max(0, 1 - viewCount)
+  let cost = 0
+
+  if (freeViewsRemaining <= 0) {
+    cost = 25 + (viewCount - 1) * 25
+  }
+
+  return {
+    cost,
+    freeViewsRemaining,
+    totalViewsThisWeek: viewCount,
+    userXp: profile.total_xp || 0,
+  }
+}
+
+export async function viewWriteup(writeupId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not logged in' }
+
+  const { data: writeup } = await supabase
+    .from('writeups')
+    .select('id')
+    .eq('id', writeupId)
+    .maybeSingle()
+
+  if (!writeup) return { error: 'Writeup not found' }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('writeup_view_count, writeup_view_week, total_xp')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile) return { error: 'Profile not found' }
+
+  const currentMonday = getMonday(new Date())
+  let viewCount = profile.writeup_view_count || 0
+
+  if (profile.writeup_view_week !== currentMonday) {
+    viewCount = 0
+  }
+
+  const freeViewsRemaining = Math.max(0, 1 - viewCount)
+  let cost = 0
+
+  if (freeViewsRemaining <= 0) {
+    cost = 25 + (viewCount - 1) * 25
+  }
+
+  if (cost > 0 && (profile.total_xp || 0) < cost) {
+    return { error: `Not enough XP. Need ${cost} XP, have ${profile.total_xp || 0} XP` }
+  }
+
+  if (cost > 0) {
+    const { addXp } = await import('./gamification')
+    await addXp(-cost, 'writeup_view')
+  }
+
+  await supabase
+    .from('profiles')
+    .update({
+      writeup_view_count: viewCount + 1,
+      writeup_view_week: currentMonday,
+    })
+    .eq('id', user.id)
+
+  return { success: true, cost }
+}
