@@ -7,7 +7,7 @@ import ProfileHeader from '@/components/members/ProfileHeader'
 import MessageButton from '@/components/members/MessageButton'
 import SpecialProfileBanner from '@/components/special/SpecialProfileBanner'
 import XPBadge from '@/components/gamification/XPBadge'
-import BadgeShowcase from '@/components/gamification/BadgeShowcase'
+import BadgeCollection from '@/components/gamification/BadgeCollection'
 
 export const dynamic = 'force-dynamic'
 
@@ -89,7 +89,7 @@ export default async function MemberProfilePage({ params }: PageProps) {
 
       {earnedBadgeIds.length > 0 && (
         <div className="mt-6 card">
-          <BadgeShowcase earnedBadgeIds={earnedBadgeIds} />
+          <BadgeCollection earnedBadgeIds={earnedBadgeIds} />
         </div>
       )}
 

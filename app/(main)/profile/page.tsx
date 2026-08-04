@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import ProfileForm from '@/components/profile/ProfileForm'
+import BadgeShowcase from '@/components/gamification/BadgeShowcase'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -10,6 +11,13 @@ export default async function ProfilePage() {
     .select('id, username, full_name, bio, avatar_url')
     .eq('id', user?.id || '')
     .single()
+
+  const { data: badgeRows } = await supabase
+    .from('user_badges')
+    .select('badge_id')
+    .eq('user_id', user?.id || '')
+
+  const earnedBadgeIds = (badgeRows || []).map((b) => b.badge_id)
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4">
@@ -26,6 +34,10 @@ export default async function ProfilePage() {
           <p style={{ color: 'var(--text-secondary)' }}>Loading profile...</p>
         </div>
       )}
+
+      <div className="mt-8 card">
+        <BadgeShowcase earnedBadgeIds={earnedBadgeIds} />
+      </div>
     </div>
   )
 }
