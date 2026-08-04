@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import FlagSubmitForm from './FlagSubmitForm'
+import HintUnlockButton from './HintUnlockButton'
 import ChallengeReviewForm from '@/components/ctf/ChallengeReviewForm'
 import ChallengeReviews from '@/components/ctf/ChallengeReviews'
 import { notFound } from 'next/navigation'
@@ -24,7 +25,7 @@ export default async function ChallengePage({ params }: { params: Promise<{ id: 
 
   const { data: challenge } = await supabase
     .from('ctf_challenges')
-    .select('id, title, description, category, difficulty, points, hint, file_url, link_url, author, created_at, learn_topic_slug, learn_lesson_slug')
+    .select('id, title, description, category, difficulty, points, hint, hint_xp_cost, file_url, link_url, author, created_at, learn_topic_slug, learn_lesson_slug')
     .eq('id', id)
     .eq('status', 'approved')
     .single()
@@ -62,6 +63,17 @@ export default async function ChallengePage({ params }: { params: Promise<{ id: 
       .maybeSingle()
 
     solved = !!sub
+  }
+
+  let hintUnlocked = false
+  if (user) {
+    const { data: unlock } = await supabase
+      .from('user_hint_unlocks')
+      .select('user_id')
+      .eq('user_id', user.id)
+      .eq('challenge_id', id)
+      .maybeSingle()
+    hintUnlocked = !!unlock
   }
 
   const { data: solveStats } = await supabase
@@ -198,14 +210,12 @@ export default async function ChallengePage({ params }: { params: Promise<{ id: 
         )}
 
         {challenge.hint && (
-          <details className="mb-6">
-            <summary className="text-sm cursor-pointer font-medium" style={{ color: 'var(--text-muted)' }}>
-              💡 Show hint
-            </summary>
-            <p className="mt-2 text-sm p-3 rounded-lg" style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-secondary)' }}>
-              {challenge.hint}
-            </p>
-          </details>
+          <HintUnlockButton
+            challengeId={challenge.id}
+            hintXpCost={challenge.hint_xp_cost ?? 0}
+            hintText={challenge.hint}
+            initiallyUnlocked={hintUnlocked}
+          />
         )}
 
         <FlagSubmitForm challengeId={challenge.id} alreadySolved={solved} />

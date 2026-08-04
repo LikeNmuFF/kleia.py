@@ -54,3 +54,15 @@ CREATE POLICY "Users can delete own reviews" ON challenge_reviews
 
 -- XP cost column on hints
 ALTER TABLE ctf_challenges ADD COLUMN IF NOT EXISTS hint_xp_cost int DEFAULT 0;
+
+-- User hint unlocks
+CREATE TABLE IF NOT EXISTS user_hint_unlocks (
+  user_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  challenge_id uuid NOT NULL REFERENCES ctf_challenges(id) ON DELETE CASCADE,
+  xp_cost int DEFAULT 0,
+  created_at timestamptz DEFAULT now(),
+  PRIMARY KEY (user_id, challenge_id)
+);
+ALTER TABLE user_hint_unlocks ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view own hint unlocks" ON user_hint_unlocks FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Auth users can insert hint unlocks" ON user_hint_unlocks FOR INSERT WITH CHECK (auth.uid() = user_id);

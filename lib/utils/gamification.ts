@@ -72,6 +72,7 @@ export const BADGES: BadgeDef[] = [
   { id: 'ctf_1', name: 'Bug Hunter', description: 'Solve 1 CTF challenge', icon: '🐛', category: 'ctf' },
   { id: 'ctf_10', name: 'CTF Pro', description: 'Solve 10 CTF challenges', icon: '🏆', category: 'ctf' },
   { id: 'ctf_25', name: 'CTF Legend', description: 'Solve 25 CTF challenges', icon: '👑', category: 'ctf' },
+  { id: 'hints_5', name: 'Help Seeker', description: 'Unlock 5 hints', icon: '💡', category: 'ctf' },
   { id: 'learn_1', name: 'Curious Mind', description: 'Complete 1 Learn lesson', icon: '🧠', category: 'learn' },
   { id: 'learn_10', name: 'Knowledge Seeker', description: 'Complete 10 lessons', icon: '📖', category: 'learn' },
   { id: 'post_1', name: 'Ice Breaker', description: 'Create your first post', icon: '💬', category: 'social' },
