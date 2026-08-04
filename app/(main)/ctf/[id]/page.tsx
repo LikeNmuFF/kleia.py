@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import FlagSubmitForm from './FlagSubmitForm'
+import ChallengeReviewForm from '@/components/ctf/ChallengeReviewForm'
+import ChallengeReviews from '@/components/ctf/ChallengeReviews'
 import { notFound } from 'next/navigation'
 
 const DIFFICULTY_COLORS: Record<string, string> = {
@@ -132,6 +134,18 @@ export default async function ChallengePage({ params }: { params: Promise<{ id: 
         <div className="my-6 pt-4 border-t whitespace-pre-wrap break-all leading-relaxed" style={{ borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}>
           {challenge.description}
         </div>
+
+        {solved && (
+          <div className="mb-6 pt-4 border-t" style={{ borderColor: 'var(--border-color)' }}>
+            <ChallengeReviews challengeId={challenge.id} />
+          </div>
+        )}
+
+        {solved && (
+          <div className="mb-6 pt-4 border-t" style={{ borderColor: 'var(--border-color)' }}>
+            <ChallengeReviewForm challengeId={challenge.id} solved={solved} />
+          </div>
+        )}
 
         {learnLessonTitle && challenge.learn_topic_slug && challenge.learn_lesson_slug && (
           <div className="mb-6 pt-4 border-t" style={{ borderColor: 'var(--border-color)' }}>
