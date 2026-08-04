@@ -104,6 +104,13 @@ export default function CTFClient({
             Seasons
           </Link>
           <Link
+            href="/ctf/skilltree"
+            className="px-4 py-2 rounded-lg font-medium text-sm transition-all"
+            style={{ backgroundColor: 'var(--card-bg)', color: 'var(--text-secondary)' }}
+          >
+            Skill Tree
+          </Link>
+          <Link
             href="/ctf/submit"
             className="px-4 py-2 rounded-lg font-medium text-sm border transition-all hover:scale-[1.02]"
             style={{ borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}
