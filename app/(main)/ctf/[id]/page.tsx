@@ -218,6 +218,21 @@ export default async function ChallengePage({ params }: { params: Promise<{ id: 
           />
         )}
 
+        <div className="mb-6 pt-4 border-t flex flex-wrap gap-3" style={{ borderColor: 'var(--border-color)' }}>
+          <a
+            href={`/ctf/${challenge.id}/writeups`}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:scale-[1.02]"
+            style={{
+              background: 'linear-gradient(90deg, rgba(124,58,237,0.15), rgba(6,182,212,0.15))',
+              color: 'var(--text-primary)',
+              border: '1px solid var(--border-color)',
+            }}
+          >
+            <span className="text-base">📝</span>
+            {solved ? 'Write a Writeup' : 'View Writeups'}
+          </a>
+        </div>
+
         <FlagSubmitForm challengeId={challenge.id} alreadySolved={solved} />
       </div>
     </div>

@@ -102,6 +102,11 @@ export async function checkBadges() {
     .eq('user_id', user.id)
     .gt('xp_cost', 0)
 
+  const { count: writeupCount } = await supabase
+    .from('writeups')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+
   const checks: [string, boolean][] = [
     ['streak_7', (profile.current_streak || 0) >= 7 || (profile.longest_streak || 0) >= 7],
     ['streak_30', (profile.longest_streak || 0) >= 30],
@@ -115,6 +120,8 @@ export async function checkBadges() {
     ['post_10', (postCount || 0) >= 10],
     ['review_1', (reviewCount || 0) >= 1],
     ['hints_5', (hintUnlockCount || 0) >= 5],
+    ['writeup_1', (writeupCount || 0) >= 1],
+    ['writeup_5', (writeupCount || 0) >= 5],
   ]
 
   for (const [badgeId, condition] of checks) {
