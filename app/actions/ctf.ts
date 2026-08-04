@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { logEvent } from '@/lib/logEvent'
 import { hashFlag } from '@/lib/utils/ctf'
+import { checkAndUnlockNodes } from './skilltree'
 
 const VALID_CATEGORIES = ['web', 'crypto', 'forensics', 'misc']
 const VALID_DIFFICULTIES = ['easy', 'medium', 'hard']
@@ -113,6 +114,7 @@ export async function submitFlag(challengeId: string, submittedFlag: string) {
     const { completeMission } = await import('./gamification')
     await addXp(15, 'ctf_solve')
     await completeMission('ctf_solve')
+    await checkAndUnlockNodes(user.id)
   }
 
   return {

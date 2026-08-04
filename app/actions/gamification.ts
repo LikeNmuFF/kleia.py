@@ -107,6 +107,12 @@ export async function checkBadges() {
     .select('*', { count: 'exact', head: true })
     .eq('user_id', user.id)
 
+  const { count: skillNodeCount } = await supabase
+    .from('user_skill_progress')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .eq('unlocked', true)
+
   const checks: [string, boolean][] = [
     ['streak_7', (profile.current_streak || 0) >= 7 || (profile.longest_streak || 0) >= 7],
     ['streak_30', (profile.longest_streak || 0) >= 30],
@@ -114,6 +120,7 @@ export async function checkBadges() {
     ['ctf_1', (ctfCount || 0) >= 1],
     ['ctf_10', (ctfCount || 0) >= 10],
     ['ctf_25', (ctfCount || 0) >= 25],
+    ['skilltree_5', (skillNodeCount || 0) >= 5],
     ['learn_1', (learnCount || 0) >= 1],
     ['learn_10', (learnCount || 0) >= 10],
     ['post_1', (postCount || 0) >= 1],
