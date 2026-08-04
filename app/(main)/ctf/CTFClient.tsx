@@ -83,6 +83,13 @@ export default function CTFClient({
         </div>
         <div className="flex items-center gap-3">
           <Link
+            href="/ctf/stats"
+            className="px-4 py-2 rounded-lg font-medium text-sm transition-all"
+            style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-text)' }}
+          >
+            My Stats
+          </Link>
+          <Link
             href="/ctf/leaderboard"
             className="px-4 py-2 rounded-lg font-medium text-sm transition-all"
             style={{ backgroundColor: 'var(--card-bg)', color: 'var(--text-secondary)' }}
