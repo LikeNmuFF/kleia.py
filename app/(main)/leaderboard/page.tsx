@@ -59,7 +59,7 @@ export default async function LeaderboardPage() {
             return (
               <Link
                 key={entry.user_id}
-                href={`/profile/${entry.username}`}
+                href={`/profile/${encodeURIComponent(entry.username)}`}
                 className="flex items-center gap-2 sm:gap-4 px-3 sm:px-4 py-3 border-t transition-colors"
                 style={{
                   borderColor: 'var(--border-color)',

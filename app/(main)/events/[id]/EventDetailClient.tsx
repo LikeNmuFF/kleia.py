@@ -246,7 +246,7 @@ export default function EventDetailClient({
               {going.map(a => (
                 <Link
                   key={a.user_id}
-                  href={`/profile/${a.profiles.username}`}
+                  href={`/profile/${encodeURIComponent(a.profiles.username)}`}
                   className="flex items-center gap-3 p-3 rounded-xl transition-all hover:scale-[1.01]"
                   style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}
                 >
@@ -275,7 +275,7 @@ export default function EventDetailClient({
               {maybe.map(a => (
                 <Link
                   key={a.user_id}
-                  href={`/profile/${a.profiles.username}`}
+                  href={`/profile/${encodeURIComponent(a.profiles.username)}`}
                   className="flex items-center gap-3 p-3 rounded-xl transition-all hover:scale-[1.01]"
                   style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}
                 >
