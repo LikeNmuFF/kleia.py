@@ -1,40 +1,56 @@
+'use client'
+
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { Award, BookOpen, Code2, Star, Trophy } from 'lucide-react'
 import Avatar from '@/components/Avatar'
 
-export const dynamic = 'force-dynamic'
+interface AchievementEntry {
+  user_id: string
+  username: string
+  avatar_url: string | null
+  total_xp: number
+  badge_count: number
+  ctf_solved: number
+  writeup_count: number
+  review_count: number
+  achievement_score: number
+}
 
-export default async function LeaderboardPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+interface AchievementsClientProps {
+  leaderboard: AchievementEntry[]
+  currentUserId: string | null
+}
 
-  const { data: leaderboard } = await supabase
-    .from('ctf_leaderboard')
-    .select('user_id, username, avatar_url, solved_challenges, total_points')
-    .limit(100)
-
+export default function AchievementsClient({ leaderboard, currentUserId }: AchievementsClientProps) {
   return (
-    <div className="max-w-3xl mx-auto py-8 px-4">
+    <div className="max-w-4xl mx-auto py-8 px-4">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
-          CTF Leaderboard
+          Achievement Leaderboard
         </h1>
         <p style={{ color: 'var(--text-secondary)' }}>
-          Top challengers ranked by total points
+          Members ranked by XP, badges, CTF solves, writeups, and reviews
         </p>
       </div>
 
       <div className="flex gap-4 mb-8">
         <Link
+          href="/leaderboard"
+          className="px-4 py-2 rounded-lg font-medium text-sm"
+          style={{ backgroundColor: 'var(--card-bg)', color: 'var(--text-secondary)' }}
+        >
+          Activity
+        </Link>
+        <Link
           href="/ctf/leaderboard"
-          className="px-4 py-2 rounded-lg font-medium text-sm bg-gradient-to-r from-violet-600 to-cyan-600 text-white"
+          className="px-4 py-2 rounded-lg font-medium text-sm"
+          style={{ backgroundColor: 'var(--card-bg)', color: 'var(--text-secondary)' }}
         >
           CTF
         </Link>
         <Link
           href="/leaderboard/achievements"
-          className="px-4 py-2 rounded-lg font-medium text-sm"
-          style={{ backgroundColor: 'var(--card-bg)', color: 'var(--text-secondary)' }}
+          className="px-4 py-2 rounded-lg font-medium text-sm bg-gradient-to-r from-violet-600 to-cyan-600 text-white"
         >
           Achievements
         </Link>
@@ -42,20 +58,30 @@ export default async function LeaderboardPage() {
 
       {leaderboard && leaderboard.length > 0 ? (
         <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border-color)' }}>
-          {/* Table header */}
           <div
             className="flex items-center gap-2 sm:gap-4 px-3 sm:px-4 py-3 text-xs font-medium uppercase tracking-wider"
             style={{ backgroundColor: 'var(--card-bg)', color: 'var(--text-muted)' }}
           >
             <div className="w-8 sm:w-10 text-center">#</div>
-            <div className="flex-1">Player</div>
-            <div className="hidden sm:block w-20 text-center">Solved</div>
-            <div className="w-14 sm:w-20 text-right">Points</div>
+            <div className="flex-1">Member</div>
+            <div className="hidden sm:block w-16 text-center">XP</div>
+            <div className="hidden sm:block w-16 text-center">
+              <Award className="w-3.5 h-3.5 inline" />
+            </div>
+            <div className="hidden sm:block w-16 text-center">
+              <Trophy className="w-3.5 h-3.5 inline" />
+            </div>
+            <div className="hidden sm:block w-16 text-center">
+              <BookOpen className="w-3.5 h-3.5 inline" />
+            </div>
+            <div className="hidden sm:block w-16 text-center">
+              <Star className="w-3.5 h-3.5 inline" />
+            </div>
+            <div className="w-20 text-right">Score</div>
           </div>
 
-          {/* Table rows */}
           {leaderboard.map((entry, i) => {
-            const isMe = user?.id === entry.user_id
+            const isMe = currentUserId === entry.user_id
             return (
               <Link
                 key={entry.user_id}
@@ -98,13 +124,29 @@ export default async function LeaderboardPage() {
                   </span>
                 </div>
 
-                <div className="hidden sm:block w-20 text-center text-sm font-mono" style={{ color: 'var(--text-secondary)' }}>
-                  {entry.solved_challenges}
+                <div className="hidden sm:block w-16 text-center text-sm font-mono" style={{ color: 'var(--text-secondary)' }}>
+                  {entry.total_xp}
                 </div>
 
-                <div className="w-14 sm:w-20 text-right">
+                <div className="hidden sm:block w-16 text-center text-sm font-mono" style={{ color: 'var(--text-secondary)' }}>
+                  {entry.badge_count}
+                </div>
+
+                <div className="hidden sm:block w-16 text-center text-sm font-mono" style={{ color: 'var(--text-secondary)' }}>
+                  {entry.ctf_solved}
+                </div>
+
+                <div className="hidden sm:block w-16 text-center text-sm font-mono" style={{ color: 'var(--text-secondary)' }}>
+                  {entry.writeup_count}
+                </div>
+
+                <div className="hidden sm:block w-16 text-center text-sm font-mono" style={{ color: 'var(--text-secondary)' }}>
+                  {entry.review_count}
+                </div>
+
+                <div className="w-20 text-right">
                   <span className="font-bold text-sm sm:text-base" style={{ color: 'var(--text-primary)' }}>
-                    {entry.total_points}
+                    {entry.achievement_score}
                   </span>
                 </div>
               </Link>
@@ -116,8 +158,8 @@ export default async function LeaderboardPage() {
           <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--card-bg)' }}>
             <span className="text-2xl">🏆</span>
           </div>
-          <h3 className="text-lg font-medium mb-2" style={{ color: 'var(--text-primary)' }}>No scores yet</h3>
-          <p style={{ color: 'var(--text-secondary)' }}>Solve a challenge to appear on the leaderboard!</p>
+          <h3 className="text-lg font-medium mb-2" style={{ color: 'var(--text-primary)' }}>No achievements yet</h3>
+          <p style={{ color: 'var(--text-secondary)' }}>Earn XP, badges, and complete challenges to appear here!</p>
         </div>
       )}
     </div>
