@@ -88,7 +88,19 @@ export async function getSeasonLeaderboard(seasonId: string) {
     .eq('season_id', seasonId)
     .order('total_points', { ascending: false })
 
-  return data || []
+  if (!data) return []
+
+  return data.map(row => {
+    const prof = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles
+    return {
+      user_id: row.user_id,
+      total_points: row.total_points,
+      challenges_solved: row.challenges_solved,
+      joined_at: row.joined_at,
+      username: prof?.username ?? 'Unknown',
+      avatar_url: prof?.avatar_url ?? null,
+    }
+  })
 }
 
 export async function getSeasonChallenges(seasonId: string) {
@@ -106,10 +118,18 @@ export async function getSeasonChallenges(seasonId: string) {
 
   if (!seasonChallenges) return []
 
-  const challenges = seasonChallenges.map(sc => ({
-    ...(sc.ctf_challenges as Record<string, unknown>),
-    bonus_points: sc.bonus_points,
-  }))
+  const challenges = seasonChallenges.map(sc => {
+    const raw = sc.ctf_challenges
+    const ch = Array.isArray(raw) ? raw[0] : raw
+    return {
+      id: (ch?.id as string) ?? sc.challenge_id,
+      title: (ch?.title as string) ?? 'Unknown',
+      category: (ch?.category as string) ?? 'misc',
+      difficulty: (ch?.difficulty as string) ?? 'easy',
+      points: (ch?.points as number) ?? 0,
+      bonus_points: sc.bonus_points ?? 0,
+    }
+  })
 
   if (!user) {
     return challenges.map(c => ({ ...c, solved: false }))

@@ -31,7 +31,8 @@ interface LeaderboardEntry {
   total_points: number
   challenges_solved: number
   joined_at: string
-  profiles: { username: string; avatar_url: string | null } | null
+  username: string
+  avatar_url: string | null
 }
 
 const DIFFICULTY_STYLES: Record<string, { color: string; bg: string; label: string }> = {
@@ -356,7 +357,7 @@ export default function SeasonDetailClient({
                     </div>
                     <div className="flex-1 min-w-0">
                       <span className="font-medium text-sm truncate block" style={{ color: 'var(--text-primary)' }}>
-                        {entry.profiles?.username || 'Unknown'}
+                        {entry.username || 'Unknown'}
                         {isMe && (
                           <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-300">
                             you
