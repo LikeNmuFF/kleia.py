@@ -113,6 +113,11 @@ export async function checkBadges() {
     .eq('user_id', user.id)
     .eq('unlocked', true)
 
+  const { count: regexCount } = await supabase
+    .from('regex_golf_solves')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+
   const checks: [string, boolean][] = [
     ['streak_7', (profile.current_streak || 0) >= 7 || (profile.longest_streak || 0) >= 7],
     ['streak_30', (profile.longest_streak || 0) >= 30],
@@ -129,6 +134,8 @@ export async function checkBadges() {
     ['hints_5', (hintUnlockCount || 0) >= 5],
     ['writeup_1', (writeupCount || 0) >= 1],
     ['writeup_5', (writeupCount || 0) >= 5],
+    ['regex_3', (regexCount || 0) >= 3],
+    ['regex_10', (regexCount || 0) >= 10],
   ]
 
   for (const [badgeId, condition] of checks) {
