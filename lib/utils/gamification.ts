@@ -78,6 +78,8 @@ export const BADGES: BadgeDef[] = [
   { id: 'learn_10', name: 'Knowledge Seeker', description: 'Complete 10 lessons', icon: '📖', category: 'learn' },
   { id: 'post_1', name: 'Ice Breaker', description: 'Create your first post', icon: '💬', category: 'social' },
   { id: 'post_10', name: 'Contributor', description: 'Create 10 posts', icon: '✍️', category: 'social' },
+  { id: 'team_create', name: 'Team Builder', description: 'Create a team', icon: '👥', category: 'social' },
+  { id: 'team_5', name: 'Squad Leader', description: 'Team solves 5 challenges', icon: '🎖️', category: 'social' },
   { id: 'review_1', name: 'Critic', description: 'Submit a challenge review', icon: '📝', category: 'ctf' },
   { id: 'writeup_1', name: 'Author', description: 'Submit a writeup', icon: '✍️', category: 'ctf' },
   { id: 'writeup_5', name: 'Prolific Writer', description: 'Submit 5 writeups', icon: '📚', category: 'ctf' },

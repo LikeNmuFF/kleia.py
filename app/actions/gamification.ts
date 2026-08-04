@@ -118,6 +118,22 @@ export async function checkBadges() {
     .select('*', { count: 'exact', head: true })
     .eq('user_id', user.id)
 
+  const { data: userTeam } = await supabase
+    .from('team_members')
+    .select('team_id')
+    .eq('user_id', user.id)
+    .single()
+
+  let teamSolves = 0
+  if (userTeam) {
+    const { data: team } = await supabase
+      .from('teams')
+      .select('total_solves')
+      .eq('id', userTeam.team_id)
+      .single()
+    teamSolves = team?.total_solves || 0
+  }
+
   const checks: [string, boolean][] = [
     ['streak_7', (profile.current_streak || 0) >= 7 || (profile.longest_streak || 0) >= 7],
     ['streak_30', (profile.longest_streak || 0) >= 30],
@@ -130,6 +146,8 @@ export async function checkBadges() {
     ['learn_10', (learnCount || 0) >= 10],
     ['post_1', (postCount || 0) >= 1],
     ['post_10', (postCount || 0) >= 10],
+    ['team_create', !!userTeam],
+    ['team_5', teamSolves >= 5],
     ['review_1', (reviewCount || 0) >= 1],
     ['hints_5', (hintUnlockCount || 0) >= 5],
     ['writeup_1', (writeupCount || 0) >= 1],
