@@ -118,6 +118,36 @@ export async function checkBadges() {
     .select('*', { count: 'exact', head: true })
     .eq('user_id', user.id)
 
+  const { count: dailyCipherCount } = await supabase
+    .from('daily_cipher_solves')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+
+  const { data: userSeasonParticipations } = await supabase
+    .from('ctf_season_participants')
+    .select('season_id')
+    .eq('user_id', user.id)
+
+  const seasonCount = userSeasonParticipations?.length || 0
+
+  let seasonWin = false
+  if (userSeasonParticipations) {
+    for (const { season_id } of userSeasonParticipations) {
+      const { data: participants } = await supabase
+        .from('ctf_season_participants')
+        .select('user_id, total_points')
+        .eq('season_id', season_id)
+        .order('total_points', { ascending: false })
+      if (participants) {
+        const rank = participants.findIndex(p => p.user_id === user.id) + 1
+        if (rank <= 3) {
+          seasonWin = true
+          break
+        }
+      }
+    }
+  }
+
   const { data: userTeam } = await supabase
     .from('team_members')
     .select('team_id')
@@ -154,6 +184,10 @@ export async function checkBadges() {
     ['writeup_5', (writeupCount || 0) >= 5],
     ['regex_3', (regexCount || 0) >= 3],
     ['regex_10', (regexCount || 0) >= 10],
+    ['daily_cipher', (dailyCipherCount || 0) >= 5],
+    ['review_10', (reviewCount || 0) >= 10],
+    ['season_1', seasonCount >= 1],
+    ['season_win', seasonWin],
   ]
 
   for (const [badgeId, condition] of checks) {
