@@ -48,6 +48,7 @@ export async function createTeam(name: string, description?: string) {
   }
 
   revalidatePath('/teams')
+  revalidatePath(`/teams/${team.id}`)
   return { teamId: team.id }
 }
 

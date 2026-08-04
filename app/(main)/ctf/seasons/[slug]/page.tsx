@@ -3,11 +3,12 @@ import { createClient } from '@/lib/supabase/server'
 import { getSeasonBySlug, getSeasonChallenges, getSeasonLeaderboard, isSeasonParticipant } from '@/app/actions/seasons'
 import SeasonDetailClient from './SeasonDetailClient'
 
-export default async function SeasonDetailPage({ params }: { params: { slug: string } }) {
+export default async function SeasonDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const season = await getSeasonBySlug(params.slug)
+  const season = await getSeasonBySlug(slug)
   if (!season) notFound()
 
   const [challenges, leaderboard, isParticipant] = await Promise.all([

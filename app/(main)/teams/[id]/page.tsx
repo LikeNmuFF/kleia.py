@@ -73,8 +73,9 @@ async function getTeamData(id: string) {
   }
 }
 
-export default async function TeamDetailPage({ params }: { params: { id: string } }) {
-  const { team, userMembership, teamRank, userId } = await getTeamData(params.id)
+export default async function TeamDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const { team, userMembership, teamRank, userId } = await getTeamData(id)
 
   return (
     <TeamDetailClient

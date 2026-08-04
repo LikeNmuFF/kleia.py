@@ -52,6 +52,13 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/chat') ||
     request.nextUrl.pathname.startsWith('/events') ||
     request.nextUrl.pathname.startsWith('/members') ||
+    request.nextUrl.pathname.startsWith('/teams') ||
+    request.nextUrl.pathname.startsWith('/ctf') ||
+    request.nextUrl.pathname.startsWith('/cipher') ||
+    request.nextUrl.pathname.startsWith('/regex-golf') ||
+    request.nextUrl.pathname.startsWith('/leaderboard') ||
+    request.nextUrl.pathname.startsWith('/learn') ||
+    request.nextUrl.pathname.startsWith('/profile') ||
     request.nextUrl.pathname.startsWith('/challenges') ||
     request.nextUrl.pathname.startsWith('/api')
   ) {
