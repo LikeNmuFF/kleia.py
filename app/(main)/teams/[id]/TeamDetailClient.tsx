@@ -182,7 +182,7 @@ export default function TeamDetailClient({
                   </span>
                 </div>
                 <Link
-                  href={`/profile/${encodeURIComponent(member.username)}`}
+                  href={`/profile/${encodeURIComponent(member.username || '')}`}
                   className="font-medium hover:underline"
                   style={{ color: 'var(--text-primary)' }}
                 >

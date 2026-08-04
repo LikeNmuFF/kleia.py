@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
+import ChallengeRatingBadge from '@/components/ctf/ChallengeRatingBadge'
 
 const CATEGORIES = [
   { key: 'all', icon: '🏴', label: 'All' },
@@ -40,10 +41,12 @@ export default function CTFClient({
   challenges,
   solvedIds,
   solvesById,
+  ratingsById,
 }: {
   challenges: Challenge[]
   solvedIds: string[]
   solvesById: Record<string, number>
+  ratingsById: Record<string, { avgDifficulty: number; avgQuality: number; reviewCount: number }>
 }) {
   const [activeCategory, setActiveCategory] = useState('all')
   const [activeSolvedFilter, setActiveSolvedFilter] = useState<SolvedFilter>('all')
@@ -323,6 +326,13 @@ export default function CTFClient({
                     </span>
                     {solves === 1 ? 'solve' : 'solves'}
                   </span>
+                  {ratingsById[challenge.id] && (
+                    <ChallengeRatingBadge
+                      avgDifficulty={ratingsById[challenge.id].avgDifficulty}
+                      avgQuality={ratingsById[challenge.id].avgQuality}
+                      reviewCount={ratingsById[challenge.id].reviewCount}
+                    />
+                  )}
                   {challenge.hint && (
                     <span className="flex items-center gap-1">
                       <span>💡</span>

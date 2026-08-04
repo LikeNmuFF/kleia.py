@@ -17,7 +17,7 @@ async function getChallengeData(userId?: string) {
     .eq('status', 'approved')
     .order('created_at', { ascending: false })
 
-  if (!challenges) return { challenges: [], solvedIds: [], solvesById: {} }
+  if (!challenges) return { challenges: [], solvedIds: [], solvesById: {}, ratingsById: {} }
 
   let solvedIds: string[] = []
   if (userId) {
@@ -41,21 +41,50 @@ async function getChallengeData(userId?: string) {
     solvesById[s.challenge_id] = s.solves
   }
 
-  return { challenges, solvedIds, solvesById }
+  const challengeIds = challenges.map(c => c.id)
+  const { data: reviews } = await supabase
+    .from('challenge_reviews')
+    .select('challenge_id, difficulty_rating, quality_rating')
+    .in('challenge_id', challengeIds)
+
+  const ratingsById: Record<string, { avgDifficulty: number; avgQuality: number; reviewCount: number }> = {}
+  const grouped: Record<string, number[]> = {}
+  const groupedQ: Record<string, number[]> = {}
+
+  for (const r of reviews || []) {
+    if (!grouped[r.challenge_id]) grouped[r.challenge_id] = []
+    if (!groupedQ[r.challenge_id]) groupedQ[r.challenge_id] = []
+    grouped[r.challenge_id].push(r.difficulty_rating)
+    groupedQ[r.challenge_id].push(r.quality_rating)
+  }
+
+  for (const id of challengeIds) {
+    const diffs = grouped[id] || []
+    const quals = groupedQ[id] || []
+    if (diffs.length > 0) {
+      ratingsById[id] = {
+        avgDifficulty: diffs.reduce((a, b) => a + b, 0) / diffs.length,
+        avgQuality: quals.reduce((a, b) => a + b, 0) / quals.length,
+        reviewCount: diffs.length,
+      }
+    }
+  }
+
+  return { challenges, solvedIds, solvesById, ratingsById }
 }
 
 export default async function CTFPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { challenges, solvedIds, solvesById } = await getChallengeData(user?.id)
+  const { challenges, solvedIds, solvesById, ratingsById } = await getChallengeData(user?.id)
 
   return (
     <>
       <div className="max-w-6xl mx-auto px-4 pt-8">
         <AnnouncementBanner />
       </div>
-      <CTFClient challenges={challenges} solvedIds={solvedIds} solvesById={solvesById} />
+      <CTFClient challenges={challenges} solvedIds={solvedIds} solvesById={solvesById} ratingsById={ratingsById} />
     </>
   )
 }
