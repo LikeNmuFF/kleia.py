@@ -12,7 +12,7 @@
     <img src="https://img.shields.io/badge/Live-www.kleia.site-8b5cf6?style=for-the-badge&logo=vercel&logoColor=white" alt="Live">
   </a>
   <a href="https://nextjs.org/">
-    <img src="https://img.shields.io/badge/Next.js-16-000000?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js">
+    <img src="https://img.shields.io/badge/Next.js_16-000000?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js">
   </a>
   <a href="https://supabase.com/">
     <img src="https://img.shields.io/badge/Supabase-3dcf8e?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase">
@@ -48,7 +48,7 @@
 
 <p align="center">
   <b>Learn Together, Grow Together</b><br/>
-  A community platform for study groups and friends — share resources, track progress, stay connected.
+  A community platform for study groups and friends — learn skills, solve CTF challenges, earn XP, and grow together.
 </p>
 
 <br/>
@@ -163,7 +163,7 @@
       <br/>
       <b>Member Profiles</b>
       <br/>
-      <sub>See bios, streaks, and CTF stats at a glance</sub>
+      <sub>Bios, XP badges, streaks, and CTF stats</sub>
     </td>
     <td align="center" width="200">
       <picture>
@@ -186,7 +186,57 @@
       <sub>Ranked by streak, study hours, and posts</sub>
     </td>
   </tr>
+  <tr>
+    <td align="center" width="200">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/feed-icon.svg">
+        <img src="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/feed-icon.svg" width="40" alt="Learn">
+      </picture>
+      <br/>
+      <b>Lessons & Quizzes</b>
+      <br/>
+      <sub>Learn Python, Linux &amp; more with reading material and quizzes</sub>
+    </td>
+    <td align="center" width="200">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/ctf-icon.svg">
+        <img src="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/ctf-icon.svg" width="40" alt="Skill Tree">
+      </picture>
+      <br/>
+      <b>CTF Skill Tree</b>
+      <br/>
+      <sub>Unlock skills as you solve challenges across categories</sub>
+    </td>
+    <td align="center" width="200">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/leaderboard-icon.svg">
+        <img src="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/leaderboard-icon.svg" width="40" alt="Writeups">
+      </picture>
+      <br/>
+      <b>Writeups</b>
+      <br/>
+      <sub>Share solutions with markdown, vote, and earn XP</sub>
+    </td>
+  </tr>
 </table>
+
+<br/>
+
+---
+
+## 📚 Learn
+
+Kleia ships with a built-in learning platform. Work through topics at your own pace — each lesson includes reading material and a quiz.
+
+| Topic | Lessons | Description |
+|-------|---------|-------------|
+| **Python Basics** | 8 lessons | Variables, loops, functions, data structures |
+| **Python Intermediate** | 4 lessons | File I/O, error handling, OOP, modules |
+| **Linux Basics** | 4 lessons | Navigation, searching, downloads, file operations |
+
+- Each lesson has a **reading material** section with explanations, code examples, and key takeaways.
+- Complete the **quiz** at the end to earn XP and unlock the next lesson.
+- CTF challenges can be **linked to lessons** — see related challenges directly from the lesson page.
 
 <br/>
 
@@ -204,10 +254,54 @@ Kleia ships with a built-in CTF platform where anyone can practice offensive sec
 | **Forensics** | 🔍 | Analyze files and artifacts |
 | **Misc** | 📌 | Everything that doesn't fit a box |
 
+### Challenge Features
+
 - **Flag format:** `KLEIA{...}` — solved flags are submitted and validated server-side.
-- Earn points per challenge and climb the **leaderboard**.
+- **Hints** — Free hint or spend XP to unlock additional hints.
+- **Reviews** — Rate challenges with stars and leave comments (only if you've solved it).
+- **Learn links** — Challenges can link to related lessons for deeper learning.
+- **Writeups** — Share your solution with the community using markdown. Earn +20 XP per writeup and escalating view costs.
+
+### Seasons & Leaderboards
+
+- Participate in **seasons** — time-limited competitive periods with separate leaderboards.
+- Earn points per challenge and climb the **overall leaderboard**.
+- Track your progress with the **skill tree** — unlock nodes as you solve challenges in each category.
+
+### Community Challenges
+
 - Community members can **submit their own challenges**, which enter a review queue.
 - Web challenges (like `robots.txt` and a view-source challenge) live right in the deployed site.
+
+<br/>
+
+---
+
+## 🎮 Gamification
+
+Kleia rewards your activity with XP and badges across the platform.
+
+| Action | XP |
+|--------|----|
+| Complete a lesson | +10 XP |
+| Submit a writeup | +20 XP |
+| View a writeup | Free once/week, then 25–75 XP |
+| Solve a CTF challenge | +10–100 XP (by difficulty) |
+| Daily login | +5 XP |
+
+### Badges
+
+Earn badges for milestones — 13 unique badges including:
+
+- **First Steps** — Complete your first lesson
+- **Author** — Submit your first writeup
+- **Prolific Writer** — Submit 5 writeups
+- **CTF Solver** — Solve challenges across categories
+- **Streak Master** — Maintain daily streaks
+
+### Daily Missions
+
+Complete daily missions for bonus XP. Missions refresh every day and include activities like logging in, solving challenges, and posting updates.
 
 <br/>
 
@@ -238,6 +332,7 @@ Kleia ships with a built-in CTF platform where anyone can practice offensive sec
 | **Realtime** | [Supabase Realtime](https://supabase.com/realtime) |
 | **Animations** | [Framer Motion](https://www.framer.com/motion/) |
 | **Uploads** | [Cloudinary](https://cloudinary.com/) |
+| **Markdown** | [react-markdown](https://github.com/remarkjs/react-markdown) + remark-gfm |
 | **Deployment** | [Vercel](https://vercel.com/) |
 
 <br/>
