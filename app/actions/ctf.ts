@@ -140,18 +140,17 @@ export async function submitFlag(challengeId: string, submittedFlag: string) {
   }
 
   await logEvent({ endpoint: 'ctf.submitFlag', status: 'success', durationMs: Date.now() - start, userId: user.id })
+  revalidatePath(`/ctf/${challengeId}`)
   revalidatePath('/ctf')
   revalidatePath('/ctf/leaderboard')
-  revalidatePath(`/ctf/${challengeId}`)
-  revalidatePath('/profile')
 
   if (isCorrect) {
-    const { addXp } = await import('./gamification')
-    const { completeMission } = await import('./gamification')
-    await addXp(15, 'ctf_solve')
-    await completeMission('ctf_solve')
-    await checkAndUnlockNodes(user.id)
-    await syncTeamStats(user.id)
+    const { addXp, completeMission } = await import('./gamification')
+    await Promise.all([
+      addXp(15, 'ctf_solve'),
+      completeMission('ctf_solve', true),
+      checkAndUnlockNodes(user.id),
+    ])
   }
 
   return {

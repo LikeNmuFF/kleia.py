@@ -42,17 +42,6 @@ export async function getUserSkillProgress() {
 export async function checkAndUnlockNodes(userId: string) {
   const supabase = await createClient()
 
-  const { count: solves, error: countError } = await supabase
-    .from('ctf_submissions')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', userId)
-    .eq('is_correct', true)
-
-  if (countError) {
-    console.error('Error counting solves:', countError)
-    return
-  }
-
   const categorySolves: Record<string, number> = {
     web: 0,
     crypto: 0,
@@ -62,7 +51,7 @@ export async function checkAndUnlockNodes(userId: string) {
 
   const { data: submissions, error: subError } = await supabase
     .from('ctf_submissions')
-    .select('challenge_id')
+    .select('challenge_id, ctf_challenges!inner(category)')
     .eq('user_id', userId)
     .eq('is_correct', true)
 
@@ -72,14 +61,9 @@ export async function checkAndUnlockNodes(userId: string) {
   }
 
   for (const sub of submissions) {
-    const { data: challenge } = await supabase
-      .from('ctf_challenges')
-      .select('category')
-      .eq('id', sub.challenge_id)
-      .single()
-
-    if (challenge && challenge.category in categorySolves) {
-      categorySolves[challenge.category]++
+    const category = (sub as any).ctf_challenges?.category
+    if (category && category in categorySolves) {
+      categorySolves[category]++
     }
   }
 

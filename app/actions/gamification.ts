@@ -30,8 +30,7 @@ export async function addXp(amount: number, reason: string) {
 
   if (error) return { error: error.message }
 
-  await checkBadges()
-  await syncTeamXp(user.id)
+  await Promise.all([checkBadges(), syncTeamXp(user.id)])
   return { success: true, totalXp: newTotal }
 }
 
@@ -76,85 +75,59 @@ export async function checkBadges() {
   const owned = new Set((existingBadges || []).map((b) => b.badge_id))
   const newBadges: string[] = []
 
-  const { count: ctfCount } = await supabase
-    .from('ctf_submissions')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-    .eq('is_correct', true)
+  const [
+    ctfResult, learnResult, postResult, reviewResult,
+    hintResult, writeupResult, skillResult, regexResult, cipherResult,
+    seasonResult, teamResult,
+  ] = await Promise.all([
+    supabase.from('ctf_submissions').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('is_correct', true),
+    supabase.from('learn_progress').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+    supabase.from('posts').select('*', { count: 'exact', head: true }).eq('author_id', user.id),
+    supabase.from('challenge_reviews').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+    supabase.from('user_hint_unlocks').select('*', { count: 'exact', head: true }).eq('user_id', user.id).gt('xp_cost', 0),
+    supabase.from('writeups').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+    supabase.from('user_skill_progress').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('unlocked', true),
+    supabase.from('regex_golf_solves').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+    supabase.from('daily_cipher_solves').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+    supabase.from('ctf_season_participants').select('season_id, user_id, total_points').eq('user_id', user.id),
+    supabase.from('team_members').select('team_id').eq('user_id', user.id).maybeSingle(),
+  ])
 
-  const { count: learnCount } = await supabase
-    .from('learn_progress')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id)
+  const ctfCount = ctfResult.count
+  const learnCount = learnResult.count
+  const postCount = postResult.count
+  const reviewCount = reviewResult.count
+  const hintUnlockCount = hintResult.count
+  const writeupCount = writeupResult.count
+  const skillNodeCount = skillResult.count
+  const regexCount = regexResult.count
+  const dailyCipherCount = cipherResult.count
 
-  const { count: postCount } = await supabase
-    .from('posts')
-    .select('*', { count: 'exact', head: true })
-    .eq('author_id', user.id)
-
-  const { count: reviewCount } = await supabase
-    .from('challenge_reviews')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-
-  const { count: hintUnlockCount } = await supabase
-    .from('user_hint_unlocks')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-    .gt('xp_cost', 0)
-
-  const { count: writeupCount } = await supabase
-    .from('writeups')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-
-  const { count: skillNodeCount } = await supabase
-    .from('user_skill_progress')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-    .eq('unlocked', true)
-
-  const { count: regexCount } = await supabase
-    .from('regex_golf_solves')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-
-  const { count: dailyCipherCount } = await supabase
-    .from('daily_cipher_solves')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-
-  const { data: userSeasonParticipations } = await supabase
-    .from('ctf_season_participants')
-    .select('season_id')
-    .eq('user_id', user.id)
-
-  const seasonCount = userSeasonParticipations?.length || 0
+  const seasonParticipations = seasonResult.data || []
+  const seasonCount = seasonParticipations.length
 
   let seasonWin = false
-  if (userSeasonParticipations) {
-    for (const { season_id } of userSeasonParticipations) {
-      const { data: participants } = await supabase
-        .from('ctf_season_participants')
-        .select('user_id, total_points')
-        .eq('season_id', season_id)
-        .order('total_points', { ascending: false })
-      if (participants) {
-        const rank = participants.findIndex(p => p.user_id === user.id) + 1
-        if (rank <= 3) {
-          seasonWin = true
-          break
-        }
-      }
+  if (seasonParticipations.length > 0) {
+    const seasonIds = [...new Set(seasonParticipations.map(s => s.season_id))]
+    const { data: allParticipants } = await supabase
+      .from('ctf_season_participants')
+      .select('season_id, user_id, total_points')
+      .in('season_id', seasonIds)
+      .order('total_points', { ascending: false })
+
+    const bySeason = (allParticipants || []).reduce((acc: Record<string, any[]>, p) => {
+      (acc[p.season_id] = acc[p.season_id] || []).push(p)
+      return acc
+    }, {})
+
+    for (const sid of seasonIds) {
+      const parts = bySeason[sid] || []
+      const rank = parts.findIndex(p => p.user_id === user.id) + 1
+      if (rank <= 3) { seasonWin = true; break }
     }
   }
 
-  const { data: userTeam } = await supabase
-    .from('team_members')
-    .select('team_id')
-    .eq('user_id', user.id)
-    .single()
-
+  const userTeam = teamResult.data
   let teamSolves = 0
   if (userTeam) {
     const { data: team } = await supabase
@@ -247,7 +220,7 @@ export async function getDailyMissions() {
   return inserted || rows
 }
 
-export async function completeMission(missionType: string) {
+export async function completeMission(missionType: string, skipXp = false) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not logged in' }
@@ -272,7 +245,9 @@ export async function completeMission(missionType: string) {
 
   if (error) return { error: error.message }
 
-  await addXp(mission.xp_reward, `mission_${missionType}`)
+  if (!skipXp) {
+    await addXp(mission.xp_reward, `mission_${missionType}`)
+  }
   return { success: true, xpEarned: mission.xp_reward }
 }
 

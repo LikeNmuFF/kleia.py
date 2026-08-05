@@ -50,10 +50,9 @@ export async function createPost(content: string, linkPreview?: LinkPreviewData)
   await logEvent({ endpoint: 'posts.createPost', status: 'success', durationMs: Date.now() - start, userId: user.id })
   revalidatePath('/feed')
 
-  const { addXp } = await import('./gamification')
-  const { completeMission } = await import('./gamification')
+  const { addXp, completeMission } = await import('./gamification')
   await addXp(10, 'post')
-  await completeMission('post')
+  await completeMission('post', true)
 
   return { success: true }
 }
