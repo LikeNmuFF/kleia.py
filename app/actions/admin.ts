@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
 import { logEvent } from '@/lib/logEvent'
 
 const FREE_TIER_BYTES = 500 * 1024 * 1024 // 500MB
@@ -324,5 +325,95 @@ export async function deleteComment(commentId: string) {
 
   const { error } = await supabase.from('comments').delete().eq('id', commentId)
   if (error) return { error: error.message }
+  return { success: true }
+}
+
+// ============================================================
+// Regex Golf Admin Actions
+// ============================================================
+
+export async function getAdminRegexPuzzles() {
+  const supabase = await createClient()
+  await checkAdmin(supabase)
+
+  const { data: puzzles } = await supabase
+    .from('regex_golf_puzzles')
+    .select('id, title, description, difficulty, solution_regex, match_strings, reject_strings, min_length, xp_reward, is_active, created_at')
+    .order('created_at', { ascending: false })
+
+  return { puzzles: puzzles ?? [] }
+}
+
+export async function createRegexPuzzle(data: {
+  title: string
+  description: string
+  difficulty: string
+  solution_regex: string
+  match_strings: string[]
+  reject_strings: string[]
+  min_length?: number | null
+  xp_reward: number
+}) {
+  const supabase = await createClient()
+  await checkAdmin(supabase)
+
+  if (!data.title.trim()) return { error: 'Title is required' }
+  if (!data.solution_regex.trim()) return { error: 'Solution regex is required' }
+  if (data.match_strings.length === 0) return { error: 'At least one match string is required' }
+  if (data.reject_strings.length === 0) return { error: 'At least one reject string is required' }
+
+  const { error } = await supabase
+    .from('regex_golf_puzzles')
+    .insert({
+      title: data.title.trim(),
+      description: data.description.trim() || null,
+      difficulty: data.difficulty,
+      solution_regex: data.solution_regex.trim(),
+      match_strings: data.match_strings,
+      reject_strings: data.reject_strings,
+      min_length: data.min_length || null,
+      xp_reward: data.xp_reward,
+      is_active: true,
+    })
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/regex-golf')
+  return { success: true }
+}
+
+export async function updateRegexPuzzle(id: string, data: Partial<{
+  title: string
+  description: string
+  difficulty: string
+  solution_regex: string
+  match_strings: string[]
+  reject_strings: string[]
+  min_length: number | null
+  xp_reward: number
+  is_active: boolean
+}>) {
+  const supabase = await createClient()
+  await checkAdmin(supabase)
+
+  const { error } = await supabase
+    .from('regex_golf_puzzles')
+    .update(data)
+    .eq('id', id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/regex-golf')
+  return { success: true }
+}
+
+export async function deleteRegexPuzzle(id: string) {
+  const supabase = await createClient()
+  await checkAdmin(supabase)
+
+  const { error } = await supabase.from('regex_golf_puzzles').delete().eq('id', id)
+  if (error) return { error: error.message }
+
+  revalidatePath('/regex-golf')
   return { success: true }
 }
