@@ -1,8 +1,5 @@
 <div align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/public/logo.svg">
-    <img alt="kleia" src="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/public/logo.svg" width="120" height="120">
-  </picture>
+  <img alt="kleia" src="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/logo-animated.svg" width="200">
   <br/>
   <br/>
 </div>
