@@ -56,13 +56,6 @@ export default function WriteupList({ challengeId }: { challengeId: string }) {
     setVoting(null)
   }
 
-  const getWriteupCost = (writeupId: string): number => {
-    if (viewedWriteups.has(writeupId)) return 0
-    if (!viewCostInfo) return 0
-    if (viewCostInfo.freeViewsRemaining > 0) return 0
-    return viewCostInfo.cost
-  }
-
   const handleViewClick = (writeup: Writeup) => {
     if (viewedWriteups.has(writeup.id)) {
       setViewedWriteups((prev) => {
@@ -72,31 +65,30 @@ export default function WriteupList({ challengeId }: { challengeId: string }) {
       })
       return
     }
-    const cost = getWriteupCost(writeup.id)
-    if (cost > 0) {
-      setConfirmModal({ writeupId: writeup.id, title: writeup.title, cost })
+    if (!viewCostInfo) return
+    if (viewCostInfo.freeViewsRemaining <= 0) {
+      setConfirmModal({ writeupId: writeup.id, title: writeup.title, cost: viewCostInfo.cost })
     } else {
-      setViewedWriteups((prev) => new Set(prev).add(writeup.id))
+      processView(writeup.id)
     }
   }
 
-  const confirmView = async () => {
-    if (!confirmModal) return
-    setViewing(confirmModal.writeupId)
-    const result = await viewWriteup(confirmModal.writeupId)
+  const processView = async (writeupId: string) => {
+    setViewing(writeupId)
+    const result = await viewWriteup(writeupId)
     if (result.success) {
-      setViewedWriteups((prev) => new Set(prev).add(confirmModal.writeupId))
-      setViewCostInfo((prev) => prev ? {
-        ...prev,
-        totalViewsThisWeek: prev.totalViewsThisWeek + 1,
-        freeViewsRemaining: Math.max(0, prev.freeViewsRemaining - 1),
-        cost: prev.freeViewsRemaining > 0 ? prev.cost : 25 + prev.totalViewsThisWeek * 25,
-        userXp: prev.userXp - (result.cost || 0),
-      } : null)
+      setViewedWriteups((prev) => new Set(prev).add(writeupId))
+      const updated = await getViewCost()
+      setViewCostInfo(updated)
     } else if (result.error) {
       alert(result.error)
     }
     setViewing(null)
+  }
+
+  const confirmView = async () => {
+    if (!confirmModal) return
+    await processView(confirmModal.writeupId)
     setConfirmModal(null)
   }
 
@@ -133,7 +125,7 @@ export default function WriteupList({ challengeId }: { challengeId: string }) {
 
       {writeups.map((w) => {
         const isViewed = viewedWriteups.has(w.id)
-        const cost = getWriteupCost(w.id)
+        const cost = !isViewed && viewCostInfo && viewCostInfo.freeViewsRemaining <= 0 ? viewCostInfo.cost : 0
 
         return (
           <div
