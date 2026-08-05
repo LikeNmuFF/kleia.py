@@ -12,7 +12,7 @@ export async function login(formData: FormData) {
   const password = formData.get('password') as string
 
   if (!email || !password) {
-    redirect('/login?error=Email and password are required')
+    redirect('/login?error=' + encodeURIComponent('Email and password are required'))
   }
 
   const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -23,7 +23,7 @@ export async function login(formData: FormData) {
       : error.message === 'Email not confirmed'
         ? 'Please confirm your email before signing in'
         : error.message
-    redirect('/login?error=' + message)
+    redirect('/login?error=' + encodeURIComponent(message))
   }
 
   redirect('/feed')

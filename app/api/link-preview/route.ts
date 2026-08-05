@@ -133,13 +133,29 @@ export async function GET(request: NextRequest) {
   }
 
   const hostname = parsed.hostname.toLowerCase()
+
+  // Block numeric IP addresses (prevents IP obfuscation)
+  if (/^(\d{1,3}\.){3}\d{1,3}$/.test(hostname) || hostname.includes(':')) {
+    return NextResponse.json({ error: 'IP addresses not allowed' }, { status: 400 })
+  }
+
   if (
     hostname === 'localhost' ||
     hostname.startsWith('127.') ||
-    hostname.startsWith('192.168.') ||
     hostname.startsWith('10.') ||
+    hostname.startsWith('192.168.') ||
+    (hostname.startsWith('172.') && (() => {
+      const second = parseInt(hostname.split('.')[1] || '0', 10)
+      return second >= 16 && second <= 31
+    })()) ||
+    hostname.startsWith('169.254.') ||
     hostname === '0.0.0.0' ||
-    hostname.endsWith('.local')
+    hostname.endsWith('.local') ||
+    hostname.endsWith('.internal') ||
+    hostname.endsWith('.localhost') ||
+    hostname === '::1' ||
+    hostname.startsWith('fc00:') ||
+    hostname.startsWith('fe80:')
   ) {
     return NextResponse.json({ error: 'Private URLs not allowed' }, { status: 400 })
   }

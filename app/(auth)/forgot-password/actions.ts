@@ -9,7 +9,7 @@ export async function resetPassword(formData: FormData) {
   const email = formData.get('email') as string
 
   if (!email || !email.includes('@')) {
-    redirect('/forgot-password?error=Please enter a valid email')
+    redirect('/forgot-password?error=' + encodeURIComponent('Please enter a valid email'))
   }
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -17,7 +17,7 @@ export async function resetPassword(formData: FormData) {
   })
 
   if (error) {
-    redirect('/forgot-password?error=' + error.message)
+    redirect('/forgot-password?error=' + encodeURIComponent(error.message))
   }
 
   redirect('/forgot-password?sent=true&email=' + encodeURIComponent(email))
