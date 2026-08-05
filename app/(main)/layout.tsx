@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import Avatar from '@/components/Avatar'
 import LogoutButton from '@/components/auth/LogoutButton'
 import PresenceTracker from '@/components/PresenceTracker'
 import ThemeToggle from '@/components/ThemeToggle'
@@ -16,6 +17,10 @@ export default async function MainLayout({
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+
+  const { data: profile } = user
+    ? await supabase.from('profiles').select('avatar_url').eq('id', user.id).single()
+    : { data: null }
 
   return (
     <ChatUnreadProvider userId={user?.id || null}>
@@ -54,10 +59,13 @@ export default async function MainLayout({
                 className="flex items-center gap-2 px-2.5 py-2 text-sm rounded-lg transition-all hover:bg-[var(--hover-bg)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
                 style={{ color: 'var(--text-secondary)' }}
               >
-                <span className="hidden xl:inline max-w-[120px] truncate">{user?.email?.split('@')[0]}</span>
-                <span className="xl:hidden flex items-center justify-center w-7 h-7 rounded-full text-xs font-semibold uppercase" style={{ background: 'var(--hover-bg)', color: 'var(--text-primary)' }}>
-                  {(user?.email?.split('@')[0] || '?').slice(0, 2)}
-                </span>
+                {profile?.avatar_url ? (
+                  <Avatar src={profile.avatar_url} alt={user?.email || ''} size={28} />
+                ) : (
+                  <span className="flex items-center justify-center w-7 h-7 rounded-full text-xs font-semibold uppercase" style={{ background: 'var(--hover-bg)', color: 'var(--text-primary)' }}>
+                    {(user?.email?.split('@')[0] || '?').slice(0, 2)}
+                  </span>
+                )}
               </Link>
               <LogoutButton />
             </div>
