@@ -1,6 +1,17 @@
 const MAX_REGEX_LENGTH = 200
 const REGEX_TIMEOUT_MS = 100
-const DANGEROUS_PATTERNS = /\(\?.*?\)|\(\?\=|\(\?!|\(\?\<|\(\?<=|\(\?<!|\\A|\\Z|\{[0-9]{3,}\}|\\\w\+\+|\\\w\*\*/
+const DANGEROUS_PATTERNS = [
+  /\(\?.*?\)/,           // lookahead/lookbehind groups
+  /\(\?\=|\(\?!|\(\?\<|\(\?<=|\(\?<!/, // specific lookahead/lookbehind
+  /\\A|\\Z/,             // anchors
+  /\{[0-9]{3,}\}/,       // excessive quantifiers {100+}
+  /\\\w\+\+|\\\w\*\*/,   // nested quantifiers on escapes
+  /\([^)]*\)[+*]{2}/,    // group followed by quantifier (a+)+
+  /\([^)]*\|[^)]*\)[+*]/, // alternation inside group with quantifier (a|b)*
+  /[+*]\?/,              // lazy quantifiers (can still cause backtracking)
+  /\.\*|\.\+/,           // dot-star/dot-plus (.* or .+)
+  /\([^)]*\.\*|\.\+[^)]*\)/, // .* or .+ inside group
+]
 
 export function validateRegex(
   pattern: string,
@@ -11,7 +22,7 @@ export function validateRegex(
     return { valid: false, error: `Pattern too long (max ${MAX_REGEX_LENGTH} chars)`, matchesAll: false, rejectsAll: false }
   }
 
-  if (DANGEROUS_PATTERNS.test(pattern)) {
+  if (DANGEROUS_PATTERNS.some(re => re.test(pattern))) {
     return { valid: false, error: 'Pattern contains disallowed constructs', matchesAll: false, rejectsAll: false }
   }
 
