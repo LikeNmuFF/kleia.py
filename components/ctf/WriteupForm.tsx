@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { submitWriteup, getUserWriteup } from '@/app/actions/writeups'
+import MarkdownContent from '@/components/MarkdownContent'
 
 export default function WriteupForm({ challengeId }: { challengeId: string }) {
   const [existing, setExisting] = useState<any>(null)
@@ -10,6 +11,7 @@ export default function WriteupForm({ challengeId }: { challengeId: string }) {
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null)
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
+  const [showPreview, setShowPreview] = useState(false)
 
   useEffect(() => {
     getUserWriteup(challengeId).then((w) => {
@@ -68,17 +70,33 @@ export default function WriteupForm({ challengeId }: { challengeId: string }) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-          Content
-        </label>
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="Share your step-by-step approach, tools used, and key insights..."
-          rows={6}
-          className="w-full px-3 py-2 rounded-lg text-sm border bg-transparent resize-none"
-          style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
-        />
+        <div className="flex items-center justify-between mb-1">
+          <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+            Content
+          </label>
+          <button
+            type="button"
+            onClick={() => setShowPreview(!showPreview)}
+            className="text-xs px-2 py-1 rounded-md transition-colors"
+            style={{ color: 'var(--text-muted)', backgroundColor: 'var(--bg-primary)' }}
+          >
+            {showPreview ? 'Edit' : 'Preview'}
+          </button>
+        </div>
+        {showPreview ? (
+          <div className="p-3 rounded-lg border" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-primary)' }}>
+            <MarkdownContent content={content || '*Nothing to preview yet.*'} />
+          </div>
+        ) : (
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="Share your step-by-step approach, tools used, and key insights... Supports markdown (**bold**, `code`, ```code blocks```)."
+            rows={6}
+            className="w-full px-3 py-2 rounded-lg text-sm border bg-transparent resize-none"
+            style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+          />
+        )}
       </div>
 
       <button

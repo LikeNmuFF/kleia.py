@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { getWriteupsForChallenge, voteWriteup, getViewCost, viewWriteup } from '@/app/actions/writeups'
+import MarkdownContent from '@/components/MarkdownContent'
 
 interface Writeup {
   id: string
@@ -154,9 +155,7 @@ export default function WriteupList({ challengeId }: { challengeId: string }) {
 
             {isViewed ? (
               <>
-                <p className="text-sm whitespace-pre-wrap" style={{ color: 'var(--text-secondary)' }}>
-                  {w.content}
-                </p>
+                <MarkdownContent content={w.content} />
                 <button
                   onClick={() => handleViewClick(w)}
                   className="text-xs px-2 py-1 rounded-md"
