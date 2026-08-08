@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHash } from 'crypto'
+import { createClient } from '@/lib/supabase/server'
 
 const MAX_URL_LENGTH = 2048
 const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
@@ -13,7 +14,6 @@ function signCloudinaryUrl(url: string): string {
   const parsed = new URL(url)
   const host = parsed.hostname
 
-  // Extract public_id from path: /raw/upload/v1234/file.pdf -> file.pdf
   const pathMatch = parsed.pathname.match(/\/raw\/upload\/(?:v\d+\/)?(.+)$/)
   if (!pathMatch) return url
 
@@ -61,10 +61,42 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Host not allowed' }, { status: 400 })
   }
 
-  // Sign the Cloudinary URL if it's a raw upload
-  const fetchUrl = parsed.pathname.includes('/raw/upload/')
-    ? signCloudinaryUrl(url)
-    : url
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const isRawUpload = parsed.pathname.includes('/raw/upload/')
+
+  // Only sign URLs for authenticated users
+  let fetchUrl = url
+  if (isRawUpload) {
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required to access this file' }, { status: 401 })
+    }
+
+    // Verify user owns this file
+    const pathMatch = parsed.pathname.match(/\/raw\/upload\/(?:v\d+\/)?(.+)$/)
+    if (pathMatch) {
+      const publicId = pathMatch[1]
+
+      // Check if this public_id belongs to the authenticated user
+      const { data: ownership } = await supabase
+        .from('avatars')
+        .select('user_id')
+        .eq('public_id', publicId)
+        .maybeSingle()
+
+      // Allow if: user owns the avatar, OR it's a CTF file they uploaded, OR it's a writeup/attachment
+      const isOwner = ownership?.user_id === user.id
+      const isCtfFile = publicId.startsWith('kleia-ctf-files/')
+      const isUserUpload = publicId.includes(user.id)
+
+      if (!isOwner && !isCtfFile && !isUserUpload) {
+        return NextResponse.json({ error: 'You do not have permission to access this file' }, { status: 403 })
+      }
+    }
+
+    fetchUrl = signCloudinaryUrl(url)
+  }
 
   try {
     const controller = new AbortController()

@@ -18,7 +18,7 @@ export default function SecurityPage() {
 
         <h2 className="text-xl font-semibold mt-8" style={{ color: 'var(--text-primary)' }}>Encryption</h2>
         <p>
-          All traffic to and from Kleia is encrypted using TLS 1.3. Passwords are hashed using SHA-256 before being stored in the database — we never store plaintext passwords. Flag values in CTF challenges are also stored as SHA-256 hashes, never in plaintext.
+          All traffic to and from Kleia is encrypted using TLS 1.3. Passwords are hashed with bcrypt by Supabase Auth — we never store plaintext passwords. Flag values in CTF challenges are also stored as SHA-256 hashes, never in plaintext.
         </p>
 
         <h2 className="text-xl font-semibold mt-8" style={{ color: 'var(--text-primary)' }}>Database Security</h2>

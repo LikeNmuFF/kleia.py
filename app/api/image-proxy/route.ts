@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { resolveAndCheckHost, hasCredentials } from '@/lib/ssrf-guard'
 
 const MAX_URL_LENGTH = 2048
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB
+const MAX_REDIRECTS = 2
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -15,7 +17,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'URL too long' }, { status: 400 })
   }
 
-  // Decode HTML entities that get encoded in URLs (&amp; → &)
   const decodedUrl = url.replace(/&amp;/g, '&')
 
   let parsed: URL
@@ -29,50 +30,56 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Only HTTPS allowed' }, { status: 400 })
   }
 
-  const hostname = parsed.hostname.toLowerCase()
-
-  // Block numeric IP addresses (prevents IP obfuscation)
-  if (/^(\d{1,3}\.){3}\d{1,3}$/.test(hostname) || hostname.includes(':')) {
-    return NextResponse.json({ error: 'IP addresses not allowed' }, { status: 400 })
+  if (hasCredentials(parsed)) {
+    return NextResponse.json({ error: 'URLs with credentials not allowed' }, { status: 400 })
   }
 
-  if (
-    hostname === 'localhost' ||
-    hostname.startsWith('127.') ||
-    hostname.startsWith('10.') ||
-    hostname.startsWith('192.168.') ||
-    (hostname.startsWith('172.') && (() => {
-      const second = parseInt(hostname.split('.')[1] || '0', 10)
-      return second >= 16 && second <= 31
-    })()) ||
-    hostname.startsWith('169.254.') ||
-    hostname === '0.0.0.0' ||
-    hostname.endsWith('.local') ||
-    hostname.endsWith('.internal') ||
-    hostname.endsWith('.localhost') ||
-    hostname === '::1' ||
-    hostname.startsWith('fc00:') ||
-    hostname.startsWith('fe80:')
-  ) {
-    return NextResponse.json({ error: 'Private URLs not allowed' }, { status: 400 })
+  if (!(await resolveAndCheckHost(parsed.hostname))) {
+    return NextResponse.json({ error: 'Host not allowed' }, { status: 400 })
   }
 
   try {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 10000)
 
-    const response = await fetch(decodedUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; KleiaBot/1.0)',
-        'Accept': 'image/*',
-      },
-      signal: controller.signal,
-      redirect: 'follow',
-    })
+    let currentUrl = decodedUrl
+    let response: Response | null = null
+
+    for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+      response = await fetch(currentUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; KleiaBot/1.0)',
+          'Accept': 'image/*',
+        },
+        signal: controller.signal,
+        redirect: 'manual',
+      })
+
+      if ([301, 302, 303, 307, 308].includes(response.status)) {
+        const location = response.headers.get('location')
+        if (!location) break
+
+        let nextUrl: URL
+        try {
+          nextUrl = new URL(location, currentUrl)
+        } catch {
+          break
+        }
+
+        if (nextUrl.protocol !== 'https:') break
+        if (hasCredentials(nextUrl)) break
+        if (!(await resolveAndCheckHost(nextUrl.hostname))) break
+
+        currentUrl = nextUrl.href
+        continue
+      }
+
+      break
+    }
 
     clearTimeout(timeout)
 
-    if (!response.ok) {
+    if (!response || !response.ok) {
       return NextResponse.json({ error: 'Failed to fetch image' }, { status: 502 })
     }
 
@@ -83,7 +90,6 @@ export async function GET(request: NextRequest) {
 
     const contentType = response.headers.get('content-type') || 'image/jpeg'
 
-    // Only allow image content types
     if (!contentType.startsWith('image/')) {
       return NextResponse.json({ error: 'URL is not an image' }, { status: 400 })
     }

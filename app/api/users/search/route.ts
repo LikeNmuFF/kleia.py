@@ -11,9 +11,14 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createClient()
 
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const { data: users } = await supabase
     .from('profiles')
-    .select('id, username, avatar_url')
+    .select('username, avatar_url')
     .ilike('username', `%${query}%`)
     .limit(10)
 

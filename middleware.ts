@@ -2,6 +2,18 @@ import { type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
+function getClientIp(request: NextRequest): string {
+  // On Vercel, x-vercel-forwarded-for is appended by the platform and cannot be spoofed
+  const vercelIp = request.headers.get('x-vercel-forwarded-for')
+  if (vercelIp) return vercelIp.split(',')[0].trim()
+
+  // Fallback to x-real-ip (set by reverse proxies)
+  const realIp = request.headers.get('x-real-ip')
+  if (realIp) return realIp.split(',')[0].trim()
+
+  return 'unknown'
+}
+
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
@@ -10,11 +22,10 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/login') ||
     pathname.startsWith('/signup') ||
     pathname.startsWith('/forgot-password') ||
-    pathname.startsWith('/reset-password')
+    pathname.startsWith('/reset-password') ||
+    pathname.startsWith('/auth/callback')
   ) {
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-      request.headers.get('x-real-ip') ||
-      'unknown'
+    const ip = getClientIp(request)
 
     const { allowed, retryAfter } = checkRateLimit(pathname, ip)
     if (!allowed && retryAfter) {

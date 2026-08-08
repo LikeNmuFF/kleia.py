@@ -18,7 +18,7 @@ export default function PrivacyPage() {
           <li><strong>Email address</strong> — Used for authentication and account recovery.</li>
           <li><strong>Username</strong> — Your public display name on the platform.</li>
           <li><strong>Avatar</strong> — An optional profile picture you upload.</li>
-          <li><strong>Account credentials</strong> — Your password, stored as a SHA-256 hash. We never store plaintext passwords.</li>
+          <li><strong>Account credentials</strong> — Your password, hashed with bcrypt by Supabase Auth. We never store plaintext passwords.</li>
         </ul>
         <p>When you use Kleia, we automatically collect:</p>
         <ul className="list-disc pl-6 space-y-1">

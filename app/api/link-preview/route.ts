@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { resolveAndCheckHost, hasCredentials } from '@/lib/ssrf-guard'
 
 interface LinkPreview {
   url: string
@@ -8,9 +9,8 @@ interface LinkPreview {
   siteName: string | null
 }
 
-// ============================================================
-// HTML entity decoder
-// ============================================================
+const MAX_REDIRECTS = 2
+
 function decodeHtmlEntities(text: string): string {
   return text
     .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
@@ -24,40 +24,18 @@ function decodeHtmlEntities(text: string): string {
     .replace(/&nbsp;/g, ' ')
 }
 
-// ============================================================
-// Hardcoded regex patterns — no dynamic RegExp construction
-// Each property has patterns for:
-//   1. property/name attr first, then content attr
-//   2. content attr first, then property/name attr
-// ============================================================
-
-// og:title
 const OG_TITLE_1 = /<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i
 const OG_TITLE_2 = /<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:title["']/i
-
-// og:description
 const OG_DESC_1 = /<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["']/i
 const OG_DESC_2 = /<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:description["']/i
-
-// og:image
 const OG_IMAGE_1 = /<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i
 const OG_IMAGE_2 = /<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/i
-
-// og:site_name
 const OG_SITE_1 = /<meta[^>]*property=["']og:site_name["'][^>]*content=["']([^"']+)["']/i
 const OG_SITE_2 = /<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:site_name["']/i
-
-// meta name="description"
 const META_DESC_1 = /<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i
 const META_DESC_2 = /<meta[^>]*content=["']([^"']+)["'][^>]*name=["']description["']/i
-
-// twitter:image
 const TW_IMAGE_1 = /<meta[^>]*name=["']twitter:image["'][^>]*content=["']([^"']+)["']/i
 const TW_IMAGE_2 = /<meta[^>]*content=["']([^"']+)["'][^>]*name=["']twitter:image["']/i
-
-// ============================================================
-// Extraction helpers
-// ============================================================
 
 function extractOgTitle(html: string): string | null {
   const raw = html.match(OG_TITLE_1)?.[1] || html.match(OG_TITLE_2)?.[1]
@@ -109,10 +87,6 @@ function extractSiteName(html: string): string | null {
   return extractOgSiteName(html)
 }
 
-// ============================================================
-// API handler
-// ============================================================
-
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const url = searchParams.get('url')
@@ -132,50 +106,56 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Only HTTPS links are allowed' }, { status: 400 })
   }
 
-  const hostname = parsed.hostname.toLowerCase()
-
-  // Block numeric IP addresses (prevents IP obfuscation)
-  if (/^(\d{1,3}\.){3}\d{1,3}$/.test(hostname) || hostname.includes(':')) {
-    return NextResponse.json({ error: 'IP addresses not allowed' }, { status: 400 })
+  if (hasCredentials(parsed)) {
+    return NextResponse.json({ error: 'URLs with credentials not allowed' }, { status: 400 })
   }
 
-  if (
-    hostname === 'localhost' ||
-    hostname.startsWith('127.') ||
-    hostname.startsWith('10.') ||
-    hostname.startsWith('192.168.') ||
-    (hostname.startsWith('172.') && (() => {
-      const second = parseInt(hostname.split('.')[1] || '0', 10)
-      return second >= 16 && second <= 31
-    })()) ||
-    hostname.startsWith('169.254.') ||
-    hostname === '0.0.0.0' ||
-    hostname.endsWith('.local') ||
-    hostname.endsWith('.internal') ||
-    hostname.endsWith('.localhost') ||
-    hostname === '::1' ||
-    hostname.startsWith('fc00:') ||
-    hostname.startsWith('fe80:')
-  ) {
-    return NextResponse.json({ error: 'Private URLs not allowed' }, { status: 400 })
+  if (!(await resolveAndCheckHost(parsed.hostname))) {
+    return NextResponse.json({ error: 'Host not allowed' }, { status: 400 })
   }
 
   try {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 8000)
 
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'KleiaBot/1.0 (LinkPreview)',
-        'Accept': 'text/html',
-      },
-      signal: controller.signal,
-      redirect: 'follow',
-    })
+    let currentUrl = url
+    let response: Response | null = null
+
+    for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+      response = await fetch(currentUrl, {
+        headers: {
+          'User-Agent': 'KleiaBot/1.0 (LinkPreview)',
+          'Accept': 'text/html',
+        },
+        signal: controller.signal,
+        redirect: 'manual',
+      })
+
+      if ([301, 302, 303, 307, 308].includes(response.status)) {
+        const location = response.headers.get('location')
+        if (!location) break
+
+        let nextUrl: URL
+        try {
+          nextUrl = new URL(location, currentUrl)
+        } catch {
+          break
+        }
+
+        if (nextUrl.protocol !== 'https:') break
+        if (hasCredentials(nextUrl)) break
+        if (!(await resolveAndCheckHost(nextUrl.hostname))) break
+
+        currentUrl = nextUrl.href
+        continue
+      }
+
+      break
+    }
 
     clearTimeout(timeout)
 
-    if (!response.ok) {
+    if (!response || !response.ok) {
       return NextResponse.json({ error: 'Failed to fetch URL' }, { status: 502 })
     }
 
@@ -190,7 +170,6 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Read only first 50KB to avoid huge pages
     const reader = response.body?.getReader()
     const chunks: Uint8Array[] = []
     let totalBytes = 0
