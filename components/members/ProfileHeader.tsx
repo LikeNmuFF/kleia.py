@@ -114,6 +114,8 @@ export default function ProfileHeader({ profile: initialProfile }: ProfileHeader
             ...prev,
             status: updated.status ?? prev.status,
             last_seen: updated.last_seen ?? prev.last_seen,
+            current_streak: updated.current_streak ?? prev.current_streak,
+            longest_streak: updated.longest_streak ?? prev.longest_streak,
           }))
         }
       )

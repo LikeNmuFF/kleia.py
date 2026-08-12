@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { usePresence } from '@/lib/hooks/usePresence'
+import { checkAndUpdateStreak } from '@/app/actions/streak'
 
 export default function PresenceTracker() {
   const [userId, setUserId] = useState<string | undefined>()
@@ -11,7 +12,10 @@ export default function PresenceTracker() {
     const supabase = createClient()
     ;(async () => {
       const { data } = await supabase.auth.getUser()
-      if (data.user) setUserId(data.user.id)
+      if (data.user) {
+        setUserId(data.user.id)
+        checkAndUpdateStreak()
+      }
     })()
   }, [])
 
