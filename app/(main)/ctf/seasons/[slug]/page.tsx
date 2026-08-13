@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getSeasonBySlug, getSeasonChallenges, getSeasonLeaderboard, isSeasonParticipant, getSeasonParticipantCount } from '@/app/actions/seasons'
-import { getEffectiveSeasonStatus } from '@/app/actions/competition'
+import { getEffectiveSeasonStatus } from '@/app/actions/competition-status'
 import SeasonDetailClient from './SeasonDetailClient'
 
 export default async function SeasonDetailPage({ params }: { params: Promise<{ slug: string }> }) {

@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { getSeasonBySlug, getSeasonChallenges, getSeasonLeaderboard } from '@/app/actions/seasons'
-import { getCompetitionAccess, getEffectiveSeasonStatus, getRecentSeasonSolves } from '@/app/actions/competition'
+import { getCompetitionAccess, getRecentSeasonSolves } from '@/app/actions/competition'
+import { getEffectiveSeasonStatus } from '@/app/actions/competition-status'
 import SpectateClient from './SpectateClient'
 
 export default async function SpectatePage({ params }: { params: Promise<{ slug: string }> }) {
