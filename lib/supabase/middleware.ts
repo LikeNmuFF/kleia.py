@@ -33,6 +33,7 @@ export async function updateSession(request: NextRequest) {
         url.pathname = '/feed'
         return NextResponse.redirect(url)
       }
+      supabaseResponse.headers.set('x-pathname', request.nextUrl.pathname)
       return supabaseResponse
     }
   }
@@ -52,6 +53,7 @@ export async function updateSession(request: NextRequest) {
   ]
 
   if (publicPaths.some((p) => request.nextUrl.pathname.startsWith(p))) {
+    supabaseResponse.headers.set('x-pathname', request.nextUrl.pathname)
     return supabaseResponse
   }
 
