@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Coffee, Copy, Check, X } from 'lucide-react'
+import QRCode from 'qrcode'
 
 const GCASH_NUMBER = '0926 739 0274'
 
@@ -15,8 +16,16 @@ export default function SupportButton({
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [qrDataUrl, setQrDataUrl] = useState('')
 
-  useEffect(() => setMounted(true), [])
+  useEffect(() => {
+    setMounted(true)
+    QRCode.toDataURL(GCASH_NUMBER.replace(/\s/g, ''), {
+      width: 200,
+      margin: 2,
+      color: { dark: '#1a1a2e', light: '#ffffff' },
+    }).then(setQrDataUrl)
+  }, [])
 
   const handleCopy = async () => {
     try {
@@ -108,33 +117,42 @@ export default function SupportButton({
                   className="rounded-xl p-4 border"
                   style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--border-color)' }}
                 >
-                  <p className="text-[11px] uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-muted)' }}>
+                  <p className="text-[11px] uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>
                     GCash
                   </p>
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-lg font-bold tracking-wide" style={{ color: 'var(--text-primary)' }}>
-                      {GCASH_NUMBER}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={handleCopy}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:scale-[1.02]"
-                      style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-text)' }}
-                    >
-                      {copied ? (
-                        <>
-                          <Check className="w-3.5 h-3.5" /> Copied
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3.5 h-3.5" /> Copy
-                        </>
-                      )}
-                    </button>
+                  <div className="flex flex-col items-center gap-3">
+                    {qrDataUrl && (
+                      <div className="rounded-xl p-2 bg-white">
+                        <img src={qrDataUrl} alt="GCash QR Code" width={160} height={160} />
+                      </div>
+                    )}
+                    <div className="w-full">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-lg font-bold tracking-wide" style={{ color: 'var(--text-primary)' }}>
+                          {GCASH_NUMBER}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleCopy}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:scale-[1.02]"
+                          style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-text)' }}
+                        >
+                          {copied ? (
+                            <>
+                              <Check className="w-3.5 h-3.5" /> Copied
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3.5 h-3.5" /> Copy
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
+                        Scan the QR or copy the number to send any amount. 💜
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
-                    Send any amount via GCash. It goes straight to the creator. 💜
-                  </p>
                 </div>
               </motion.div>
               </div>
