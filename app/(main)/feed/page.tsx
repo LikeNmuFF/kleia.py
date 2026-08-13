@@ -1,8 +1,10 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import { getUpcomingRegistration } from '@/app/actions/competition'
 import PostCard from '@/components/feed/PostCard'
 import CreatePost from '@/components/feed/CreatePost'
 import DailyMissions from '@/components/gamification/DailyMissions'
+import CompetitionBanner from '@/components/competition/CompetitionBanner'
 
 export const metadata: Metadata = {
   title: 'Feed',
@@ -13,7 +15,7 @@ export default async function FeedPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const [postsResult, profileResult] = await Promise.all([
+  const [postsResult, profileResult, upcomingRegistration] = await Promise.all([
     supabase
       .from('posts')
       .select('id, content, type, author_id, created_at, is_pinned, likes_count, comments_count, link_preview')
@@ -22,6 +24,7 @@ export default async function FeedPage() {
     user
       ? supabase.from('profiles').select('id, role, username, avatar_url').eq('id', user.id).single()
       : Promise.resolve({ data: null }),
+    getUpcomingRegistration(),
   ])
 
   const rawPosts = postsResult.data
@@ -56,6 +59,9 @@ export default async function FeedPage() {
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4">
+      {/* Competition Banner */}
+      {upcomingRegistration && <CompetitionBanner season={upcomingRegistration} />}
+
       {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Feed</h1>
