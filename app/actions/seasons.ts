@@ -17,6 +17,17 @@ async function checkAdmin(supabase: Awaited<ReturnType<typeof createClient>>) {
   return profile?.role === 'admin'
 }
 
+export async function getAllSeasons() {
+  const supabase = await createClient()
+
+  const { data } = await supabase
+    .from('ctf_seasons')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  return data || []
+}
+
 export async function getActiveSeason() {
   const supabase = await createClient()
   const today = new Date().toISOString().split('T')[0]
@@ -175,6 +186,99 @@ export async function isSeasonParticipant(seasonId: string, userId: string) {
     .maybeSingle()
 
   return !!data
+}
+
+export async function updateSeason(seasonId: string, data: {
+  name?: string
+  description?: string
+  theme?: string
+  start_date?: string
+  end_date?: string
+  is_active?: boolean
+}) {
+  const start = Date.now()
+  const supabase = await createClient()
+  if (!(await checkAdmin(supabase))) {
+    return { error: 'Unauthorized' }
+  }
+
+  const updates: Record<string, unknown> = {}
+  if (data.name !== undefined) updates.name = data.name.trim()
+  if (data.description !== undefined) updates.description = data.description?.trim() || null
+  if (data.theme !== undefined) updates.theme = data.theme?.trim() || null
+  if (data.start_date !== undefined) updates.start_date = data.start_date
+  if (data.end_date !== undefined) updates.end_date = data.end_date
+  if (data.is_active !== undefined) updates.is_active = data.is_active
+
+  const { error } = await supabase
+    .from('ctf_seasons')
+    .update(updates)
+    .eq('id', seasonId)
+
+  if (error) {
+    await logEvent({ endpoint: 'seasons.updateSeason', status: 'error', durationMs: Date.now() - start, errorMessage: error.message })
+    return { error: error.message }
+  }
+
+  await logEvent({ endpoint: 'seasons.updateSeason', status: 'success', durationMs: Date.now() - start })
+  revalidatePath('/ctf/seasons')
+  revalidatePath(`/ctf/seasons/${seasonId}`)
+  return { success: true }
+}
+
+export async function deleteSeason(seasonId: string) {
+  const start = Date.now()
+  const supabase = await createClient()
+  if (!(await checkAdmin(supabase))) {
+    return { error: 'Unauthorized' }
+  }
+
+  const { error } = await supabase
+    .from('ctf_seasons')
+    .delete()
+    .eq('id', seasonId)
+
+  if (error) {
+    await logEvent({ endpoint: 'seasons.deleteSeason', status: 'error', durationMs: Date.now() - start, errorMessage: error.message })
+    return { error: error.message }
+  }
+
+  await logEvent({ endpoint: 'seasons.deleteSeason', status: 'success', durationMs: Date.now() - start })
+  revalidatePath('/ctf/seasons')
+  return { success: true }
+}
+
+export async function addChallengeToSeason(seasonId: string, challengeId: string, bonusPoints: number = 0) {
+  const supabase = await createClient()
+  if (!(await checkAdmin(supabase))) return { error: 'Unauthorized' }
+
+  const { error } = await supabase
+    .from('ctf_season_challenges')
+    .insert({ season_id: seasonId, challenge_id: challengeId, bonus_points: bonusPoints })
+
+  if (error) {
+    if (error.message?.includes('duplicate key')) return { error: 'Challenge already in this season' }
+    return { error: error.message }
+  }
+
+  revalidatePath('/ctf/seasons')
+  return { success: true }
+}
+
+export async function removeChallengeFromSeason(seasonId: string, challengeId: string) {
+  const supabase = await createClient()
+  if (!(await checkAdmin(supabase))) return { error: 'Unauthorized' }
+
+  const { error } = await supabase
+    .from('ctf_season_challenges')
+    .delete()
+    .eq('season_id', seasonId)
+    .eq('challenge_id', challengeId)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/ctf/seasons')
+  return { success: true }
 }
 
 export async function createSeason(data: {

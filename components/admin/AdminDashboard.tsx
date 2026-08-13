@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Users, BarChart3, MessageSquare, Shield, Flag, LayoutDashboard, Regex } from 'lucide-react'
+import { Users, BarChart3, MessageSquare, Shield, Flag, LayoutDashboard, Regex, Trophy } from 'lucide-react'
 import OverviewTab from './OverviewTab'
 import UsersTab from './UsersTab'
 import ContentTab from './ContentTab'
@@ -9,6 +9,7 @@ import ChatTab from './ChatTab'
 import SecurityTabComponent from './SecurityTabComponent'
 import CTFAdminTab from './CTFAdminTab'
 import RegexGolfAdminTab from './RegexGolfAdminTab'
+import SeasonsAdminTab from './SeasonsAdminTab'
 
 const TABS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -16,6 +17,7 @@ const TABS = [
   { id: 'content', label: 'Content', icon: MessageSquare },
   { id: 'chat', label: 'Chat', icon: BarChart3 },
   { id: 'ctf', label: 'CTF', icon: Flag },
+  { id: 'seasons', label: 'Seasons', icon: Trophy },
   { id: 'regex-golf', label: 'Regex Golf', icon: Regex },
   { id: 'security', label: 'Security', icon: Shield },
 ] as const
@@ -62,6 +64,7 @@ export default function AdminDashboard({ role }: { role: string }) {
       {activeTab === 'content' && <ContentTab />}
       {activeTab === 'chat' && <ChatTab />}
       {activeTab === 'ctf' && <CTFAdminTab />}
+      {activeTab === 'seasons' && <SeasonsAdminTab />}
       {activeTab === 'regex-golf' && <RegexGolfAdminTab />}
       {activeTab === 'security' && <SecurityTabComponent />}
     </div>
