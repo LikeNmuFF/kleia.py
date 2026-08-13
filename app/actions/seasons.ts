@@ -31,15 +31,15 @@ export async function getAllSeasons() {
 
 export async function getActiveSeason() {
   const supabase = await createClient()
-  const today = new Date().toISOString().split('T')[0]
+  const now = new Date().toISOString()
 
   // First try to find a season that is currently running (today between start and end)
   let { data } = await supabase
     .from('ctf_seasons')
     .select('*')
     .eq('is_active', true)
-    .lte('start_date', today)
-    .gte('end_date', today)
+    .lte('start_date', now)
+    .gte('end_date', now)
     .single()
 
   // If no running season, find the next upcoming season
@@ -48,7 +48,7 @@ export async function getActiveSeason() {
       .from('ctf_seasons')
       .select('*')
       .eq('is_active', true)
-      .gte('start_date', today)
+      .gte('start_date', now)
       .order('start_date', { ascending: true })
       .limit(1)
       .single()
@@ -61,12 +61,12 @@ export async function getActiveSeason() {
 
 export async function getPastSeasons() {
   const supabase = await createClient()
-  const today = new Date().toISOString().split('T')[0]
+  const now = new Date().toISOString()
 
   const { data } = await supabase
     .from('ctf_seasons')
     .select('*')
-    .or(`is_active.eq.false,end_date.lt.${today}`)
+    .or(`is_active.eq.false,end_date.lt.${now}`)
     .order('end_date', { ascending: false })
     .limit(10)
 
