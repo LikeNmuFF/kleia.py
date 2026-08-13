@@ -52,14 +52,15 @@ export default function SupportButton({
 
       <AnimatePresence>
         {open && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 overflow-y-auto">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm"
               onClick={() => setOpen(false)}
             />
+            <div className="flex min-h-full items-center justify-center p-4">
             <motion.div
               role="dialog"
               aria-modal="true"
@@ -131,6 +132,7 @@ export default function SupportButton({
                 </p>
               </div>
             </motion.div>
+            </div>
           </div>
         )}
       </AnimatePresence>
