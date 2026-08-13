@@ -32,13 +32,28 @@ export async function getActiveSeason() {
   const supabase = await createClient()
   const today = new Date().toISOString().split('T')[0]
 
-  const { data } = await supabase
+  // First try to find a season that is currently running (today between start and end)
+  let { data } = await supabase
     .from('ctf_seasons')
     .select('*')
     .eq('is_active', true)
     .lte('start_date', today)
     .gte('end_date', today)
     .single()
+
+  // If no running season, find the next upcoming season
+  if (!data) {
+    const { data: upcoming } = await supabase
+      .from('ctf_seasons')
+      .select('*')
+      .eq('is_active', true)
+      .gte('start_date', today)
+      .order('start_date', { ascending: true })
+      .limit(1)
+      .single()
+
+    data = upcoming
+  }
 
   return data
 }

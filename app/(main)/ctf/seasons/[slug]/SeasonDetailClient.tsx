@@ -91,6 +91,16 @@ export default function SeasonDetailClient({
     return season.is_active && season.start_date <= today && season.end_date >= today
   }
 
+  const isSeasonUpcoming = () => {
+    const today = new Date().toISOString().split('T')[0]
+    return season.is_active && season.start_date > today
+  }
+
+  const canRegister = () => {
+    const today = new Date().toISOString().split('T')[0]
+    return season.is_active && season.end_date >= today
+  }
+
   const handleJoin = async () => {
     if (!userId) {
       router.push('/login')
@@ -193,6 +203,12 @@ export default function SeasonDetailClient({
                   Live Now
                 </span>
               )}
+              {isSeasonUpcoming() && (
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                  style={{ backgroundColor: 'rgba(234, 179, 8, 0.2)', color: '#eab308' }}>
+                  Starting {formatDate(season.start_date)}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -289,7 +305,7 @@ export default function SeasonDetailClient({
       </div>
 
       {/* Registration / Join Section */}
-      {!isParticipant && isSeasonActive() && userId && (
+      {!isParticipant && canRegister() && userId && (
         <div
           className="mb-8 rounded-2xl overflow-hidden"
           style={{ border: '2px dashed rgba(139, 92, 246, 0.4)' }}

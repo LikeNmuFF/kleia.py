@@ -39,6 +39,11 @@ export default function SeasonsClient({
     return season.is_active && season.start_date <= today && season.end_date >= today
   }
 
+  const isSeasonUpcoming = (season: Season) => {
+    const today = new Date().toISOString().split('T')[0]
+    return season.is_active && season.start_date > today
+  }
+
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
       {/* Header */}
@@ -76,15 +81,17 @@ export default function SeasonsClient({
       </div>
 
       {/* Active Season */}
-      {activeSeason && isSeasonActive(activeSeason) ? (
+      {activeSeason && (isSeasonActive(activeSeason) || isSeasonUpcoming(activeSeason)) ? (
         <div className="mb-8">
           <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
-            Current Season
+            {isSeasonActive(activeSeason) ? 'Current Season' : 'Upcoming Season'}
           </h2>
           <div
             className="rounded-2xl overflow-hidden cursor-pointer transition-all hover:scale-[1.01] hover:shadow-xl"
             style={{
-              background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(6, 182, 212, 0.2), rgba(236, 72, 153, 0.15))',
+              background: isSeasonActive(activeSeason)
+                ? 'linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(6, 182, 212, 0.2), rgba(236, 72, 153, 0.15))'
+                : 'linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(6, 182, 212, 0.1))',
               border: '1px solid rgba(139, 92, 246, 0.3)',
             }}
             onClick={() => router.push(`/ctf/seasons/${activeSeason.slug}`)}
@@ -100,11 +107,18 @@ export default function SeasonsClient({
                   </span>
                 )}
               </div>
-              <span className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
-                style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)', color: '#22c55e' }}>
-                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                Live
-              </span>
+              {isSeasonActive(activeSeason) ? (
+                <span className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
+                  style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)', color: '#22c55e' }}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                  Live
+                </span>
+              ) : (
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                  style={{ backgroundColor: 'rgba(234, 179, 8, 0.2)', color: '#eab308' }}>
+                  Starting {formatDate(activeSeason.start_date)}
+                </span>
+              )}
             </div>
 
             {/* Main */}
