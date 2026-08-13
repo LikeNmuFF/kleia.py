@@ -78,7 +78,7 @@ export default function CompetitionClient({
           table: 'ctf_season_participants',
           filter: `season_id=eq.${season.id}and user_id=eq.${userId}`,
         },
-        (payload) => {
+        (payload: { new: { total_points?: number; challenges_solved?: number } }) => {
           const row = payload.new as { total_points?: number; challenges_solved?: number }
           setTotalPoints(row.total_points ?? 0)
           setChallengesSolved(row.challenges_solved ?? 0)
@@ -114,7 +114,7 @@ export default function CompetitionClient({
       setChallengesSolved(prev => prev + 1)
       setFlag('')
     } else {
-      setResult({ ok: false, text: res.message })
+      setResult({ ok: false, text: res.message ?? '' })
     }
   }
 
