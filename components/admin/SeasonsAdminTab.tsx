@@ -198,8 +198,8 @@ export default function SeasonsAdminTab() {
   }
 
   function isTodayInRange(start: string, end: string) {
-    const today = new Date().toISOString().split('T')[0]
-    return today >= start && today <= end
+    const now = new Date().toISOString()
+    return start <= now && now <= end
   }
 
   if (loading) {
