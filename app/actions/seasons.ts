@@ -57,17 +57,22 @@ export async function getPastSeasons() {
   return data || []
 }
 
-export async function joinSeason(seasonId: string) {
+export async function joinSeason(seasonId: string, codename?: string) {
   const start = Date.now()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not logged in' }
+
+  if (codename && codename.trim().length < 2) {
+    return { error: 'Codename must be at least 2 characters' }
+  }
 
   const { error } = await supabase
     .from('ctf_season_participants')
     .insert({
       season_id: seasonId,
       user_id: user.id,
+      codename: codename?.trim() || null,
     })
 
   if (error) {
@@ -94,6 +99,7 @@ export async function getSeasonLeaderboard(seasonId: string) {
       total_points,
       challenges_solved,
       joined_at,
+      codename,
       profiles:user_id (username, avatar_url)
     `)
     .eq('season_id', seasonId)
@@ -108,6 +114,7 @@ export async function getSeasonLeaderboard(seasonId: string) {
       total_points: row.total_points,
       challenges_solved: row.challenges_solved,
       joined_at: row.joined_at,
+      codename: row.codename ?? null,
       username: prof?.username ?? 'Unknown',
       avatar_url: prof?.avatar_url ?? null,
     }
@@ -180,12 +187,44 @@ export async function isSeasonParticipant(seasonId: string, userId: string) {
 
   const { data } = await supabase
     .from('ctf_season_participants')
-    .select('user_id')
+    .select('user_id, codename')
     .eq('season_id', seasonId)
     .eq('user_id', userId)
     .maybeSingle()
 
-  return !!data
+  return data ? { joined: true, codename: data.codename } : { joined: false, codename: null }
+}
+
+export async function updateSeasonCodename(seasonId: string, codename: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not logged in' }
+
+  if (codename.trim().length < 2) {
+    return { error: 'Codename must be at least 2 characters' }
+  }
+
+  const { error } = await supabase
+    .from('ctf_season_participants')
+    .update({ codename: codename.trim() })
+    .eq('season_id', seasonId)
+    .eq('user_id', user.id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/ctf/seasons')
+  return { success: true }
+}
+
+export async function getSeasonParticipantCount(seasonId: string) {
+  const supabase = await createClient()
+
+  const { count } = await supabase
+    .from('ctf_season_participants')
+    .select('*', { count: 'exact', head: true })
+    .eq('season_id', seasonId)
+
+  return count ?? 0
 }
 
 export async function updateSeason(seasonId: string, data: {

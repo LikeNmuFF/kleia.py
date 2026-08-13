@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { Users, Trophy, Calendar } from 'lucide-react'
 
 interface Season {
   id: string
@@ -46,7 +47,7 @@ export default function SeasonsClient({
           CTF Seasons
         </h1>
         <p style={{ color: 'var(--text-secondary)' }}>
-          Join monthly competitions and compete for the top spot
+          Join competitions, register with a codename, and compete for the top spot
         </p>
       </div>
 
@@ -81,44 +82,59 @@ export default function SeasonsClient({
             Current Season
           </h2>
           <div
-            className="rounded-xl p-6 cursor-pointer transition-all hover:scale-[1.01] hover:shadow-lg"
+            className="rounded-2xl overflow-hidden cursor-pointer transition-all hover:scale-[1.01] hover:shadow-xl"
             style={{
-              background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(6, 182, 212, 0.15))',
+              background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(6, 182, 212, 0.2), rgba(236, 72, 153, 0.15))',
               border: '1px solid rgba(139, 92, 246, 0.3)',
             }}
             onClick={() => router.push(`/ctf/seasons/${activeSeason.slug}`)}
           >
-            <div className="flex items-start justify-between mb-4">
-              <div>
+            {/* Top Bar */}
+            <div className="px-6 py-2.5 flex items-center justify-between"
+              style={{ backgroundColor: 'rgba(0,0,0,0.2)' }}>
+              <div className="flex items-center gap-2">
                 {activeSeason.theme && (
-                  <span className="text-sm font-medium px-2 py-1 rounded-full mb-2 inline-block"
-                    style={{ backgroundColor: 'rgba(139, 92, 246, 0.2)', color: 'var(--text-primary)' }}>
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider"
+                    style={{ backgroundColor: 'rgba(139, 92, 246, 0.3)', color: '#c4b5fd' }}>
                     {activeSeason.theme}
                   </span>
                 )}
-                <h3 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-                  {activeSeason.name}
-                </h3>
               </div>
-              <span className="px-3 py-1 rounded-full text-xs font-semibold"
+              <span className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
                 style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)', color: '#22c55e' }}>
-                Active
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                Live
               </span>
             </div>
-            {activeSeason.description && (
-              <p className="mb-4" style={{ color: 'var(--text-secondary)' }}>
-                {activeSeason.description}
-              </p>
-            )}
-            <div className="flex items-center gap-4 text-sm" style={{ color: 'var(--text-muted)' }}>
-              <span>📅 {formatDate(activeSeason.start_date)} — {formatDate(activeSeason.end_date)}</span>
+
+            {/* Main */}
+            <div className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+                    {activeSeason.name}
+                  </h3>
+                  {activeSeason.description && (
+                    <p className="text-sm max-w-lg" style={{ color: 'var(--text-secondary)' }}>
+                      {activeSeason.description}
+                    </p>
+                  )}
+                </div>
+                <Trophy className="w-8 h-8 shrink-0" style={{ color: '#eab308' }} />
+              </div>
+              <div className="flex items-center gap-4 text-sm" style={{ color: 'var(--text-muted)' }}>
+                <span className="flex items-center gap-1.5">
+                  <Calendar className="w-4 h-4" />
+                  {formatDate(activeSeason.start_date)} — {formatDate(activeSeason.end_date)}
+                </span>
+              </div>
             </div>
           </div>
         </div>
       ) : (
         <div className="mb-8">
           <div
-            className="rounded-xl p-8 text-center"
+            className="rounded-2xl p-8 text-center"
             style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}
           >
             <div className="text-4xl mb-4">🏆</div>
@@ -126,7 +142,7 @@ export default function SeasonsClient({
               No Active Season
             </h3>
             <p style={{ color: 'var(--text-secondary)' }}>
-              Check back soon for the next monthly competition!
+              Check back soon for the next competition!
             </p>
           </div>
         </div>
@@ -142,7 +158,7 @@ export default function SeasonsClient({
             {pastSeasons.map((season) => (
               <div
                 key={season.id}
-                className="rounded-xl p-4 cursor-pointer transition-all hover:scale-[1.01]"
+                className="rounded-2xl p-4 cursor-pointer transition-all hover:scale-[1.01] hover:shadow-md"
                 style={{
                   backgroundColor: 'var(--card-bg)',
                   border: '1px solid var(--border-color)',
@@ -151,9 +167,9 @@ export default function SeasonsClient({
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg flex items-center justify-center"
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center"
                       style={{ backgroundColor: 'var(--bg-secondary)' }}>
-                      <span className="text-lg">🏆</span>
+                      <Trophy className="w-5 h-5" style={{ color: 'var(--text-muted)' }} />
                     </div>
                     <div>
                       <h3 className="font-semibold" style={{ color: 'var(--text-primary)' }}>
@@ -166,7 +182,7 @@ export default function SeasonsClient({
                   </div>
                   <div className="flex items-center gap-2">
                     {season.theme && (
-                      <span className="text-xs px-2 py-1 rounded-full"
+                      <span className="text-xs px-2.5 py-1 rounded-full"
                         style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
                         {season.theme}
                       </span>
