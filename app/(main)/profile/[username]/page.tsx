@@ -8,6 +8,7 @@ import MessageButton from '@/components/members/MessageButton'
 import SpecialProfileBanner from '@/components/special/SpecialProfileBanner'
 import XPBadge from '@/components/gamification/XPBadge'
 import BadgeCollection from '@/components/gamification/BadgeCollection'
+import { getCompetitionAccess } from '@/app/actions/competition'
 
 export const dynamic = 'force-dynamic'
 
@@ -54,6 +55,9 @@ export default async function MemberProfilePage({ params }: PageProps) {
 
   const showCtf = (profile.role === 'user' || profile.role === 'special') && !!ctfStats
 
+  const access = await getCompetitionAccess()
+  const messagingBlocked = access.kind === 'participant' && access.effectiveStatus === 'live'
+
   return (
     <div className="max-w-3xl mx-auto py-8 px-4">
       {isSpecial && <SpecialProfileBanner />}
@@ -75,7 +79,7 @@ export default async function MemberProfilePage({ params }: PageProps) {
             Edit profile
           </Link>
         ) : (
-          <MessageButton userId={profile.id} />
+          <MessageButton userId={profile.id} blocked={messagingBlocked} />
         )}
       </div>
 

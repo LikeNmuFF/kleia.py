@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation'
 import { MessageCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
-export default function MessageButton({ userId }: { userId: string }) {
+export default function MessageButton({ userId, blocked = false }: { userId: string; blocked?: boolean }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
+
+  if (blocked) return null
 
   const handleMessage = async () => {
     setLoading(true)

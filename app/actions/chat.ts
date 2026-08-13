@@ -3,6 +3,12 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { logEvent } from '@/lib/logEvent'
+import { getCompetitionAccess } from './competition'
+
+async function isParticipantLocked() {
+  const access = await getCompetitionAccess()
+  return access.kind === 'participant' && access.effectiveStatus === 'live'
+}
 
 export async function getConversations() {
   const start = Date.now()
@@ -95,6 +101,10 @@ export async function startConversation(otherUserId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not logged in' }
 
+  if (await isParticipantLocked()) {
+    return { error: 'Messaging is disabled during the competition' }
+  }
+
   const { data: existing, error: rpcError } = await supabase.rpc(
     'create_direct_conversation',
     { other_user_id: otherUserId }
@@ -119,6 +129,10 @@ export async function sendMessage(conversationId: string, content: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not logged in' }
+
+  if (await isParticipantLocked()) {
+    return { error: 'Messaging is disabled during the competition' }
+  }
 
   const { count, error: memberError } = await supabase
     .from('conversation_members')
