@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getSeasonBySlug, getSeasonChallenges, getSeasonLeaderboard, isSeasonParticipant, getSeasonParticipantCount } from '@/app/actions/seasons'
+import { getEffectiveSeasonStatus } from '@/app/actions/competition'
 import SeasonDetailClient from './SeasonDetailClient'
 
 export default async function SeasonDetailPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -10,6 +11,8 @@ export default async function SeasonDetailPage({ params }: { params: Promise<{ s
 
   const season = await getSeasonBySlug(slug)
   if (!season) notFound()
+
+  const status = getEffectiveSeasonStatus(season)
 
   const [challenges, leaderboard, participantInfo, participantCount] = await Promise.all([
     getSeasonChallenges(season.id),
@@ -30,6 +33,7 @@ export default async function SeasonDetailPage({ params }: { params: Promise<{ s
       userId={user?.id}
       participantCount={participantCount}
       registrationUrl={`${siteUrl}/ctf/seasons/${season.slug}`}
+      status={status}
     />
   )
 }

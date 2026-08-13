@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { joinSeason, updateSeasonCodename } from '@/app/actions/seasons'
+import Countdown from '@/components/competition/Countdown'
 import { Share2, Copy, Check, Trophy, Users, Calendar, Target, Shield, ExternalLink } from 'lucide-react'
 
 interface Season {
@@ -59,6 +60,7 @@ export default function SeasonDetailClient({
   userId,
   participantCount,
   registrationUrl,
+  status,
 }: {
   season: Season
   challenges: Challenge[]
@@ -68,6 +70,7 @@ export default function SeasonDetailClient({
   userId?: string
   participantCount: number
   registrationUrl: string
+  status: 'upcoming' | 'live' | 'paused' | 'ended'
 }) {
   const router = useRouter()
   const [joining, setJoining] = useState(false)
@@ -86,19 +89,8 @@ export default function SeasonDetailClient({
     })
   }
 
-  const isSeasonActive = () => {
-    const today = new Date().toISOString().split('T')[0]
-    return season.is_active && season.start_date <= today && season.end_date >= today
-  }
-
-  const isSeasonUpcoming = () => {
-    const today = new Date().toISOString().split('T')[0]
-    return season.is_active && season.start_date > today
-  }
-
   const canRegister = () => {
-    const today = new Date().toISOString().split('T')[0]
-    return season.is_active && season.end_date >= today
+    return season.is_active && status === 'upcoming'
   }
 
   const handleJoin = async () => {
@@ -196,17 +188,18 @@ export default function SeasonDetailClient({
                   {season.theme}
                 </span>
               )}
-              {isSeasonActive() && (
+              {status === 'live' && (
                 <span className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full"
                   style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)', color: '#22c55e' }}>
                   <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
                   Live Now
                 </span>
               )}
-              {isSeasonUpcoming() && (
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+              {status === 'upcoming' && (
+                <span className="flex items-center gap-2 text-xs font-semibold px-2.5 py-1 rounded-full"
                   style={{ backgroundColor: 'rgba(234, 179, 8, 0.2)', color: '#eab308' }}>
-                  Starting {formatDate(season.start_date)}
+                  Starts in
+                  <Countdown target={`${season.start_date}T00:00:00`} compact />
                 </span>
               )}
             </div>
@@ -383,6 +376,15 @@ export default function SeasonDetailClient({
           >
             Change Codename
           </button>
+          {status === 'live' && (
+            <Link
+              href={`/ctf/seasons/${season.slug}/compete`}
+              className="px-4 py-2 rounded-lg text-xs font-semibold"
+              style={{ background: 'linear-gradient(135deg, #8b5cf6, #06b6d4)', color: 'white' }}
+            >
+              Enter Competition
+            </Link>
+          )}
         </div>
       )}
 
