@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Coffee, Copy, Check, X } from 'lucide-react'
 
@@ -51,8 +52,8 @@ export default function SupportButton({
       </button>
 
       <AnimatePresence>
-        {open && (
-          <div className="fixed inset-0 z-50 overflow-y-auto">
+        {open && createPortal(
+          <div className="fixed inset-0 z-[9999] overflow-y-auto">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -133,7 +134,8 @@ export default function SupportButton({
               </div>
             </motion.div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </AnimatePresence>
     </>
