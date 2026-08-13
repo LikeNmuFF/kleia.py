@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { logEvent } from '@/lib/logEvent'
+import { getEffectiveSeasonStatus } from './competition'
 
 async function checkAdmin(supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data: { user } } = await supabase.auth.getUser()
@@ -80,6 +81,16 @@ export async function joinSeason(seasonId: string, codename?: string) {
 
   if (codename && codename.trim().length < 2) {
     return { error: 'Codename must be at least 2 characters' }
+  }
+
+  const { data: season } = await supabase
+    .from('ctf_seasons')
+    .select('status, start_date, end_date')
+    .eq('id', seasonId)
+    .single()
+
+  if (season && getEffectiveSeasonStatus(season) !== 'upcoming') {
+    return { error: 'Registration is closed for this season' }
   }
 
   const { error } = await supabase
