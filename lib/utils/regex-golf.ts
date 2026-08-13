@@ -14,27 +14,31 @@ const DANGEROUS_PATTERNS = [
 // Only allow safe regex characters
 const SAFE_REGEX_CHARS = /^[a-zA-Z0-9\\^$.[\]{}()|*+?!,;:=<>_%\-:\/\s#@\uff00-\uffef\u0100-\u017f]+$/
 
+// Validates pattern safety before compilation. Returns error or null.
+function sanitizePattern(pattern: string): string | null {
+  if (pattern.length > MAX_REGEX_LENGTH) return `Pattern too long (max ${MAX_REGEX_LENGTH} chars)`
+  if (DANGEROUS_PATTERNS.some(re => re.test(pattern))) return 'Pattern contains disallowed constructs'
+  if (!SAFE_REGEX_CHARS.test(pattern)) return 'Pattern contains invalid characters'
+  return null
+}
+
+// Compiles a pre-validated pattern. Only call after sanitizePattern returns null.
+function compileValidated(pattern: string): RegExp {
+  return new RegExp(pattern)
+}
+
 export function validateRegex(
   pattern: string,
   matchStrings: string[],
   rejectStrings: string[]
 ): { valid: boolean; error?: string; matchesAll: boolean; rejectsAll: boolean } {
-  if (pattern.length > MAX_REGEX_LENGTH) {
-    return { valid: false, error: `Pattern too long (max ${MAX_REGEX_LENGTH} chars)`, matchesAll: false, rejectsAll: false }
-  }
-
-  if (DANGEROUS_PATTERNS.some(re => re.test(pattern))) {
-    return { valid: false, error: 'Pattern contains disallowed constructs', matchesAll: false, rejectsAll: false }
-  }
-
-  // Whitelist validation: only allow known-safe regex characters
-  if (!SAFE_REGEX_CHARS.test(pattern)) {
-    return { valid: false, error: 'Pattern contains invalid characters', matchesAll: false, rejectsAll: false }
+  const sanitizeError = sanitizePattern(pattern)
+  if (sanitizeError) {
+    return { valid: false, error: sanitizeError, matchesAll: false, rejectsAll: false }
   }
 
   try {
-    // Use non-capturing group wrapper to limit scope
-    const regex = new RegExp(pattern)
+    const regex = compileValidated(pattern)
 
     let matchesAll = true
     let rejectsAll = true
