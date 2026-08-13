@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { getTodayCipher, getUserCipherSolves } from '@/app/actions/cipher'
+import AIFairPlayBanner from '@/components/ctf/AIFairPlayBanner'
 import CipherClient from './CipherClient'
 
 export const metadata: Metadata = {
@@ -16,5 +17,10 @@ export default async function CipherPage() {
   const solves = user ? await getUserCipherSolves() : []
   const todaySolve = solves.find(s => s.cipher_id === cipher?.id)
 
-  return <CipherClient cipher={cipher} todaySolve={todaySolve} />
+  return (
+    <div className="max-w-6xl mx-auto px-4 pt-8">
+      <AIFairPlayBanner />
+      <CipherClient cipher={cipher} todaySolve={todaySolve} />
+    </div>
+  )
 }

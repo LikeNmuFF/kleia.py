@@ -8,6 +8,7 @@ import StatsBar from '@/components/landing/StatsBar'
 import StreaksCarousel from '@/components/landing/StreaksCarousel'
 import TerminalDemo from '@/components/landing/TerminalDemo'
 import { useLandingData } from '@/components/landing/useLandingData'
+import SupportButton from '@/components/SupportButton'
 
 const ThreeBackground = dynamic(() => import('@/components/landing/ThreeBackground'), {
   ssr: false,
@@ -276,6 +277,7 @@ export default function Home() {
               <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
               <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
               <Link href="/login" className="hover:text-white transition-colors">Login</Link>
+              <SupportButton />
             </div>
           </div>
         </footer>

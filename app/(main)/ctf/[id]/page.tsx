@@ -3,6 +3,7 @@ import FlagSubmitForm from './FlagSubmitForm'
 import HintUnlockButton from './HintUnlockButton'
 import ChallengeReviewForm from '@/components/ctf/ChallengeReviewForm'
 import ChallengeReviews from '@/components/ctf/ChallengeReviews'
+import AIFairPlayBanner from '@/components/ctf/AIFairPlayBanner'
 import { notFound } from 'next/navigation'
 
 const DIFFICULTY_COLORS: Record<string, string> = {
@@ -93,6 +94,8 @@ export default async function ChallengePage({ params }: { params: Promise<{ id: 
       >
         ← Back to Challenges
       </a>
+
+      <AIFairPlayBanner />
 
         <div className="rounded-xl p-6" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
         <div className="flex items-start gap-4 mb-4">

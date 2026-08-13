@@ -9,6 +9,7 @@ import ChatUnreadProvider from '@/components/chat/ChatUnreadProvider'
 import DesktopNav from '@/components/nav/DesktopNav'
 import MobileNav from '@/components/nav/MobileNav'
 import TeamInviteNotification from '@/components/teams/TeamInviteNotification'
+import SupportButton from '@/components/SupportButton'
 
 export default async function MainLayout({
   children,
@@ -52,6 +53,7 @@ export default async function MainLayout({
 
             {/* User Menu */}
             <div className="flex items-center gap-2 lg:gap-3 shrink-0">
+              <SupportButton variant="nav" />
               <TeamInviteNotification />
               <ThemeToggle />
               <Link
@@ -87,6 +89,7 @@ export default async function MainLayout({
             <Link href="/security" className="hover:text-violet-400 transition-colors">Security</Link>
             <Link href="/privacy" className="hover:text-violet-400 transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-violet-400 transition-colors">Terms</Link>
+            <SupportButton />
           </div>
         </footer>
       </div>
