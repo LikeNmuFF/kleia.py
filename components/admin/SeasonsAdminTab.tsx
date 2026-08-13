@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Calendar, Plus, Trash2, Edit3, Check, X, Link as LinkIcon, Unlink, Trophy, Settings } from 'lucide-react'
 import { createSeason, updateSeason, deleteSeason, addChallengeToSeason, removeChallengeFromSeason } from '@/app/actions/seasons'
+import { formatDateTime, toManilaLocalInput } from '@/lib/utils/time'
 
 interface Season {
   id: string
@@ -93,8 +94,8 @@ export default function SeasonsAdminTab() {
     setFormSlug(season.slug)
     setFormDescription(season.description || '')
     setFormTheme(season.theme || '')
-    setFormStartDate(season.start_date)
-    setFormEndDate(season.end_date)
+    setFormStartDate(toManilaLocalInput(season.start_date))
+    setFormEndDate(toManilaLocalInput(season.end_date))
     setFormActive(season.is_active)
     setShowCreate(false)
   }
@@ -291,9 +292,9 @@ export default function SeasonsAdminTab() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Start Date *</label>
+              <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Start Date & Time · Asia/Manila</label>
               <input
-                type="date"
+                type="datetime-local"
                 value={formStartDate}
                 onChange={e => setFormStartDate(e.target.value)}
                 required
@@ -302,9 +303,9 @@ export default function SeasonsAdminTab() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>End Date *</label>
+              <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>End Date & Time · Asia/Manila</label>
               <input
-                type="date"
+                type="datetime-local"
                 value={formEndDate}
                 onChange={e => setFormEndDate(e.target.value)}
                 required
@@ -384,7 +385,7 @@ export default function SeasonsAdminTab() {
                   <div className="flex items-center gap-3 text-xs" style={{ color: 'var(--text-muted)' }}>
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
-                      {season.start_date} → {season.end_date}
+                      {formatDateTime(season.start_date)} → {formatDateTime(season.end_date)}
                     </span>
                     {season.theme && <span>{season.theme}</span>}
                     <span>{scs.length} challenges</span>

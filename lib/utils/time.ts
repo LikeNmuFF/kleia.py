@@ -56,3 +56,14 @@ export function formatDateTime(iso: string): string {
     minute: '2-digit',
   })
 }
+
+/** Format a UTC ISO timestamp as a `YYYY-MM-DDTHH:mm` string in Asia/Manila (for datetime-local inputs). */
+export function toManilaLocalInput(iso: string): string {
+  const d = new Date(iso)
+  const year = d.toLocaleString('en-CA', { timeZone: MANILA_TZ, year: 'numeric' })
+  const month = d.toLocaleString('en-CA', { timeZone: MANILA_TZ, month: '2-digit' })
+  const day = d.toLocaleString('en-CA', { timeZone: MANILA_TZ, day: '2-digit' })
+  const hour = d.toLocaleString('en-US', { timeZone: MANILA_TZ, hour: '2-digit', hour12: false })
+  const minute = d.toLocaleString('en-US', { timeZone: MANILA_TZ, minute: '2-digit' })
+  return `${year}-${month}-${day}T${hour}:${minute}`
+}

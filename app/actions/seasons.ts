@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { logEvent } from '@/lib/logEvent'
 import { getEffectiveSeasonStatus } from './competition-status'
+import { parseManilaLocal } from '@/lib/utils/time'
 
 async function checkAdmin(supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data: { user } } = await supabase.auth.getUser()
@@ -271,8 +272,8 @@ export async function updateSeason(seasonId: string, data: {
   if (data.name !== undefined) updates.name = data.name.trim()
   if (data.description !== undefined) updates.description = data.description?.trim() || null
   if (data.theme !== undefined) updates.theme = data.theme?.trim() || null
-  if (data.start_date !== undefined) updates.start_date = data.start_date
-  if (data.end_date !== undefined) updates.end_date = data.end_date
+  if (data.start_date !== undefined) updates.start_date = parseManilaLocal(data.start_date)
+  if (data.end_date !== undefined) updates.end_date = parseManilaLocal(data.end_date)
   if (data.is_active !== undefined) updates.is_active = data.is_active
 
   const { error } = await supabase
@@ -367,6 +368,9 @@ export async function createSeason(data: {
   if (!data.slug.trim()) return { error: 'Slug cannot be empty' }
   if (!data.start_date) return { error: 'Start date is required' }
   if (!data.end_date) return { error: 'End date is required' }
+  if (!(new Date(`${data.start_date}+08:00`).getTime() < new Date(`${data.end_date}+08:00`).getTime())) {
+    return { error: 'End must be after start' }
+  }
 
   const { error } = await supabase
     .from('ctf_seasons')
@@ -375,8 +379,8 @@ export async function createSeason(data: {
       slug: data.slug.trim().toLowerCase().replace(/\s+/g, '-'),
       description: data.description?.trim() || null,
       theme: data.theme?.trim() || null,
-      start_date: data.start_date,
-      end_date: data.end_date,
+      start_date: parseManilaLocal(data.start_date),
+      end_date: parseManilaLocal(data.end_date),
       is_active: data.is_active ?? true,
     })
 
