@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { logEvent } from '@/lib/logEvent'
 import { hashFlag } from '@/lib/utils/ctf'
 import { checkAndUnlockNodes } from './skilltree'
+import { creditSeasonSolve } from './competition'
 
 const VALID_CATEGORIES = ['web', 'crypto', 'forensics', 'misc']
 const VALID_DIFFICULTIES = ['easy', 'medium', 'hard']
@@ -150,6 +151,7 @@ export async function submitFlag(challengeId: string, submittedFlag: string) {
       addXp(15, 'ctf_solve'),
       completeMission('ctf_solve', true),
       checkAndUnlockNodes(user.id),
+      creditSeasonSolve(user.id, challengeId),
     ])
   }
 
