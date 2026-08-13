@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
+import { getCompetitionAccess } from '@/app/actions/competition'
 import Avatar from '@/components/Avatar'
 import LogoutButton from '@/components/auth/LogoutButton'
 import PresenceTracker from '@/components/PresenceTracker'
@@ -21,6 +23,32 @@ export default async function MainLayout({
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) redirect('/login')
+
+  const headerList = await headers()
+  const pathname = headerList.get('x-pathname') || ''
+  const access = await getCompetitionAccess()
+
+  const locked = access.kind === 'participant' && access.effectiveStatus === 'live'
+  const competitionHref = locked && access.kind === 'participant'
+    ? `/ctf/seasons/${access.season.slug}/compete`
+    : null
+
+  const isBlockedPath = (p: string) => {
+    if (p === '/' || p === '/feed') return true
+    if (p === '/chat' || p.startsWith('/chat/')) return true
+    if (p === '/events' || p.startsWith('/events/')) return true
+    if (p === '/teams' || p.startsWith('/teams/')) return true
+    if (p === '/leaderboard' || p.startsWith('/leaderboard/')) return true
+    if (p === '/regex-golf' || p.startsWith('/regex-golf/')) return true
+    if (p === '/cipher' || p.startsWith('/cipher/')) return true
+    if (p === '/challenges' || p.startsWith('/challenges/')) return true
+    if (p === '/ctf' || (p.startsWith('/ctf/') && !p.startsWith('/ctf/seasons/'))) return true
+    return false
+  }
+
+  if (locked && competitionHref && isBlockedPath(pathname)) {
+    redirect(competitionHref)
+  }
 
   const { data: profile } = user
     ? await supabase.from('profiles').select('avatar_url').eq('id', user.id).single()
@@ -52,7 +80,7 @@ export default async function MainLayout({
             </Link>
 
             {/* Desktop Navigation Links */}
-            <DesktopNav />
+            <DesktopNav competitionHref={competitionHref} />
 
             {/* User Menu */}
             <div className="flex items-center gap-2 lg:gap-3 shrink-0">
@@ -98,7 +126,7 @@ export default async function MainLayout({
       </div>
 
       {/* Mobile bottom navigation */}
-      <MobileNav />
+      <MobileNav competitionHref={competitionHref} />
     </ChatUnreadProvider>
   )
 }
