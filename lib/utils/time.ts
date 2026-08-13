@@ -37,3 +37,22 @@ export function getStatusInfo(
     isOnline: false,
   }
 }
+
+export const MANILA_TZ = 'Asia/Manila'
+
+/** Interpret a `YYYY-MM-DDTHH:mm` string as Manila-local and return a UTC ISO timestamp. */
+export function parseManilaLocal(datetimeLocal: string): string {
+  return new Date(`${datetimeLocal}+08:00`).toISOString()
+}
+
+/** Format a UTC ISO timestamp as date + time in Asia/Manila. */
+export function formatDateTime(iso: string): string {
+  return new Date(iso).toLocaleString('en-US', {
+    timeZone: MANILA_TZ,
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}
