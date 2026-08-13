@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { joinSeason, updateSeasonCodename } from '@/app/actions/seasons'
 import Countdown from '@/components/competition/Countdown'
+import { formatDateTime } from '@/lib/utils/time'
 import { Share2, Copy, Check, Trophy, Users, Calendar, Target, Shield, ExternalLink } from 'lucide-react'
 
 interface Season {
@@ -80,14 +81,6 @@ export default function SeasonDetailClient({
   const [codenameError, setCodenameError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [showShare, setShowShare] = useState(false)
-
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    })
-  }
 
   const canRegister = () => {
     return season.is_active && status === 'upcoming'
@@ -235,7 +228,7 @@ export default function SeasonDetailClient({
             <div className="flex items-center gap-6 text-sm">
               <div className="flex items-center gap-1.5" style={{ color: 'var(--text-muted)' }}>
                 <Calendar className="w-4 h-4" />
-                <span>{formatDate(season.start_date)} — {formatDate(season.end_date)}</span>
+                <span>{formatDateTime(season.start_date)} — {formatDateTime(season.end_date)}</span>
               </div>
               <div className="flex items-center gap-1.5" style={{ color: 'var(--text-muted)' }}>
                 <Target className="w-4 h-4" />

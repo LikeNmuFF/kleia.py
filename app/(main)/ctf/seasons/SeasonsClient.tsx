@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { Users, Trophy, Calendar } from 'lucide-react'
+import { formatDateTime } from '@/lib/utils/time'
 
 interface Season {
   id: string
@@ -26,22 +27,14 @@ export default function SeasonsClient({
 }) {
   const router = useRouter()
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    })
-  }
-
   const isSeasonActive = (season: Season) => {
-    const today = new Date().toISOString().split('T')[0]
-    return season.is_active && season.start_date <= today && season.end_date >= today
+    const now = new Date().toISOString()
+    return season.is_active && season.start_date <= now && season.end_date >= now
   }
 
   const isSeasonUpcoming = (season: Season) => {
-    const today = new Date().toISOString().split('T')[0]
-    return season.is_active && season.start_date > today
+    const now = new Date().toISOString()
+    return season.is_active && season.start_date > now
   }
 
   return (
@@ -116,7 +109,7 @@ export default function SeasonsClient({
               ) : (
                 <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
                   style={{ backgroundColor: 'rgba(234, 179, 8, 0.2)', color: '#eab308' }}>
-                  Starting {formatDate(activeSeason.start_date)}
+                  Starting {formatDateTime(activeSeason.start_date)}
                 </span>
               )}
             </div>
@@ -139,7 +132,7 @@ export default function SeasonsClient({
               <div className="flex items-center gap-4 text-sm" style={{ color: 'var(--text-muted)' }}>
                 <span className="flex items-center gap-1.5">
                   <Calendar className="w-4 h-4" />
-                  {formatDate(activeSeason.start_date)} — {formatDate(activeSeason.end_date)}
+                  {formatDateTime(activeSeason.start_date)} — {formatDateTime(activeSeason.end_date)}
                 </span>
               </div>
             </div>
@@ -190,7 +183,7 @@ export default function SeasonsClient({
                         {season.name}
                       </h3>
                       <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                        {formatDate(season.start_date)} — {formatDate(season.end_date)}
+                        {formatDateTime(season.start_date)} — {formatDateTime(season.end_date)}
                       </p>
                     </div>
                   </div>
