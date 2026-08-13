@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import TypeWriter from '@/components/TypeWriter'
+import WordCycle from '@/components/WordCycle'
 import StatsBar from '@/components/landing/StatsBar'
 import StreaksCarousel from '@/components/landing/StreaksCarousel'
 import TerminalDemo from '@/components/landing/TerminalDemo'
@@ -148,9 +148,8 @@ export default function Home() {
             Learn Together,
             <br />
             <span className="bg-gradient-to-r from-violet-400 via-cyan-400 to-pink-400 bg-clip-text text-transparent">
-              <TypeWriter
-                texts={['Grow Together', 'Code Together', 'Compete Together', 'Stay Consistent']}
-                className=""
+              <WordCycle
+                words={['Grow Together', 'Code Together', 'Compete Together', 'Stay Consistent']}
               />
             </span>
           </motion.h1>
