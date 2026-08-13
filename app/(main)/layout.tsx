@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import Avatar from '@/components/Avatar'
 import LogoutButton from '@/components/auth/LogoutButton'
@@ -18,6 +19,8 @@ export default async function MainLayout({
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) redirect('/login')
 
   const { data: profile } = user
     ? await supabase.from('profiles').select('avatar_url').eq('id', user.id).single()
