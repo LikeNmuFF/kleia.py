@@ -199,7 +199,7 @@ export default function SeasonDetailClient({
                 <span className="flex items-center gap-2 text-xs font-semibold px-2.5 py-1 rounded-full"
                   style={{ backgroundColor: 'rgba(234, 179, 8, 0.2)', color: '#eab308' }}>
                   Starts in
-                  <Countdown target={`${season.start_date}T00:00:00`} compact />
+                  <Countdown target={season.start_date} compact />
                 </span>
               )}
             </div>

@@ -20,7 +20,7 @@ export default function CompetitionBanner({ season }: {
           </p>
           <p className="font-semibold mt-1" style={{ color: 'var(--text-primary)' }}>{season.name}</p>
         </div>
-        <Countdown target={`${season.start_date}T00:00:00`} compact />
+        <Countdown target={season.start_date} compact />
       </div>
     </Link>
   )

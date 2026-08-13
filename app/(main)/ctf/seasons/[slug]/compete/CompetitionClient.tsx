@@ -132,7 +132,7 @@ export default function CompetitionClient({
             </p>
           )}
           <p className="text-lg mb-4" style={{ color: 'var(--text-secondary)' }}>Competition starts in</p>
-          <Countdown target={`${season.start_date}T00:00:00`} />
+          <Countdown target={season.start_date} />
           <div className="mt-8 flex justify-center gap-4">
             <Link href="/learn" className="px-5 py-2.5 rounded-xl text-sm font-medium" style={{ backgroundColor: 'var(--card-bg)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' }}>
               Learn
@@ -196,7 +196,7 @@ export default function CompetitionClient({
             </div>
             <div className="hidden sm:flex flex-col items-end">
               <div className="text-[10px] uppercase tracking-wider mb-0.5" style={{ color: 'var(--text-muted)' }}>Time left</div>
-              <Countdown target={`${season.end_date}T23:59:59`} compact />
+              <Countdown target={season.end_date} compact />
             </div>
             <div className="flex items-center gap-2">
               <Link href="/learn" className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ backgroundColor: 'var(--card-bg)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' }}>
