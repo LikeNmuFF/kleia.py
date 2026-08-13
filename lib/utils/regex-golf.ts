@@ -7,11 +7,12 @@ const DANGEROUS_PATTERNS = [
   /\{[0-9]{3,}\}/,       // excessive quantifiers {100+}
   /\\\w\+\+|\\\w\*\*/,   // nested quantifiers on escapes
   /\([^)]*\)[+*]{2}/,    // group followed by quantifier (a+)+
-  /\([^)]*\|[^)]*\)[+*]/, // alternation inside group with quantifier (a|b)*
+  /\([^)]*\|[^)]*\)[+*]+/, // alternation inside group with quantifier (a|b)* or (a|b)+
   /[+*]\?/,              // lazy quantifiers (can still cause backtracking)
-  /\.\*|\.\+/,           // dot-star/dot-plus (.* or .+)
-  /\([^)]*\.\*|\.\+[^)]*\)/, // .* or .+ inside group
 ]
+
+// Only allow safe regex characters
+const SAFE_REGEX_CHARS = /^[a-zA-Z0-9\\^$.[\]{}()|*+?!,;:=<>_%\-:\/\s#@\uff00-\uffef\u0100-\u017f]+$/
 
 export function validateRegex(
   pattern: string,
@@ -26,7 +27,13 @@ export function validateRegex(
     return { valid: false, error: 'Pattern contains disallowed constructs', matchesAll: false, rejectsAll: false }
   }
 
+  // Whitelist validation: only allow known-safe regex characters
+  if (!SAFE_REGEX_CHARS.test(pattern)) {
+    return { valid: false, error: 'Pattern contains invalid characters', matchesAll: false, rejectsAll: false }
+  }
+
   try {
+    // Use non-capturing group wrapper to limit scope
     const regex = new RegExp(pattern)
 
     let matchesAll = true

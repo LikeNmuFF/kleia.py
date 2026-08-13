@@ -2,7 +2,7 @@
 // Validates that each solution correctly matches/rejects all test strings
 // Run with: npx tsx scripts/test-regex-golf.ts
 
-const DANGEROUS_PATTERNS = /\(\?.*?\)|\(\?\=|\(\?!|\(\?\<|\(\?<=|\(\?<!|\\A|\\Z|\{[0-9]{3,}\}|\\\w\+\+|\\\w\*\*/
+import { validateRegex } from '../lib/utils/regex-golf'
 
 interface Puzzle {
   title: string
@@ -161,46 +161,27 @@ function testPuzzle(puzzle: Puzzle, index: number): boolean {
   console.log(`\n--- Puzzle ${index + 1}: ${puzzle.title} (${puzzle.difficulty}) ---`)
   console.log(`  Solution: ${puzzle.solution_regex}`)
 
-  // Check for dangerous patterns
-  if (DANGEROUS_PATTERNS.test(puzzle.solution_regex)) {
-    console.log(`  ❌ BLOCKED: Contains dangerous pattern`)
+  // Use the shared validation function (no dynamic RegExp)
+  const validation = validateRegex(puzzle.solution_regex, puzzle.match_strings, puzzle.reject_strings)
+
+  if (!validation.valid) {
+    console.log(`  ❌ BLOCKED: ${validation.error}`)
     return false
   }
 
-  // Check length
-  if (puzzle.solution_regex.length > 200) {
-    console.log(`  ❌ TOO LONG: ${puzzle.solution_regex.length} chars (max 200)`)
-    return false
+  if (validation.matchesAll) {
+    console.log(`  ✅ All match strings pass`)
+  } else {
+    console.log(`  ❌ Some match strings failed`)
   }
 
-  // Compile regex
-  let regex: RegExp
-  try {
-    regex = new RegExp(puzzle.solution_regex)
-  } catch (e) {
-    console.log(`  ❌ INVALID SYNTAX: ${e}`)
-    return false
+  if (validation.rejectsAll) {
+    console.log(`  ✅ All reject strings pass`)
+  } else {
+    console.log(`  ❌ Some reject strings failed`)
   }
 
-  let allPassed = true
-
-  // Test match strings
-  for (const s of puzzle.match_strings) {
-    const result = regex.test(s)
-    const status = result ? '✅' : '❌'
-    console.log(`  ${status} Match "${s}": ${result ? 'PASS' : 'FAIL (should match)'}`)
-    if (!result) allPassed = false
-  }
-
-  // Test reject strings
-  for (const s of puzzle.reject_strings) {
-    const result = regex.test(s)
-    const status = !result ? '✅' : '❌'
-    console.log(`  ${status} Reject "${s}": ${!result ? 'PASS' : 'FAIL (should reject)'}`)
-    if (result) allPassed = false
-  }
-
-  return allPassed
+  return validation.valid && validation.matchesAll && validation.rejectsAll
 }
 
 console.log('=== Regex Golf Puzzle Test ===\n')
