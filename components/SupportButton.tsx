@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Coffee, Copy, Check, X } from 'lucide-react'
@@ -14,6 +14,9 @@ export default function SupportButton({
 }) {
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => setMounted(true), [])
 
   const handleCopy = async () => {
     try {
@@ -51,7 +54,7 @@ export default function SupportButton({
         {variant === 'nav' ? 'Support' : 'Buy me a coffee'}
       </button>
 
-      {createPortal(
+      {mounted && createPortal(
         <AnimatePresence>
           {open && (
             <div className="fixed inset-0 z-[9999] overflow-y-auto">
