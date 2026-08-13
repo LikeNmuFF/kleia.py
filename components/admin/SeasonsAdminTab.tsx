@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { Calendar, Plus, Trash2, Edit3, Check, X, Link as LinkIcon, Unlink, Trophy } from 'lucide-react'
+import { Calendar, Plus, Trash2, Edit3, Check, X, Link as LinkIcon, Unlink, Trophy, Settings } from 'lucide-react'
 import { createSeason, updateSeason, deleteSeason, addChallengeToSeason, removeChallengeFromSeason } from '@/app/actions/seasons'
 
 interface Season {
@@ -407,6 +408,14 @@ export default function SeasonsAdminTab() {
                   >
                     <LinkIcon className="w-4 h-4" />
                   </button>
+                  <Link
+                    href={`/admin/seasons/${season.slug}`}
+                    className="p-1.5 rounded-lg transition-colors"
+                    style={{ color: 'var(--text-muted)' }}
+                    title="Manage"
+                  >
+                    <Settings className="w-4 h-4" />
+                  </Link>
                   <button
                     onClick={() => startEdit(season)}
                     className="p-1.5 rounded-lg transition-colors"
