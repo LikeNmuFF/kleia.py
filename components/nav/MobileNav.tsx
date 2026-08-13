@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Ellipsis, X } from 'lucide-react'
+import { Ellipsis, Swords, X } from 'lucide-react'
 import NavLink from './NavLink'
 import { useChatUnread } from '@/components/chat/ChatUnreadProvider'
 import {
@@ -12,6 +12,7 @@ import {
   isNavItemActive,
   MOBILE_SHEET_SECTIONS,
   MOBILE_TABS,
+  PRIMARY_NAV,
   type NavItem,
 } from './navItems'
 
@@ -54,12 +55,20 @@ function TabLink({
   )
 }
 
-export default function MobileNav() {
+export default function MobileNav({ competitionHref }: { competitionHref?: string | null }) {
   const pathname = usePathname()
   const [sheetOpen, setSheetOpen] = useState(false)
   const chat = useChatUnread()
   const unreadCount = chat?.unreadCount || 0
   const moreActive = isMobileMoreActive(pathname) || sheetOpen
+
+  const tabs = competitionHref
+    ? [
+        { label: 'Competition', href: competitionHref, icon: Swords, matchPrefix: true },
+        ...PRIMARY_NAV.filter((i) => i.href === '/learn' || i.href === '/members'),
+      ]
+    : MOBILE_TABS
+  const sheetSections = competitionHref ? [] : MOBILE_SHEET_SECTIONS
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -97,24 +106,27 @@ export default function MobileNav() {
         }}
       >
         <div className="max-w-lg mx-auto px-2 py-1.5 flex items-center">
-          {MOBILE_TABS.map((item) => (
+          {tabs.map((item) => (
             <TabLink key={item.href} item={item} unreadCount={item.label === 'Chat' ? unreadCount : 0} />
           ))}
-          <button
-            type="button"
-            aria-expanded={sheetOpen}
-            aria-haspopup="dialog"
-            onClick={() => setSheetOpen((v) => !v)}
-            className="relative flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-lg w-full outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
-            style={{ color: moreActive ? 'var(--accent)' : 'var(--text-secondary)' }}
-          >
-            <Ellipsis className="w-5 h-5" aria-hidden />
-            <span className="text-[11px] font-medium leading-none">More</span>
-          </button>
+          {!competitionHref && (
+            <button
+              type="button"
+              aria-expanded={sheetOpen}
+              aria-haspopup="dialog"
+              onClick={() => setSheetOpen((v) => !v)}
+              className="relative flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-lg w-full outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+              style={{ color: moreActive ? 'var(--accent)' : 'var(--text-secondary)' }}
+            >
+              <Ellipsis className="w-5 h-5" aria-hidden />
+              <span className="text-[11px] font-medium leading-none">More</span>
+            </button>
+          )}
         </div>
       </nav>
 
       {/* More sheet */}
+      {!competitionHref && (
       <AnimatePresence>
         {sheetOpen && (
           <div className="lg:hidden fixed inset-0 z-50">
@@ -159,7 +171,7 @@ export default function MobileNav() {
               </div>
 
               <div className="p-2 pb-4">
-                {MOBILE_SHEET_SECTIONS.map((section) => (
+                {sheetSections.map((section) => (
                   <div key={section.title} className="mt-1">
                     <p
                       className="px-4 pt-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider"
@@ -176,7 +188,8 @@ export default function MobileNav() {
             </motion.div>
           </div>
         )}
-      </AnimatePresence>
+        </AnimatePresence>
+      )}
     </>
   )
 }
