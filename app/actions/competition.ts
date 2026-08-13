@@ -147,8 +147,11 @@ export async function getUpcomingRegistration() {
 
 /**
  * Credits a correct solve to every live season that includes this challenge.
- * Called from submitFlag. Double-credit is impossible because the partial unique
- * index ctf_submissions_one_correct_idx blocks repeat correct submissions.
+ * Called from submitFlag. Uses the atomic RPC `increment_season_score` (a
+ * SECURITY DEFINER function) so the increment is a single UPDATE — immune to
+ * RLS update denial and lost-update races. Double-credit is impossible because
+ * the partial unique index ctf_submissions_one_correct_idx blocks repeat
+ * correct submissions.
  */
 export async function creditSeasonSolve(userId: string, challengeId: string) {
   const supabase = await createClient()
@@ -168,14 +171,6 @@ export async function creditSeasonSolve(userId: string, challengeId: string) {
     if (!season) continue
     if (getEffectiveSeasonStatus(season) !== 'live') continue
 
-    const { data: participant } = await supabase
-      .from('ctf_season_participants')
-      .select('total_points, challenges_solved')
-      .eq('season_id', season.id)
-      .eq('user_id', userId)
-      .maybeSingle()
-    if (!participant) continue
-
     const { data: challenge } = await supabase
       .from('ctf_challenges')
       .select('points')
@@ -183,14 +178,22 @@ export async function creditSeasonSolve(userId: string, challengeId: string) {
       .single()
 
     const points = (challenge?.points ?? 0) + (link.bonus_points ?? 0)
-    await supabase
-      .from('ctf_season_participants')
-      .update({
-        total_points: (participant.total_points ?? 0) + points,
-        challenges_solved: (participant.challenges_solved ?? 0) + 1,
+    const { data: credited, error } = await supabase.rpc('increment_season_score', {
+      p_season_id: season.id,
+      p_user_id: userId,
+      p_points: points,
+    })
+    if (error) {
+      console.error('creditSeasonSolve: failed to credit season score', {
+        seasonId: season.id,
+        userId,
+        challengeId,
+        points,
+        error: error.message,
       })
-      .eq('season_id', season.id)
-      .eq('user_id', userId)
+    } else if (credited === false || credited === null) {
+      // Participant row missing — not registered for this season, skip silently.
+    }
   }
 }
 
