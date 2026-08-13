@@ -89,6 +89,7 @@ export const BADGES: BadgeDef[] = [
   { id: 'writeup_5', name: 'Prolific Writer', description: 'Submit 5 writeups', icon: '📚', category: 'ctf' },
   { id: 'regex_3', name: 'Regex Wizard', description: 'Solve 3 regex golf puzzles', icon: '🎯', category: 'ctf' },
   { id: 'regex_10', name: 'Regex Master', description: 'Solve 10 regex golf puzzles', icon: '🏆', category: 'ctf' },
+  { id: 'bug_finder', name: 'Bug Reporter', description: 'Reported a bug that was fixed', icon: '🪲', category: 'social' },
   { id: 'level_5', name: 'Halfway There', description: 'Reach level 5', icon: '🎯', category: 'level' },
   { id: 'level_10', name: 'Maxed Out', description: 'Reach level 10', icon: '💎', category: 'level' },
 ]
