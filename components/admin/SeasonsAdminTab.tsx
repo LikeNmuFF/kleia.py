@@ -1,11 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { Calendar, Plus, Trash2, Edit3, Check, X, Link as LinkIcon, Unlink, Trophy, Settings } from 'lucide-react'
+import { Calendar, Plus, Trash2, Edit3, Check, X, Link as LinkIcon, Unlink, Trophy, Settings, Upload } from 'lucide-react'
 import { createSeason, updateSeason, deleteSeason, addChallengeToSeason, removeChallengeFromSeason } from '@/app/actions/seasons'
 import { formatDateTime, toManilaLocalInput } from '@/lib/utils/time'
+
+const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`
 
 interface Season {
   id: string
@@ -52,7 +54,27 @@ export default function SeasonsAdminTab() {
   const [formEndDate, setFormEndDate] = useState('')
   const [formActive, setFormActive] = useState(true)
   const [formOgImageUrl, setFormOgImageUrl] = useState('')
+  const [ogImageUploading, setOgImageUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const ogImageInputRef = useRef<HTMLInputElement>(null)
+
+  async function uploadOgImage(file: File) {
+    setOgImageUploading(true)
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('upload_preset', 'kleia-avatars')
+    formData.append('folder', 'kleia/season-og')
+
+    try {
+      const res = await fetch(CLOUDINARY_URL, { method: 'POST', body: formData })
+      if (!res.ok) throw new Error('Upload failed')
+      const data = await res.json()
+      setFormOgImageUrl(data.secure_url)
+    } catch {
+      setMessage({ text: 'Image upload failed', type: 'error' })
+    }
+    setOgImageUploading(false)
+  }
 
   useEffect(() => {
     loadData()
@@ -298,17 +320,43 @@ export default function SeasonsAdminTab() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>OG Image URL (for social sharing)</label>
+              <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>OG Image (for social sharing)</label>
               <input
-                type="url"
-                value={formOgImageUrl}
-                onChange={e => setFormOgImageUrl(e.target.value)}
-                placeholder="https://... (thumbnail when shared on social media)"
-                className="w-full px-3 py-2 rounded-lg text-sm border bg-transparent"
-                style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                ref={ogImageInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={e => {
+                  const file = e.target.files?.[0]
+                  if (file) uploadOgImage(file)
+                }}
               />
+              {formOgImageUrl ? (
+                <div className="relative rounded-lg overflow-hidden border" style={{ borderColor: 'var(--border-color)' }}>
+                  <img src={formOgImageUrl} alt="OG Preview" className="w-full h-40 object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => { setFormOgImageUrl(''); if (ogImageInputRef.current) ogImageInputRef.current.value = '' }}
+                    className="absolute top-2 right-2 p-1.5 rounded-lg"
+                    style={{ backgroundColor: 'rgba(0,0,0,0.6)', color: 'white' }}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => ogImageInputRef.current?.click()}
+                  disabled={ogImageUploading}
+                  className="w-full px-4 py-8 rounded-lg border-2 border-dashed text-sm flex flex-col items-center gap-2 transition-colors hover:border-violet-400"
+                  style={{ borderColor: 'var(--border-color)', color: 'var(--text-muted)' }}
+                >
+                  <Upload className="w-5 h-5" />
+                  {ogImageUploading ? 'Uploading...' : 'Click to upload OG image (1200x630px)'}
+                </button>
+              )}
               <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>
-                Recommended: 1200x630px. Used as preview image when sharing the season link.
+                Used as preview image when sharing the season link on social media.
               </p>
             </div>
             <div>
