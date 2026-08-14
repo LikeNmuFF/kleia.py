@@ -111,13 +111,37 @@ export async function submitFlag(challengeId: string, submittedFlag: string) {
 
   const { data: challenge } = await supabase
     .from('ctf_challenges')
-    .select('id, flag_hash')
+    .select('id, flag_hash, season_id')
     .eq('id', challengeId)
     .eq('status', 'approved')
     .single()
 
   if (!challenge) {
     return { error: 'Challenge not found' }
+  }
+
+  if (challenge.season_id) {
+    const { data: season } = await supabase
+      .from('ctf_seasons')
+      .select('status, start_date, end_date')
+      .eq('id', challenge.season_id)
+      .single()
+    const status = getEffectiveSeasonStatus(season ?? { status: 'ended', start_date: '', end_date: '' })
+
+    if (status === 'upcoming' || status === 'paused') {
+      return { error: 'Submissions are disabled for this season right now' }
+    }
+    if (status === 'live') {
+      const { data: part } = await supabase
+        .from('ctf_season_participants')
+        .select('user_id')
+        .eq('season_id', challenge.season_id)
+        .eq('user_id', user.id)
+        .maybeSingle()
+      if (!part) {
+        return { error: 'Only participants can solve this during the season' }
+      }
+    }
   }
 
   const { data: seasonLinks } = await supabase
@@ -237,6 +261,90 @@ export async function createChallenge(data: {
   }
 
   await logEvent({ endpoint: 'ctf.createChallenge', status: 'success', durationMs: Date.now() - start, userId: user?.id })
+  revalidatePath('/ctf')
+  return { success: true }
+}
+
+export async function createSeasonChallenge(seasonId: string, data: {
+  title: string
+  description: string
+  category: string
+  difficulty: string
+  points: number
+  flag: string
+  hint?: string
+  file_url?: string
+  link_url?: string
+  author?: string
+  learn_topic_slug?: string
+  learn_lesson_slug?: string
+}) {
+  const start = Date.now()
+  const supabase = await createClient()
+  if (!(await checkAdmin(supabase))) {
+    await logEvent({ endpoint: 'ctf.createSeasonChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: 'Unauthorized', userId: (await supabase.auth.getUser()).data.user?.id })
+    return { error: 'Unauthorized' }
+  }
+
+  const { data: season } = await supabase
+    .from('ctf_seasons')
+    .select('id, slug')
+    .eq('id', seasonId)
+    .single()
+  if (!season) return { error: 'Season not found' }
+
+  if (!data.title.trim()) return { error: 'Title cannot be empty' }
+  if (!data.description.trim()) return { error: 'Description cannot be empty' }
+  if (!isValidCategory(data.category)) return { error: 'Invalid category' }
+  if (!isValidDifficulty(data.difficulty)) return { error: 'Invalid difficulty' }
+  if (!Number.isInteger(data.points) || data.points < 1) return { error: 'Points must be a positive integer' }
+  if (!data.flag.trim()) return { error: 'Flag cannot be empty' }
+
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const learnLink = await resolveLearnLink(
+    supabase,
+    data.learn_topic_slug,
+    data.learn_lesson_slug
+  )
+
+  const { data: inserted, error: insertError } = await supabase
+    .from('ctf_challenges')
+    .insert({
+      title: data.title.trim(),
+      description: data.description.trim(),
+      category: data.category,
+      difficulty: data.difficulty,
+      points: data.points,
+      flag_hash: hashFlag(data.flag.trim()),
+      hint: data.hint?.trim() || null,
+      file_url: data.file_url?.trim() || null,
+      link_url: data.link_url?.trim() || null,
+      author: data.author?.trim() || null,
+      status: 'approved',
+      season_id: seasonId,
+      created_by: user!.id,
+      ...learnLink,
+    })
+    .select('id')
+    .single()
+
+  if (insertError) {
+    await logEvent({ endpoint: 'ctf.createSeasonChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: insertError.message, userId: user?.id })
+    return { error: insertError.message }
+  }
+
+  const { error: linkError } = await supabase
+    .from('ctf_season_challenges')
+    .insert({ season_id: seasonId, challenge_id: inserted!.id, bonus_points: 0 })
+
+  if (linkError) {
+    await logEvent({ endpoint: 'ctf.createSeasonChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: linkError.message, userId: user?.id })
+    return { error: linkError.message }
+  }
+
+  await logEvent({ endpoint: 'ctf.createSeasonChallenge', status: 'success', durationMs: Date.now() - start, userId: user?.id })
+  revalidatePath(`/admin/seasons/${season.slug}`)
   revalidatePath('/ctf')
   return { success: true }
 }
