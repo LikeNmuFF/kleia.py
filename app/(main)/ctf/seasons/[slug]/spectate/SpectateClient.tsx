@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getSeasonLeaderboard } from '@/app/actions/seasons'
 import { getRecentSeasonSolves } from '@/app/actions/competition'
+import { useSeasonStatusRealtime } from '@/lib/hooks/useSeasonStatusRealtime'
 
 interface Standing {
   user_id: string
@@ -41,6 +42,8 @@ export default function SpectateClient({
 }) {
   const [rows, setRows] = useState(standings)
   const [solves, setSolves] = useState(recentSolves)
+
+  useSeasonStatusRealtime(season.id)
 
   useEffect(() => {
     const supabase = createClient()

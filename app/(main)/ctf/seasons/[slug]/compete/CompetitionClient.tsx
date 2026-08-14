@@ -6,6 +6,7 @@ import { X, Trophy, Target, CheckCircle2, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { submitFlag, getChallenge } from '@/app/actions/ctf'
 import Countdown from '@/components/competition/Countdown'
+import { useSeasonStatusRealtime } from '@/lib/hooks/useSeasonStatusRealtime'
 
 interface Season {
   id: string
@@ -64,6 +65,8 @@ export default function CompetitionClient({
   const [flag, setFlag] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null)
+
+  useSeasonStatusRealtime(season.id)
 
   useEffect(() => {
     if (effectiveStatus !== 'live') return

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { joinSeason, updateSeasonCodename } from '@/app/actions/seasons'
 import Countdown from '@/components/competition/Countdown'
 import { formatDateTime } from '@/lib/utils/time'
+import { useSeasonStatusRealtime } from '@/lib/hooks/useSeasonStatusRealtime'
 import { Share2, Copy, Check, Trophy, Users, Calendar, Target, Shield, ExternalLink } from 'lucide-react'
 
 interface Season {
@@ -81,6 +82,8 @@ export default function SeasonDetailClient({
   const [codenameError, setCodenameError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [showShare, setShowShare] = useState(false)
+
+  useSeasonStatusRealtime(season.id)
 
   const canRegister = () => {
     return season.is_active && status === 'upcoming'
