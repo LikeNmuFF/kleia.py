@@ -92,7 +92,7 @@ app/                      # Next.js App Router routes
   (main)/                 # Authenticated app pages (feed, chat, events, ctf, ...)
   (auth)/                 # Login, signup, password pages
   (legal)/                # Terms, privacy, security pages
-  api/                    # Route handlers (server actions fallbacks, etc.)
+  api/                    # Route handlers (server action fallbacks, etc.)
 components/               # Reusable React components
 lib/                      # Utilities, contexts, supabase clients
 public/                   # Static assets (robots.txt, sitemap.xml, images)
