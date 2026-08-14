@@ -27,6 +27,8 @@ function getTransporter() {
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+// CAP: Vercel Hobby functions time out at 300s; each SMTP send takes ~1-3s, so
+// a full 500-recipient batch could exceed the limit. ~40 invitees is well within.
 const MAX_RECIPIENTS = 500
 
 export async function sendInviteEmails(
