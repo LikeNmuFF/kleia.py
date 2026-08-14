@@ -17,6 +17,7 @@ interface Season {
   end_date: string
   is_active: boolean
   created_at: string
+  og_image_url?: string | null
 }
 
 interface Challenge {
@@ -99,7 +100,7 @@ export default function SeasonsAdminTab() {
     setFormStartDate(toManilaLocalInput(season.start_date))
     setFormEndDate(toManilaLocalInput(season.end_date))
     setFormActive(season.is_active)
-    setFormOgImageUrl((season as Record<string, unknown>).og_image_url as string || '')
+    setFormOgImageUrl(season.og_image_url || '')
     setShowCreate(false)
   }
 
