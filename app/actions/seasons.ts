@@ -272,6 +272,13 @@ export async function updateSeason(seasonId: string, data: {
   if (data.name !== undefined) updates.name = data.name.trim()
   if (data.description !== undefined) updates.description = data.description?.trim() || null
   if (data.theme !== undefined) updates.theme = data.theme?.trim() || null
+  if (data.start_date !== undefined && data.end_date !== undefined) {
+    const startTs = new Date(parseManilaLocal(data.start_date)).getTime()
+    const endTs = new Date(parseManilaLocal(data.end_date)).getTime()
+    if (Number.isNaN(startTs) || Number.isNaN(endTs) || startTs >= endTs) {
+      return { error: 'End must be after start' }
+    }
+  }
   if (data.start_date !== undefined) updates.start_date = parseManilaLocal(data.start_date)
   if (data.end_date !== undefined) updates.end_date = parseManilaLocal(data.end_date)
   if (data.is_active !== undefined) updates.is_active = data.is_active

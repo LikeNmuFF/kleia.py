@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Play, Pause, Circle, Square, UserPlus, Trash2, Save } from 'lucide-react'
 import type { SeasonStatus } from '@/app/actions/competition'
+import { formatDateTime } from '@/lib/utils/time'
 import {
   setSeasonStatus,
   addSeasonSpectator,
@@ -93,7 +94,7 @@ export default function SeasonAdminClient({
       <div>
         <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{season.name}</h1>
         <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-          {season.start_date} → {season.end_date} · status: <span className="font-mono font-semibold" style={{ color: '#8b5cf6' }}>{effectiveStatus}</span>
+          {formatDateTime(season.start_date)} → {formatDateTime(season.end_date)} · status: <span className="font-mono font-semibold" style={{ color: '#8b5cf6' }}>{effectiveStatus}</span>
         </p>
       </div>
 
