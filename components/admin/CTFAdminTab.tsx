@@ -20,6 +20,7 @@ interface Challenge {
   created_at: string
   learn_topic_slug: string | null
   learn_lesson_slug: string | null
+  season_id: string | null
 }
 
 interface TopicLink {
@@ -47,7 +48,7 @@ export default function CTFAdminTab() {
       const [{ data }, { data: t }, { data: l }] = await Promise.all([
         supabase
           .from('ctf_challenges')
-          .select('id, title, description, category, difficulty, points, hint, is_active, file_url, link_url, author, status, created_at, learn_topic_slug, learn_lesson_slug')
+          .select('id, title, description, category, difficulty, points, hint, is_active, file_url, link_url, author, status, created_at, learn_topic_slug, learn_lesson_slug, season_id')
           .order('created_at', { ascending: false }),
         supabase
           .from('learn_topics')

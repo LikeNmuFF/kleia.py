@@ -23,6 +23,7 @@ interface Challenge {
   created_at: string
   learn_topic_slug: string | null
   learn_lesson_slug: string | null
+  season_id: string | null
 }
 
 interface TopicLink {
@@ -300,6 +301,11 @@ export default function AdminCTFClient({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <span className="font-medium truncate max-w-[200px]" style={{ color: 'var(--text-primary)' }}>{ch.title}</span>
+                      {ch.season_id && (
+                        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-md" style={{ backgroundColor: 'rgba(139,92,246,0.15)', color: '#a78bfa' }}>
+                          Season-only
+                        </span>
+                      )}
                       <span className="text-xs px-1.5 py-0.5 rounded-full capitalize shrink-0" style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-muted)' }}>
                         {ch.category}
                       </span>
