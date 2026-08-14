@@ -21,10 +21,27 @@ export default async function SeasonAdminPage({ params }: { params: Promise<{ sl
   const season = await getSeasonBySlug(slug)
   if (!season) notFound()
 
-  const [participants, spectators] = await Promise.all([
+  const [participants, spectators, seasonChallenges] = await Promise.all([
     getSeasonParticipants(season.id),
     getSeasonSpectators(season.id),
+    supabase
+      .from('ctf_season_challenges')
+      .select('challenge_id, bonus_points, ctf_challenges:challenge_id (id, title, category, difficulty, points, season_id)')
+      .eq('season_id', season.id),
   ])
+
+  const challenges = (seasonChallenges.data || []).map(sc => {
+    const ch = Array.isArray(sc.ctf_challenges) ? sc.ctf_challenges[0] : sc.ctf_challenges
+    return {
+      id: (ch?.id as string) ?? sc.challenge_id,
+      title: (ch?.title as string) ?? 'Unknown',
+      category: (ch?.category as string) ?? 'misc',
+      difficulty: (ch?.difficulty as string) ?? 'easy',
+      points: (ch?.points as number) ?? 0,
+      bonus_points: sc.bonus_points ?? 0,
+      seasonOnly: (ch?.season_id as string | null) === season.id,
+    }
+  })
 
   return (
     <SeasonAdminClient
@@ -32,6 +49,7 @@ export default async function SeasonAdminPage({ params }: { params: Promise<{ sl
       effectiveStatus={getEffectiveSeasonStatus(season)}
       participants={participants}
       spectators={spectators}
+      challenges={challenges}
     />
   )
 }
