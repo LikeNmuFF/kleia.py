@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import { getEffectiveSeasonStatus } from '@/app/actions/competition-status'
 import AnnouncementBanner from '@/components/AnnouncementBanner'
 import AIFairPlayBanner from '@/components/ctf/AIFairPlayBanner'
 import CTFClient from './CTFClient'
@@ -12,13 +13,30 @@ export const metadata: Metadata = {
 async function getChallengeData(userId?: string) {
   const supabase = await createClient()
 
-  const { data: challenges } = await supabase
-    .from('ctf_challenges')
-    .select('id, title, category, difficulty, points, hint, author, created_at')
-    .eq('status', 'approved')
-    .order('created_at', { ascending: false })
+  const [{ data: globalChallenges }, { data: exclusiveChallenges }] = await Promise.all([
+    supabase
+      .from('ctf_challenges')
+      .select('id, title, category, difficulty, points, hint, author, created_at')
+      .is('season_id', null)
+      .eq('status', 'approved')
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('ctf_challenges')
+      .select('id, title, category, difficulty, points, hint, author, created_at, seasons:season_id (status, start_date, end_date)')
+      .not('season_id', 'is', null)
+      .eq('status', 'approved'),
+  ])
 
-  if (!challenges) return { challenges: [], solvedIds: [], solvesById: {}, ratingsById: {} }
+  const challenges = [...(globalChallenges || [])]
+  for (const c of exclusiveChallenges || []) {
+    const season = Array.isArray(c.seasons) ? c.seasons[0] : c.seasons
+    if (!season || getEffectiveSeasonStatus(season as { status: string; start_date: string; end_date: string }) === 'ended') {
+      const { seasons, ...rest } = c
+      challenges.push(rest)
+    }
+  }
+
+  if (!challenges.length) return { challenges: [], solvedIds: [], solvesById: {}, ratingsById: {} }
 
   let solvedIds: string[] = []
   if (userId) {
