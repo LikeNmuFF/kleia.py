@@ -10,10 +10,42 @@ interface SendResult {
   error?: string
 }
 
+const DEFAULT_BODY = `[SEASON NAME] is officially launching soon.
+
+You've been personally selected to compete in this season of Kleia — a cybersec challenge league where skill is everything.
+
+SEASON OVERVIEW
+
+  Season:    [Season Name]
+  Starts:    [Start Date/Time, Asia/Manila]
+  Ends:      [End Date/Time, Asia/Manila]
+  Theme:     [Theme — e.g., "Digital Forensics & Cryptography"]
+
+CHALLENGES INCOMING
+
+  This season brings [N] new challenges across multiple categories:
+  forensics, crypto, web exploitation, and more. Some you've never
+  seen before — and a few that will test limits you didn't know
+  you had.
+
+  Whether you're here to grind the leaderboard or learn something
+  new, there's a seat at the table.
+
+WHAT YOU GET
+
+  - XP and badges for every solve
+  - Season-exclusive challenges (not available after the season ends)
+  - A shot at the top of the leaderboard
+  - Bragging rights
+
+Join the fight — the clock starts soon.
+
+Questions? Reach out anytime: me@kleia.site`
+
 export default function EmailTab() {
   const [addresses, setAddresses] = useState('')
   const [subject, setSubject] = useState('You are invited to join Kleia')
-  const [body, setBody] = useState('')
+  const [body, setBody] = useState(DEFAULT_BODY)
   const [sending, setSending] = useState(false)
   const [results, setResults] = useState<SendResult[] | null>(null)
   const [error, setError] = useState<string | null>(null)
