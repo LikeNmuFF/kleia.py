@@ -142,19 +142,19 @@ export async function submitFlag(challengeId: string, submittedFlag: string) {
         return { error: 'Only participants can solve this during the season' }
       }
     }
-  }
-
-  const { data: seasonLinks } = await supabase
-    .from('ctf_season_challenges')
-    .select('seasons:season_id (status, start_date, end_date)')
-    .eq('challenge_id', challengeId)
-  if (seasonLinks?.length) {
-    const statuses = seasonLinks.map((link) => {
-      const season = Array.isArray(link.seasons) ? link.seasons[0] : link.seasons
-      return season ? getEffectiveSeasonStatus(season) : null
-    })
-    if (statuses.some((s) => s === 'paused' || s === 'ended')) {
-      return { error: 'Submissions are disabled for this season right now' }
+  } else {
+    const { data: seasonLinks } = await supabase
+      .from('ctf_season_challenges')
+      .select('seasons:season_id (status, start_date, end_date)')
+      .eq('challenge_id', challengeId)
+    if (seasonLinks?.length) {
+      const statuses = seasonLinks.map((link) => {
+        const season = Array.isArray(link.seasons) ? link.seasons[0] : link.seasons
+        return season ? getEffectiveSeasonStatus(season) : null
+      })
+      if (statuses.some((s) => s === 'paused' || s === 'ended')) {
+        return { error: 'Submissions are disabled for this season right now' }
+      }
     }
   }
 
