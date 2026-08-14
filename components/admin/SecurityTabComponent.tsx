@@ -66,6 +66,7 @@ export default function SecurityTabComponent() {
   const [topIps, setTopIps] = useState<Array<{ ip: string; count: number }>>([])
   const [topTypes, setTopTypes] = useState<Array<{ type: string; count: number }>>([])
   const [severityCounts, setSeverityCounts] = useState({ critical: 0, high: 0, medium: 0, low: 0 })
+  const [ipUsers, setIpUsers] = useState<Record<string, Array<{ userId: string; username: string; lastSeen: string }>>>({})
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -76,6 +77,7 @@ export default function SecurityTabComponent() {
         setTopIps(sec.topIps)
         setTopTypes(sec.topTypes)
         setSeverityCounts(sec.severityCounts)
+        setIpUsers(sec.ipUsers ?? {})
         setLoading(false)
       })
       .catch(() => setLoading(false))
@@ -109,12 +111,31 @@ export default function SecurityTabComponent() {
               <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No threats detected in the last 24 hours</p>
             ) : (
               <div className="space-y-1.5">
-                {topIps.map(({ ip, count }) => (
-                  <div key={ip} className="flex items-center justify-between text-sm">
-                    <span className="font-mono text-xs" style={{ color: 'var(--text-secondary)' }}>{ip}</span>
-                    <span className="font-medium" style={{ color: count >= 10 ? '#ef4444' : 'var(--text-primary)' }}>{count}</span>
-                  </div>
-                ))}
+                {topIps.map(({ ip, count }) => {
+                  const players = ipUsers[ip] ?? []
+                  return (
+                    <div key={ip} className="flex items-center justify-between gap-3 text-sm">
+                      <div className="min-w-0">
+                        <span className="font-mono text-xs" style={{ color: 'var(--text-secondary)' }}>{ip}</span>
+                        {players.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-0.5">
+                            {players.map(p => (
+                              <a
+                                key={p.userId}
+                                href={`/profile/${p.username}`}
+                                className="text-[10px] px-1.5 py-0.5 rounded font-medium hover:underline"
+                                style={{ backgroundColor: `${SEVERITY_COLORS.high}20`, color: '#f97316' }}
+                              >
+                                @{p.username}
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <span className="font-medium shrink-0" style={{ color: count >= 10 ? '#ef4444' : 'var(--text-primary)' }}>{count}</span>
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>

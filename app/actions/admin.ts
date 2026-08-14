@@ -217,17 +217,41 @@ export async function getSecurityEvents(limit = 50) {
     else severityCounts.low++
   }
 
+  const topIps = [...ipCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([ip, count]) => ({ ip, count }))
+
+  // Correlate each top IP with players seen from it (events_log pairs client_ip + user_id)
+  const ipUserMap = new Map<string, { userId: string; username: string; lastSeen: string }[]>()
+  if (topIps.length > 0) {
+    const { data: ipRows } = await supabase
+      .from('events_log')
+      .select('client_ip, user_id, created_at, users:user_id (id, username)')
+      .in('client_ip', topIps.map(t => t.ip))
+      .not('user_id', 'is', null)
+      .order('created_at', { ascending: false })
+
+    for (const row of ipRows ?? []) {
+      if (!row.client_ip || !row.user_id) continue
+      const user = Array.isArray(row.users) ? row.users[0] : row.users
+      const list = ipUserMap.get(row.client_ip) ?? []
+      if (!list.some(u => u.userId === row.user_id)) {
+        list.push({ userId: row.user_id, username: user?.username ?? 'unknown', lastSeen: row.created_at })
+      }
+      ipUserMap.set(row.client_ip, list)
+    }
+  }
+
   return {
     events: eventsResult.data ?? [],
-    topIps: [...ipCounts.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
-      .map(([ip, count]) => ({ ip, count })),
+    topIps,
     topTypes: [...typeCounts.entries()]
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10)
       .map(([type, count]) => ({ type, count })),
     severityCounts,
+    ipUsers: Object.fromEntries(ipUserMap),
   }
 }
 
