@@ -25,6 +25,22 @@
   </a>
 </p>
 
+<p align="center">
+  <a href="https://github.com/LikeNmuFF/kleia.py/stargazers">
+    <img src="https://img.shields.io/github/stars/LikeNmuFF/kleia.py?style=flat&color=8b5cf6" alt="Stars">
+  </a>
+  <a href="https://github.com/LikeNmuFF/kleia.py/network/members">
+    <img src="https://img.shields.io/github/forks/LikeNmuFF/kleia.py?style=flat&color=38bdf8" alt="Forks">
+  </a>
+  <a href="https://github.com/LikeNmuFF/kleia.py/issues">
+    <img src="https://img.shields.io/github/issues/LikeNmuFF/kleia.py?style=flat&color=f59e0b" alt="Issues">
+  </a>
+  <a href="https://github.com/LikeNmuFF/kleia.py/pulls">
+    <img src="https://img.shields.io/github/issues-pr/LikeNmuFF/kleia.py?style=flat&color=10b981" alt="Pull Requests">
+  </a>
+  <img src="https://img.shields.io/github/last-commit/LikeNmuFF/kleia.py?style=flat&color=6b7280" alt="Last Commit">
+</p>
+
 <br/>
 
 <div align="center">
@@ -47,6 +63,18 @@
   <b>Learn Together, Grow Together</b><br/>
   A community platform for study groups and friends — learn skills, solve CTF challenges, earn XP, and grow together.
 </p>
+
+<br/>
+
+---
+
+## 🎬 Demo
+
+> **Live:** [kleia.site](https://www.kleia.site)
+
+| Feed | Chat | CTF Challenges | Leaderboard |
+|------|------|----------------|-------------|
+| Share posts, resources, and updates | Real-time messaging with friends | Solve web, crypto, pwn, forensics & misc | Earn XP and climb the ranks |
 
 <br/>
 
@@ -382,6 +410,25 @@ Apply the migrations in `supabase-migrations/` to your Supabase project via the 
 ## 🤝 Contributing
 
 This is a community project — contributions, ideas, and bug reports are all welcome! Check out the **[Contributing Guide](CONTRIBUTING.md)** to get started (setup, code style, and how to submit CTF challenges).
+
+### Quick Start for Contributors
+
+```bash
+# Fork and clone
+git clone https://github.com/YOUR_USERNAME/kleia.py.git
+cd kleia.py
+
+# Install dependencies
+npm install
+
+# Copy env template
+cp .env.example .env.local
+
+# Start dev server
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) and start hacking. PRs that fix bugs or add features are always appreciated!
 
 For how to responsibly report a security vulnerability, see **[SECURITY.md](SECURITY.md)**.
 
