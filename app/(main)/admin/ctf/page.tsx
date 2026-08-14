@@ -18,7 +18,7 @@ export default async function AdminCTFPage() {
 
   const { data: challenges } = await supabase
     .from('ctf_challenges')
-    .select('id, title, description, category, difficulty, points, hint, is_active, file_url, link_url, author, status, created_at, learn_topic_slug, learn_lesson_slug')
+    .select('id, title, description, category, difficulty, points, hint, is_active, file_url, link_url, author, status, created_at, learn_topic_slug, learn_lesson_slug, season_id')
     .order('created_at', { ascending: false })
 
   const { data: topics } = await supabase
