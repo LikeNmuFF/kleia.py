@@ -92,7 +92,7 @@ export async function sendInviteEmails(
         subject: cleanedSubject,
         text: `${cleanedBody}\n\nJoin here: ${siteUrl}/signup`,
         html: `<div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
-  <h2 style="color: #111;">${cleanedSubject.replace(/</g, '&lt;')}</h2>
+  <h2 style="color: #111;">${cleanedSubject.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</h2>
   ${htmlBody}
   <p style="margin-top: 24px;">
     <a href="${siteUrl}/signup" style="display: inline-block; padding: 12px 24px; background-color: #22c55e; color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold;">
