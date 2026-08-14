@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Shield, AlertTriangle } from 'lucide-react'
-import { getSecurityReports } from '@/app/actions/admin'
+import { Shield, AlertTriangle, Radar } from 'lucide-react'
+import { getSecurityReports, getSecurityEvents } from '@/app/actions/admin'
 
 interface SecurityData {
   latest: {
@@ -24,6 +24,17 @@ interface SecurityData {
   }>
 }
 
+interface SecurityEvent {
+  id: string
+  event_type: string
+  severity: string
+  source_ip: string | null
+  user_id: string | null
+  challenge_id: string | null
+  details: Record<string, unknown>
+  created_at: string
+}
+
 function SeverityBadge({ count, label, color }: { count: number; label: string; color: string }) {
   return (
     <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: `${color}15`, color }}>
@@ -32,12 +43,42 @@ function SeverityBadge({ count, label, color }: { count: number; label: string; 
   )
 }
 
+const SEVERITY_COLORS: Record<string, string> = {
+  critical: '#ef4444',
+  high: '#f97316',
+  medium: '#eab308',
+  low: '#22c55e',
+}
+
+const EVENT_LABELS: Record<string, string> = {
+  flag_bruteforce: 'Flag brute-force',
+  flag_bruteforce_hourly: 'Flag spam (hourly cap)',
+  ssrf_attempt: 'SSRF attempt',
+  honeypot_hit: 'Honeypot hit',
+  rate_limited: 'Rate-limited',
+  proxy_invalid_protocol: 'Proxy invalid protocol',
+  proxy_credentials: 'Proxy credential abuse',
+}
+
 export default function SecurityTabComponent() {
   const [data, setData] = useState<SecurityData | null>(null)
+  const [events, setEvents] = useState<SecurityEvent[]>([])
+  const [topIps, setTopIps] = useState<Array<{ ip: string; count: number }>>([])
+  const [topTypes, setTopTypes] = useState<Array<{ type: string; count: number }>>([])
+  const [severityCounts, setSeverityCounts] = useState({ critical: 0, high: 0, medium: 0, low: 0 })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    getSecurityReports().then(d => { setData(d); setLoading(false) })
+    Promise.all([getSecurityReports(), getSecurityEvents(50)])
+      .then(([reports, sec]) => {
+        setData(reports)
+        setEvents(sec.events)
+        setTopIps(sec.topIps)
+        setTopTypes(sec.topTypes)
+        setSeverityCounts(sec.severityCounts)
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
   }, [])
 
   if (loading) {
@@ -46,6 +87,89 @@ export default function SecurityTabComponent() {
 
   return (
     <div className="space-y-6">
+      {/* Threat Feed */}
+      <div className="rounded-xl p-5" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+            <Radar className="w-4 h-4 text-red-400" />
+            Detected Attacks
+          </h3>
+          <div className="flex gap-2">
+            {severityCounts.critical > 0 && <SeverityBadge count={severityCounts.critical} label="Critical" color="#ef4444" />}
+            {severityCounts.high > 0 && <SeverityBadge count={severityCounts.high} label="High" color="#f97316" />}
+            {severityCounts.medium > 0 && <SeverityBadge count={severityCounts.medium} label="Medium" color="#eab308" />}
+            {severityCounts.low > 0 && <SeverityBadge count={severityCounts.low} label="Low" color="#22c55e" />}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-5">
+          <div>
+            <p className="text-xs font-medium mb-2 uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Top threat IPs (24h)</p>
+            {topIps.length === 0 ? (
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No threats detected in the last 24 hours</p>
+            ) : (
+              <div className="space-y-1.5">
+                {topIps.map(({ ip, count }) => (
+                  <div key={ip} className="flex items-center justify-between text-sm">
+                    <span className="font-mono text-xs" style={{ color: 'var(--text-secondary)' }}>{ip}</span>
+                    <span className="font-medium" style={{ color: count >= 10 ? '#ef4444' : 'var(--text-primary)' }}>{count}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div>
+            <p className="text-xs font-medium mb-2 uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Attack types (24h)</p>
+            {topTypes.length === 0 ? (
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No attack types recorded</p>
+            ) : (
+              <div className="space-y-1.5">
+                {topTypes.map(({ type, count }) => (
+                  <div key={type} className="flex items-center justify-between text-sm">
+                    <span style={{ color: 'var(--text-secondary)' }}>{EVENT_LABELS[type] || type}</span>
+                    <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{count}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <p className="text-xs font-medium mb-2 uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Latest events</p>
+        {events.length === 0 ? (
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No security events recorded yet</p>
+        ) : (
+          <div className="max-h-72 overflow-y-auto space-y-1.5 pr-1">
+            {events.map(ev => (
+              <div key={ev.id} className="flex items-start gap-2 py-1.5 border-t text-sm" style={{ borderColor: 'var(--border-color)' }}>
+                <span
+                  className="w-2 h-2 rounded-full mt-1.5 shrink-0"
+                  style={{ backgroundColor: SEVERITY_COLORS[ev.severity] || '#22c55e' }}
+                />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
+                      {EVENT_LABELS[ev.event_type] || ev.event_type}
+                    </span>
+                    {ev.source_ip && (
+                      <span className="font-mono text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-muted)' }}>
+                        {ev.source_ip}
+                      </span>
+                    )}
+                  </div>
+                  {ev.user_id && (
+                    <span className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>user: {ev.user_id.slice(0, 8)}…</span>
+                  )}
+                  <span className="text-[10px] ml-2" style={{ color: 'var(--text-muted)' }}>
+                    {new Date(ev.created_at).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Latest Report */}
       <div className="rounded-xl p-5" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
         <div className="flex items-center justify-between mb-4">

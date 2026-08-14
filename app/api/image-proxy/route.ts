@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { resolveAndCheckHost, hasCredentials } from '@/lib/ssrf-guard'
+import { logSecurityEvent } from '@/lib/security-log'
 
 const MAX_URL_LENGTH = 2048
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB
@@ -26,15 +27,39 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid URL' }, { status: 400 })
   }
 
+  const clientIp =
+    request.headers.get('x-vercel-forwarded-for')?.split(',')[0].trim() ||
+    request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+    request.headers.get('cf-connecting-ip') ||
+    null
+
   if (parsed.protocol !== 'https:') {
+    void logSecurityEvent({
+      eventType: 'proxy_invalid_protocol',
+      severity: 'low',
+      sourceIp: clientIp,
+      details: { url: decodedUrl.slice(0, 200) },
+    })
     return NextResponse.json({ error: 'Only HTTPS allowed' }, { status: 400 })
   }
 
   if (hasCredentials(parsed)) {
+    void logSecurityEvent({
+      eventType: 'proxy_credentials',
+      severity: 'medium',
+      sourceIp: clientIp,
+      details: { url: decodedUrl.slice(0, 200) },
+    })
     return NextResponse.json({ error: 'URLs with credentials not allowed' }, { status: 400 })
   }
 
   if (!(await resolveAndCheckHost(parsed.hostname))) {
+    void logSecurityEvent({
+      eventType: 'ssrf_attempt',
+      severity: 'high',
+      sourceIp: clientIp,
+      details: { hostname: parsed.hostname, url: decodedUrl.slice(0, 200) },
+    })
     return NextResponse.json({ error: 'Host not allowed' }, { status: 400 })
   }
 

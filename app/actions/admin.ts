@@ -178,6 +178,59 @@ export async function getSecurityReports() {
   }
 }
 
+export async function getSecurityEvents(limit = 50) {
+  const supabase = await createClient()
+  await checkAdmin(supabase)
+
+  const [eventsResult, ipsResult, typesResult] = await Promise.all([
+    supabase
+      .from('security_events')
+      .select('id, event_type, severity, source_ip, user_id, challenge_id, details, created_at')
+      .order('created_at', { ascending: false })
+      .limit(limit),
+    supabase
+      .from('security_events')
+      .select('source_ip')
+      .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
+    supabase
+      .from('security_events')
+      .select('event_type')
+      .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
+  ])
+
+  const ipCounts = new Map<string, number>()
+  for (const row of ipsResult.data ?? []) {
+    if (!row.source_ip) continue
+    ipCounts.set(row.source_ip, (ipCounts.get(row.source_ip) ?? 0) + 1)
+  }
+
+  const typeCounts = new Map<string, number>()
+  for (const row of typesResult.data ?? []) {
+    typeCounts.set(row.event_type, (typeCounts.get(row.event_type) ?? 0) + 1)
+  }
+
+  const severityCounts = { critical: 0, high: 0, medium: 0, low: 0 }
+  for (const row of eventsResult.data ?? []) {
+    if (row.severity === 'critical') severityCounts.critical++
+    else if (row.severity === 'high') severityCounts.high++
+    else if (row.severity === 'medium') severityCounts.medium++
+    else severityCounts.low++
+  }
+
+  return {
+    events: eventsResult.data ?? [],
+    topIps: [...ipCounts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([ip, count]) => ({ ip, count })),
+    topTypes: [...typeCounts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([type, count]) => ({ type, count })),
+    severityCounts,
+  }
+}
+
 export async function getAdminAnalytics() {
   const supabase = await createClient()
   await checkAdmin(supabase)

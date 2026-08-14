@@ -1,6 +1,40 @@
-import { type NextRequest } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { logSecurityEvent } from '@/lib/security-log'
+
+// Paths that no legitimate user ever hits — only scanners and attackers probe them.
+const HONEYPOT_PATHS = new Set([
+  '/.env',
+  '/.git/config',
+  '/.git/HEAD',
+  '/.well-known/security.txt',
+  '/.aws/credentials',
+  '/admin-login',
+  '/administrator',
+  '/backup.zip',
+  '/backup.sql',
+  '/cgi-bin',
+  '/config.php',
+  '/debug',
+  '/info.php',
+  '/phpinfo',
+  '/phpmyadmin',
+  '/server-status',
+  '/shell',
+  '/test.php',
+  '/wp-admin',
+  '/wp-login.php',
+  '/wp-content',
+  '/ws/manager',
+  '/actuator',
+  '/actuator/env',
+  '/swagger-ui',
+  '/v2/api-docs',
+  '/vendor',
+  '/tmp',
+  '/etc/passwd',
+])
 
 function getClientIp(request: NextRequest): string {
   // On Vercel, x-vercel-forwarded-for is appended by the platform and cannot be spoofed
@@ -26,6 +60,18 @@ function getClientIp(request: NextRequest): string {
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
+  // Honeypot: log + absorb scanner hits
+  if (HONEYPOT_PATHS.has(pathname)) {
+    const ip = getClientIp(request)
+    void logSecurityEvent({
+      eventType: 'honeypot_hit',
+      severity: 'medium',
+      sourceIp: ip,
+      details: { path: pathname, userAgent: request.headers.get('user-agent') },
+    })
+    return new NextResponse('Not Found', { status: 404 })
+  }
+
   // Rate limit auth endpoints
   if (
     pathname.startsWith('/login') ||
@@ -38,6 +84,12 @@ export async function proxy(request: NextRequest) {
 
     const { allowed, retryAfter } = checkRateLimit(pathname, ip)
     if (!allowed && retryAfter) {
+      void logSecurityEvent({
+        eventType: 'rate_limited',
+        severity: 'low',
+        sourceIp: ip,
+        details: { path: pathname, retryAfter },
+      })
       return rateLimitResponse(retryAfter)
     }
   }

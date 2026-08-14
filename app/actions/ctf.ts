@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { logEvent } from '@/lib/logEvent'
+import { logSecurityEvent } from '@/lib/security-log'
 import { hashFlag } from '@/lib/utils/ctf'
 import { checkAndUnlockNodes } from './skilltree'
 import { creditSeasonSolve } from './competition'
@@ -11,6 +12,10 @@ import { getEffectiveSeasonStatus } from './competition-status'
 
 const VALID_CATEGORIES = ['web', 'crypto', 'forensics', 'misc']
 const VALID_DIFFICULTIES = ['easy', 'medium', 'hard']
+
+const FLAG_WINDOW_MS = 30_000
+const FLAG_MAX_WRONG_PER_WINDOW = 5
+const FLAG_MAX_TOTAL_PER_HOUR = 30
 
 async function checkAdmin(supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data: { user } } = await supabase.auth.getUser()
@@ -159,6 +164,49 @@ export async function submitFlag(challengeId: string, submittedFlag: string) {
   }
 
   const isCorrect = hashFlag(submittedFlag.trim()) === challenge.flag_hash
+
+  if (!isCorrect) {
+    const windowStart = new Date(Date.now() - FLAG_WINDOW_MS).toISOString()
+    const hourStart = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+
+    const [{ count: windowWrong }, { count: hourWrong }] = await Promise.all([
+      supabase
+        .from('ctf_submissions')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('challenge_id', challengeId)
+        .eq('is_correct', false)
+        .gte('created_at', windowStart),
+      supabase
+        .from('ctf_submissions')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('is_correct', false)
+        .gte('created_at', hourStart),
+    ])
+
+    if ((windowWrong ?? 0) >= FLAG_MAX_WRONG_PER_WINDOW) {
+      await logSecurityEvent({
+        eventType: 'flag_bruteforce',
+        severity: (windowWrong ?? 0) >= 10 ? 'high' : 'medium',
+        userId: user.id,
+        challengeId,
+        details: { windowWrong: windowWrong ?? 0 },
+      })
+      return { error: 'Too many incorrect flags. Try again in a moment.' }
+    }
+
+    if ((hourWrong ?? 0) >= FLAG_MAX_TOTAL_PER_HOUR) {
+      await logSecurityEvent({
+        eventType: 'flag_bruteforce_hourly',
+        severity: 'high',
+        userId: user.id,
+        challengeId,
+        details: { hourWrong: hourWrong ?? 0 },
+      })
+      return { error: 'Too many flags submitted. Try again later.' }
+    }
+  }
 
   const { error: insertError } = await supabase
     .from('ctf_submissions')
