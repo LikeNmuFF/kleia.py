@@ -11,6 +11,7 @@ import {
   removeSeasonSpectator,
   adjustSeasonScore,
 } from '@/app/actions/competition'
+import { createSeasonChallenge } from '@/app/actions/ctf'
 
 interface Season {
   id: string
@@ -35,16 +36,28 @@ interface Spectator {
   avatar_url: string | null
 }
 
+interface Challenge {
+  id: string
+  title: string
+  category: string
+  difficulty: string
+  points: number
+  bonus_points: number
+  seasonOnly: boolean
+}
+
 export default function SeasonAdminClient({
   season,
   effectiveStatus,
   participants,
   spectators,
+  challenges,
 }: {
   season: Season
   effectiveStatus: string
   participants: Participant[]
   spectators: Spectator[]
+  challenges: Challenge[]
 }) {
   const router = useRouter()
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null)
@@ -53,6 +66,7 @@ export default function SeasonAdminClient({
   const [adjustPoints, setAdjustPoints] = useState(0)
   const [adjustSolved, setAdjustSolved] = useState(0)
   const [busy, setBusy] = useState(false)
+  const [showCreate, setShowCreate] = useState(false)
 
   const notify = (text: string, type: 'success' | 'error' = 'success') => {
     setMessage({ text, type })
@@ -68,6 +82,7 @@ export default function SeasonAdminClient({
       notify(okText)
       router.refresh()
     }
+    return res
   }
 
   const statusBtn = (label: string, status: SeasonStatus, Icon: typeof Play, active: boolean, disabled: boolean) => (
@@ -163,6 +178,96 @@ export default function SeasonAdminClient({
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Season challenges */}
+      <section className="rounded-2xl p-5" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+            Challenges ({challenges.length})
+          </h2>
+          <button
+            onClick={() => setShowCreate(!showCreate)}
+            className="px-3 py-1.5 rounded-lg text-sm font-medium"
+            style={{ background: 'var(--accent)', color: 'var(--accent-text)' }}
+          >
+            {showCreate ? 'Cancel' : '+ Create season challenge'}
+          </button>
+        </div>
+
+        {showCreate && (
+          <form
+            className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5 p-4 rounded-xl"
+            style={{ backgroundColor: 'var(--input-bg)' }}
+            onSubmit={async (e) => {
+              e.preventDefault()
+              const fd = new FormData(e.currentTarget)
+              const res = await run(
+                () => createSeasonChallenge(season.id, {
+                  title: fd.get('title') as string,
+                  description: fd.get('description') as string,
+                  category: fd.get('category') as string,
+                  difficulty: fd.get('difficulty') as string,
+                  points: parseInt(fd.get('points') as string),
+                  flag: fd.get('flag') as string,
+                  hint: (fd.get('hint') as string) || undefined,
+                  file_url: (fd.get('file_url') as string) || undefined,
+                  link_url: (fd.get('link_url') as string) || undefined,
+                  author: (fd.get('author') as string) || undefined,
+                }),
+                'Challenge created'
+              )
+              if (res.success) setShowCreate(false)
+            }}
+          >
+            <input name="title" placeholder="Title *" required className="w-full px-3 py-2 rounded-lg text-sm border bg-transparent md:col-span-2" style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
+            <textarea name="description" placeholder="Description *" required rows={3} className="w-full px-3 py-2 rounded-lg text-sm border bg-transparent md:col-span-2" style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
+            <select name="category" required className="w-full px-3 py-2 rounded-lg text-sm border bg-transparent" style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
+              <option value="web">Web</option>
+              <option value="crypto">Crypto</option>
+              <option value="forensics">Forensics</option>
+              <option value="misc">Misc</option>
+            </select>
+            <select name="difficulty" required className="w-full px-3 py-2 rounded-lg text-sm border bg-transparent" style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+            <input name="points" type="number" min="1" placeholder="Points *" required className="w-full px-3 py-2 rounded-lg text-sm border bg-transparent" style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
+            <input name="flag" type="text" placeholder="Flag (plaintext) *" required className="w-full px-3 py-2 rounded-lg text-sm border bg-transparent" style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
+            <input name="hint" placeholder="Hint (optional)" className="w-full px-3 py-2 rounded-lg text-sm border bg-transparent" style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
+            <input name="author" placeholder="Author (optional)" className="w-full px-3 py-2 rounded-lg text-sm border bg-transparent" style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
+            <input name="link_url" placeholder="External link URL (optional)" className="w-full px-3 py-2 rounded-lg text-sm border bg-transparent md:col-span-2" style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
+            <input name="file_url" placeholder="File URL (optional)" className="w-full px-3 py-2 rounded-lg text-sm border bg-transparent md:col-span-2" style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
+            <button type="submit" disabled={busy} className="md:col-span-2 px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40" style={{ background: 'var(--accent)', color: 'var(--accent-text)' }}>
+              Create
+            </button>
+          </form>
+        )}
+
+        {challenges.length === 0 ? (
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No challenges in this season yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {challenges.map((c) => (
+              <div key={c.id} className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--input-bg)' }}>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="font-medium text-sm truncate" style={{ color: 'var(--text-primary)' }}>
+                    {c.title}
+                  </span>
+                  {c.seasonOnly && (
+                    <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-md" style={{ backgroundColor: 'rgba(139,92,246,0.15)', color: '#a78bfa' }}>
+                      Season-only
+                    </span>
+                  )}
+                </div>
+                <span className="text-sm font-mono shrink-0" style={{ color: 'var(--text-primary)' }}>
+                  {c.category} · {c.points + c.bonus_points} pts
+                </span>
               </div>
             ))}
           </div>
