@@ -67,6 +67,7 @@ export function rateLimitResponse(retryAfter: number): NextResponse {
       headers: {
         'Retry-After': retryAfter.toString(),
         'X-RateLimit-Limited': 'true',
+        'X-RateLimit-Retry-After': retryAfter.toString(),
       },
     }
   )
