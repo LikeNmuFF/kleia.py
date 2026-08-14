@@ -99,7 +99,7 @@ export default function EmailTab() {
         </div>
       )}
 
-      {results && (
+      {results && results.length > 0 && (
         <div className="rounded-xl p-5" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
           <h3 className="text-lg font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
             Results — {results.filter(r => r.ok).length} sent / {results.filter(r => !r.ok).length} failed
