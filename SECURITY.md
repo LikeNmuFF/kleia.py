@@ -62,3 +62,4 @@ We consider security research conducted in good faith — testing vulnerabilitie
 - **Dependency & static scanning** runs nightly via GitHub Actions (npm audit + Semgrep), with results summarized into the admin security dashboard.
 - **Secrets** (Supabase keys, API keys) live only in Vercel/GitHub environment variables and are never committed.
 - **Public flags** for CTF challenges are never stored in the repository; seed scripts with plaintext flags are gitignored.
+
