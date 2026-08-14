@@ -67,11 +67,19 @@ export default function SeasonsAdminTab() {
 
     try {
       const res = await fetch(CLOUDINARY_URL, { method: 'POST', body: formData })
-      if (!res.ok) throw new Error('Upload failed')
+      if (!res.ok) {
+        const errBody = await res.text().catch(() => '')
+        let reason = `Upload failed (${res.status})`
+        try {
+          const parsed = JSON.parse(errBody)
+          if (parsed?.error?.message) reason = `Upload failed: ${parsed.error.message}`
+        } catch { /* keep generic */ }
+        throw new Error(reason)
+      }
       const data = await res.json()
       setFormOgImageUrl(data.secure_url)
-    } catch {
-      setMessage({ text: 'Image upload failed', type: 'error' })
+    } catch (err) {
+      setMessage({ text: err instanceof Error ? err.message : 'Image upload failed', type: 'error' })
     }
     setOgImageUploading(false)
   }
