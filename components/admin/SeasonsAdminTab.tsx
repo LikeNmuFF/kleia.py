@@ -50,6 +50,7 @@ export default function SeasonsAdminTab() {
   const [formStartDate, setFormStartDate] = useState('')
   const [formEndDate, setFormEndDate] = useState('')
   const [formActive, setFormActive] = useState(true)
+  const [formOgImageUrl, setFormOgImageUrl] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
@@ -86,6 +87,7 @@ export default function SeasonsAdminTab() {
     setFormStartDate('')
     setFormEndDate('')
     setFormActive(true)
+    setFormOgImageUrl('')
   }
 
   function startEdit(season: Season) {
@@ -97,6 +99,7 @@ export default function SeasonsAdminTab() {
     setFormStartDate(toManilaLocalInput(season.start_date))
     setFormEndDate(toManilaLocalInput(season.end_date))
     setFormActive(season.is_active)
+    setFormOgImageUrl((season as Record<string, unknown>).og_image_url as string || '')
     setShowCreate(false)
   }
 
@@ -113,6 +116,7 @@ export default function SeasonsAdminTab() {
       start_date: formStartDate,
       end_date: formEndDate,
       is_active: formActive,
+      og_image_url: formOgImageUrl || undefined,
     })
 
     if (result.success) {
@@ -139,6 +143,7 @@ export default function SeasonsAdminTab() {
       start_date: formStartDate,
       end_date: formEndDate,
       is_active: formActive,
+      og_image_url: formOgImageUrl || undefined,
     })
 
     if (result.success) {
@@ -290,6 +295,20 @@ export default function SeasonsAdminTab() {
                 className="w-full px-3 py-2 rounded-lg text-sm border bg-transparent"
                 style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
               />
+            </div>
+            <div>
+              <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>OG Image URL (for social sharing)</label>
+              <input
+                type="url"
+                value={formOgImageUrl}
+                onChange={e => setFormOgImageUrl(e.target.value)}
+                placeholder="https://... (thumbnail when shared on social media)"
+                className="w-full px-3 py-2 rounded-lg text-sm border bg-transparent"
+                style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+              />
+              <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>
+                Recommended: 1200x630px. Used as preview image when sharing the season link.
+              </p>
             </div>
             <div>
               <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Start Date & Time · Asia/Manila</label>

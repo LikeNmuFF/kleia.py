@@ -261,6 +261,7 @@ export async function updateSeason(seasonId: string, data: {
   start_date?: string
   end_date?: string
   is_active?: boolean
+  og_image_url?: string | null
 }) {
   const start = Date.now()
   const supabase = await createClient()
@@ -282,6 +283,7 @@ export async function updateSeason(seasonId: string, data: {
   if (data.start_date !== undefined) updates.start_date = parseManilaLocal(data.start_date)
   if (data.end_date !== undefined) updates.end_date = parseManilaLocal(data.end_date)
   if (data.is_active !== undefined) updates.is_active = data.is_active
+  if (data.og_image_url !== undefined) updates.og_image_url = data.og_image_url?.trim() || null
 
   const { error } = await supabase
     .from('ctf_seasons')
@@ -362,6 +364,7 @@ export async function createSeason(data: {
   start_date: string
   end_date: string
   is_active?: boolean
+  og_image_url?: string | null
 }) {
   const start = Date.now()
   const supabase = await createClient()
@@ -389,6 +392,7 @@ export async function createSeason(data: {
       start_date: parseManilaLocal(data.start_date),
       end_date: parseManilaLocal(data.end_date),
       is_active: data.is_active ?? true,
+      og_image_url: data.og_image_url?.trim() || null,
     })
 
   if (error) {
