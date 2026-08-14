@@ -7,9 +7,18 @@ function getClientIp(request: NextRequest): string {
   const vercelIp = request.headers.get('x-vercel-forwarded-for')
   if (vercelIp) return vercelIp.split(',')[0].trim()
 
+  // Check x-forwarded-for (set by reverse proxies like nginx/cloudflare)
+  // Only trust the FIRST entry — the last proxy appends, earlier entries may be client-spoofed
+  const forwarded = request.headers.get('x-forwarded-for')
+  if (forwarded) return forwarded.split(',')[0].trim()
+
   // Fallback to x-real-ip (set by reverse proxies)
   const realIp = request.headers.get('x-real-ip')
   if (realIp) return realIp.split(',')[0].trim()
+
+  // CF-Connecting-IP (Cloudflare)
+  const cfIp = request.headers.get('cf-connecting-ip')
+  if (cfIp) return cfIp.trim()
 
   return 'unknown'
 }

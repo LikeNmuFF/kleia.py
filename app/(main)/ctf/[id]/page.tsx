@@ -1,4 +1,3 @@
-import { createHash } from 'crypto'
 import { createClient } from '@/lib/supabase/server'
 import FlagSubmitForm from './FlagSubmitForm'
 import HintUnlockButton from './HintUnlockButton'
@@ -6,31 +5,6 @@ import ChallengeReviewForm from '@/components/ctf/ChallengeReviewForm'
 import ChallengeReviews from '@/components/ctf/ChallengeReviews'
 import AIFairPlayBanner from '@/components/ctf/AIFairPlayBanner'
 import { notFound } from 'next/navigation'
-
-function getCloudinarySignedUrl(url: string): string {
-  const apiSecret = process.env.CLOUDINARY_API_SECRET
-  const apiKey = process.env.CLOUDINARY_API_KEY
-  if (!apiSecret || !apiKey) return url
-
-  const parsed = new URL(url)
-  const pathMatch = parsed.pathname.match(/\/raw\/upload\/(?:v\d+\/)?(.+)$/)
-  if (!pathMatch) return url
-
-  const publicId = pathMatch[1]
-  const timestamp = Math.floor(Date.now() / 1000) + 3600
-  const signature = createHash('sha1')
-    .update(`public_id=${publicId}&timestamp=${timestamp}${apiSecret}`)
-    .digest('hex')
-
-  const params = new URLSearchParams({
-    public_id: publicId,
-    timestamp: timestamp.toString(),
-    api_key: apiKey,
-    signature,
-  })
-
-  return `https://${parsed.host}/raw/upload?${params.toString()}`
-}
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   easy: '#22c55e',
@@ -209,7 +183,7 @@ export default async function ChallengePage({ params }: { params: Promise<{ id: 
           <div className="flex flex-wrap gap-3 mb-6 pt-4 border-t" style={{ borderColor: 'var(--border-color)' }}>
             {challenge.file_url && (
               <a
-                href={getCloudinarySignedUrl(challenge.file_url)}
+                href={challenge.file_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:scale-[1.02]"

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Users, BarChart3, MessageSquare, Shield, Flag, LayoutDashboard, Regex, Trophy } from 'lucide-react'
+import { Users, BarChart3, MessageSquare, Shield, Flag, LayoutDashboard, Regex, Trophy, Mail } from 'lucide-react'
 import OverviewTab from './OverviewTab'
 import UsersTab from './UsersTab'
 import ContentTab from './ContentTab'
@@ -10,6 +10,7 @@ import SecurityTabComponent from './SecurityTabComponent'
 import CTFAdminTab from './CTFAdminTab'
 import RegexGolfAdminTab from './RegexGolfAdminTab'
 import SeasonsAdminTab from './SeasonsAdminTab'
+import EmailTab from './EmailTab'
 
 const TABS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -19,6 +20,7 @@ const TABS = [
   { id: 'ctf', label: 'CTF', icon: Flag },
   { id: 'seasons', label: 'Seasons', icon: Trophy },
   { id: 'regex-golf', label: 'Regex Golf', icon: Regex },
+  { id: 'email', label: 'Email', icon: Mail },
   { id: 'security', label: 'Security', icon: Shield },
 ] as const
 
@@ -66,6 +68,7 @@ export default function AdminDashboard({ role }: { role: string }) {
       {activeTab === 'ctf' && <CTFAdminTab />}
       {activeTab === 'seasons' && <SeasonsAdminTab />}
       {activeTab === 'regex-golf' && <RegexGolfAdminTab />}
+      {activeTab === 'email' && <EmailTab />}
       {activeTab === 'security' && <SecurityTabComponent />}
     </div>
   )

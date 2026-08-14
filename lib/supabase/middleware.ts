@@ -50,6 +50,7 @@ export async function updateSession(request: NextRequest) {
     '/privacy',
     '/terms',
     '/api',
+    '/ctf/seasons',
   ]
 
   if (publicPaths.some((p) => request.nextUrl.pathname.startsWith(p))) {
