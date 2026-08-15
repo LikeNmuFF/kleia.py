@@ -72,13 +72,14 @@ export async function proxy(request: NextRequest) {
     return new NextResponse('Not Found', { status: 404 })
   }
 
-  // Rate limit auth endpoints
+  // Rate limit auth endpoints — only form submissions, never page loads
   if (
-    pathname.startsWith('/login') ||
-    pathname.startsWith('/signup') ||
-    pathname.startsWith('/forgot-password') ||
-    pathname.startsWith('/reset-password') ||
-    pathname.startsWith('/auth/callback')
+    request.method === 'POST' &&
+    (pathname.startsWith('/login') ||
+      pathname.startsWith('/signup') ||
+      pathname.startsWith('/forgot-password') ||
+      pathname.startsWith('/reset-password') ||
+      pathname.startsWith('/auth/callback'))
   ) {
     const ip = getClientIp(request)
 
