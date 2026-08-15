@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from 'next/font/google'
 import Script from 'next/script'
 import './globals.css'
 import Providers from '@/components/Providers'
+import PresenceHeartbeat from '@/components/PresenceHeartbeat'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -123,6 +124,7 @@ export default function RootLayout({
           }}
         />
         <Providers>
+          <PresenceHeartbeat />
           {children}
         </Providers>
       </body>

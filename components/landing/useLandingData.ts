@@ -20,6 +20,9 @@ export interface LandingData {
   topStreaks: StreakMember[]
 }
 
+const ONLINE_WINDOW_MS = 3 * 60 * 1000
+const POLL_INTERVAL_MS = 30_000
+
 export function useLandingData() {
   const [data, setData] = useState<LandingData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -29,11 +32,12 @@ export function useLandingData() {
     const supabase = createClient()
 
     const load = async () => {
+      const onlineSince = new Date(Date.now() - ONLINE_WINDOW_MS).toISOString()
       const [members, posts, challenges, online, streaks] = await Promise.all([
         supabase.from('profiles').select('id', { count: 'exact', head: true }),
         supabase.from('posts').select('id', { count: 'exact', head: true }),
         supabase.from('ctf_challenges').select('id', { count: 'exact', head: true }).eq('status', 'approved'),
-        supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('status', 'online'),
+        supabase.from('profiles').select('id', { count: 'exact', head: true }).gt('last_seen', onlineSince),
         supabase
           .from('profiles')
           .select('id, username, avatar_url, current_streak, longest_streak, role')
@@ -56,9 +60,11 @@ export function useLandingData() {
     }
 
     load()
+    const poll = setInterval(load, POLL_INTERVAL_MS)
 
     return () => {
       cancelled = true
+      clearInterval(poll)
     }
   }, [])
 
