@@ -68,7 +68,7 @@ export default function MemberCard({ member: initialMember }: { member: Member }
   }, [member.id])
 
   return (
-    <Link href={`/profile/${member.username}`} className="block">
+    <Link href={`/profile/${encodeURIComponent(member.username)}`} className="block">
       <div className="card">
       <div className="flex items-center gap-4">
         <div className="relative">

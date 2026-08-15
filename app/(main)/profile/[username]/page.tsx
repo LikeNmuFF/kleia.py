@@ -16,22 +16,32 @@ type PageProps = {
   params: Promise<{ username: string }>
 }
 
+function safeDecode(value: string): string {
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return value
+  }
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { username } = await params
+  const decoded = safeDecode(username)
   return {
-    title: `@${username} — Kleia`,
-    description: `View ${username}'s Kleia profile.`,
+    title: `@${decoded} — Kleia`,
+    description: `View ${decoded}'s Kleia profile.`,
   }
 }
 
 export default async function MemberProfilePage({ params }: PageProps) {
   const { username } = await params
+  const decodedUsername = safeDecode(username)
   const supabase = await createClient()
 
   const { data: profile } = await supabase
     .from('profiles')
     .select('id, username, full_name, avatar_url, bio, status, last_seen, current_streak, longest_streak, created_at, role, total_xp')
-    .eq('username', username)
+    .eq('username', decodedUsername)
     .single()
 
   if (!profile) notFound()

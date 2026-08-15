@@ -122,7 +122,7 @@ export default function SecurityTabComponent() {
                             {players.map(p => (
                               <a
                                 key={p.userId}
-                                href={`/profile/${p.username}`}
+                                href={`/profile/${encodeURIComponent(p.username)}`}
                                 className="text-[10px] px-1.5 py-0.5 rounded font-medium hover:underline"
                                 style={{ backgroundColor: `${SEVERITY_COLORS.high}20`, color: '#f97316' }}
                               >
