@@ -254,13 +254,13 @@ GLYPH5X7 = {
     "{": ["011", "100", "100", "100", "011"],
     "x": ["101", "101", "011", "101", "101"],
     "0": ["111", "101", "101", "101", "111"],
-    "r": ["101", "111", "101", "101", "101"],
+    "r": ["110", "101", "100", "100", "100"],
     "1": ["010", "110", "010", "010", "111"],
     "s": ["011", "100", "110", "001", "110"],
-    "n": ["101", "111", "101", "101", "101"],
+    "n": ["110", "101", "101", "101", "101"],
     "t": ["010", "111", "010", "010", "010"],
     "3": ["111", "001", "011", "001", "111"],
-    "c": ["011", "100", "100", "100", "011"],
+    "c": ["011", "101", "101", "101", "011"],
     "h": ["100", "111", "101", "101", "101"],
     "4": ["101", "101", "111", "001", "001"],
     "n2": ["101", "101", "101", "101", "111"],
@@ -533,13 +533,13 @@ GLYPH5X7 = {
     "{": ["011", "100", "100", "100", "011"],
     "x": ["101", "101", "011", "101", "101"],
     "0": ["111", "101", "101", "101", "111"],
-    "r": ["101", "111", "101", "101", "101"],
+    "r": ["110", "101", "100", "100", "100"],
     "1": ["010", "110", "010", "010", "111"],
     "s": ["011", "100", "110", "001", "110"],
-    "n": ["101", "111", "101", "101", "101"],
+    "n": ["110", "101", "101", "101", "101"],
     "t": ["010", "111", "010", "010", "010"],
     "3": ["111", "001", "011", "001", "111"],
-    "c": ["011", "100", "100", "100", "011"],
+    "c": ["011", "101", "101", "101", "011"],
     "h": ["100", "111", "101", "101", "101"],
     "4": ["101", "101", "111", "001", "001"],
     "d": ["001", "011", "101", "101", "011"],
@@ -565,7 +565,7 @@ def solve_bitplane(path: Path) -> str:
     # scan text rows starting at y=30, x=20, advancing 4px per char
     rows = {}
     for y in range(30, 35):
-        rows[y] = "".join("0" if (pix[x, y][0] & 1) == 0 else "1" for x in range(20, w))
+        rows[y] = "".join("1" if (pix[x, y][0] & 1) == 0 else "0" for x in range(20, w))
     out = ""
     for start in range(0, w - 20 - 3, 4):
         col = "".join(rows[y][start:start + 3] for y in range(30, 35))
@@ -1095,4 +1095,4 @@ Expected: `scripts/forensics-artifacts/` artifacts untracked (they may already b
 - **Spec coverage:** All 10 challenges from the spec are present (XOR pcap C1, steghide BMP C2, steghide WAV C3, zsteg C4, jsteg C5, bit-plane C6, whitespace C7, appended ZIP C8, WAV LSB C9, PNG tEXt C10). Verify-first gate, Cloudinary raw upload, `file_url` insert, delete-by-title, `--dry-run`, and hints all implemented. Points match the 100–600 scale.
 - **Dependencies confirmed locally:** steghide 0.5.1 (BMP+WAV verified), zsteg 0.2.14 (verified on LSB PNG), jsteg at `~/go/bin/jsteg` (verified hide+reveal), binwalk not required by solver (ZIP signature parse verified), PIL 12.2.0.
 - **Type consistency:** `get_flag`/`getFlag` naming matches existing scripts; `verified.json` schema shared between solve script and seeder uses identical keys (`sha256`, `flag_key`). Passphrases `kleia_rock_2026` / `kleia_audio_2026` and flag keys `FLAG_FORENSICS_3_*` are consistent across Tasks 2–4.
-- **Known constraint:** steghide does not support PNG covers — BMP and WAV are used. `GLYPH5X7` supports only the characters used in the bit-plane flag (`KLEIA{b1tpl4n3_0f_th3_r3d_ch4nn3l}`); unknown chars are skipped by design in the generator and stop the decoder — the flag contains only supported glyphs.
+- **Known constraint:** steghide does not support PNG covers — BMP and WAV are used. `GLYPH5X7` supports only the characters used in the bit-plane flag (`KLEIA{b1tpl4n3_0f_th3_r3d_ch4nn3l}`); unknown chars are skipped by design in the generator and stop the decoder — the flag contains only supported glyphs. **Correction (review):** `n`/`r` and `c`/`{` glyphs were made distinct (`r` = `110,101,100,100,100`, `n` = `110,101,101,101,101`, `c` = `011,101,101,101,011`), and the solver's bit-plane extraction polarity was fixed so dark pixels (bit 0 == 0) map to glyph `"1"` (matching how the generator clears bit 0). Verified: regenerated `bitplane.png` decodes exactly to the flag.
