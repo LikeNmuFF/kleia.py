@@ -38,42 +38,6 @@ function isValidDifficulty(d: string): d is (typeof VALID_DIFFICULTIES)[number] 
   return VALID_DIFFICULTIES.includes(d)
 }
 
-async function syncTeamStats(userId: string) {
-  const supabase = await createClient()
-  const { data: membership } = await supabase
-    .from('team_members')
-    .select('team_id')
-    .eq('user_id', userId)
-    .single()
-  if (!membership) return
-
-  const { data: teamMembers } = await supabase
-    .from('team_members')
-    .select('user_id')
-    .eq('team_id', membership.team_id)
-
-  const memberIds = teamMembers?.map(m => m.user_id) || []
-  if (memberIds.length === 0) return
-
-  const { count: totalSolves } = await supabase
-    .from('ctf_submissions')
-    .select('*', { count: 'exact', head: true })
-    .eq('is_correct', true)
-    .in('user_id', memberIds)
-
-  const { data: profiles } = await supabase
-    .from('profiles')
-    .select('total_xp')
-    .in('id', memberIds)
-
-  const totalXp = profiles?.reduce((sum, p) => sum + (p.total_xp || 0), 0) || 0
-
-  await supabase
-    .from('teams')
-    .update({ total_xp: totalXp, total_solves: totalSolves || 0 })
-    .eq('id', membership.team_id)
-}
-
 async function resolveLearnLink(
   supabase: Awaited<ReturnType<typeof createClient>>,
   topicSlug?: string | null,

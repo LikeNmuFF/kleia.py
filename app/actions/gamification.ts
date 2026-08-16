@@ -30,7 +30,7 @@ export async function addXp(amount: number, reason: string) {
 
   if (error) return { error: error.message }
 
-  await Promise.all([checkBadges(), syncTeamXp(user.id)])
+  await checkBadges()
   return { success: true, totalXp: newTotal }
 }
 
@@ -78,7 +78,7 @@ export async function checkBadges() {
   const [
     ctfResult, learnResult, postResult, reviewResult,
     hintResult, writeupResult, skillResult, regexResult, cipherResult,
-    seasonResult, teamResult,
+    seasonResult,
   ] = await Promise.all([
     supabase.from('ctf_submissions').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('is_correct', true),
     supabase.from('learn_progress').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
@@ -90,7 +90,6 @@ export async function checkBadges() {
     supabase.from('regex_golf_solves').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
     supabase.from('daily_cipher_solves').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
     supabase.from('ctf_season_participants').select('season_id, user_id, total_points').eq('user_id', user.id),
-    supabase.from('team_members').select('team_id').eq('user_id', user.id).maybeSingle(),
   ])
 
   const ctfCount = ctfResult.count
@@ -127,17 +126,6 @@ export async function checkBadges() {
     }
   }
 
-  const userTeam = teamResult.data
-  let teamSolves = 0
-  if (userTeam) {
-    const { data: team } = await supabase
-      .from('teams')
-      .select('total_solves')
-      .eq('id', userTeam.team_id)
-      .single()
-    teamSolves = team?.total_solves || 0
-  }
-
   const checks: [string, boolean][] = [
     ['streak_7', (profile.current_streak || 0) >= 7 || (profile.longest_streak || 0) >= 7],
     ['streak_30', (profile.longest_streak || 0) >= 30],
@@ -150,8 +138,6 @@ export async function checkBadges() {
     ['learn_10', (learnCount || 0) >= 10],
     ['post_1', (postCount || 0) >= 1],
     ['post_10', (postCount || 0) >= 10],
-    ['team_create', !!userTeam],
-    ['team_5', teamSolves >= 5],
     ['review_1', (reviewCount || 0) >= 1],
     ['hints_5', (hintUnlockCount || 0) >= 5],
     ['writeup_1', (writeupCount || 0) >= 1],
@@ -269,40 +255,4 @@ export async function awardFirstLogin() {
       badge_id: 'first_login',
     })
   }
-}
-
-async function syncTeamXp(userId: string) {
-  const supabase = await createClient()
-  const { data: membership } = await supabase
-    .from('team_members')
-    .select('team_id')
-    .eq('user_id', userId)
-    .single()
-  if (!membership) return
-
-  const { data: teamMembers } = await supabase
-    .from('team_members')
-    .select('user_id')
-    .eq('team_id', membership.team_id)
-
-  const memberIds = teamMembers?.map(m => m.user_id) || []
-  if (memberIds.length === 0) return
-
-  const { data: profiles } = await supabase
-    .from('profiles')
-    .select('total_xp')
-    .in('id', memberIds)
-
-  const totalXp = profiles?.reduce((sum, p) => sum + (p.total_xp || 0), 0) || 0
-
-  const { count: totalSolves } = await supabase
-    .from('ctf_submissions')
-    .select('*', { count: 'exact', head: true })
-    .eq('is_correct', true)
-    .in('user_id', memberIds)
-
-  await supabase
-    .from('teams')
-    .update({ total_xp: totalXp, total_solves: totalSolves || 0 })
-    .eq('id', membership.team_id)
 }

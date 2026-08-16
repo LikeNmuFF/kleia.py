@@ -144,35 +144,15 @@ A competitive regex puzzle game — match strings with the shortest regex possib
 
 ---
 
-## 9. Team System
-
-**URL:** `/teams`, `/teams/[id]`, `/teams/leaderboard`
-
-Create teams and compete together.
-
-**How it works:**
-- Create a team with a name and description (max 5 members)
-- Only one team per user
-- Team leaders can invite other users
-- Team stats (total XP, total solves) are aggregated from all members
-- Team leaderboard ranks teams by total XP
-- Join/Leave teams (leaders must transfer ownership or be the last member to leave)
-- Badges: `team_create` — "Team Builder", `team_5` — "Squad Leader"
-
-**Tables:** `teams`, `team_members`, `team_invites`
-
----
-
 ## Navigation Updates
 
 New links added to the main nav bar:
 - **Cipher** — between Learn and CTF
 - **Regex Golf** — in the CTF section
-- **Teams** — in the main nav
 
 ---
 
-## New Badges (13 total)
+## New Badges (11 total)
 
 | Badge ID | Name | Description | Category |
 |----------|------|-------------|----------|
@@ -184,8 +164,6 @@ New links added to the main nav bar:
 | `hints_5` | Help Seeker | Unlock 5 hints | ctf |
 | `regex_3` | Regex Wizard | Solve 3 regex golf puzzles | ctf |
 | `regex_10` | Regex Master | Solve 10 regex golf puzzles | ctf |
-| `team_create` | Team Builder | Create a team | social |
-| `team_5` | Squad Leader | Team solves 5 challenges | social |
 | `season_1` | Contender | Join a season | ctf |
 | `season_win` | Champion | Finish top 3 in a season | ctf |
 | `skilltree_5` | Skill Explorer | Unlock 5 skill tree nodes | ctf |
@@ -200,7 +178,7 @@ New links added to the main nav bar:
 | `030` | Writeups and writeup votes |
 | `031` | Achievement leaderboard VIEW |
 | `032` | Seasons and skill tree tables |
-| `033` | Regex golf and team system tables |
+| `033` | Regex golf tables |
 
 **Total migrations:** 33 (000–033)
 
@@ -223,11 +201,6 @@ app/(main)/ctf/[id]/writeups/page.tsx   — Writeups page (server)
 app/(main)/ctf/[id]/writeups/WriteupsClient.tsx — Writeups UI
 app/(main)/regex-golf/page.tsx          — Regex golf (server)
 app/(main)/regex-golf/RegexGolfClient.tsx — Regex golf UI
-app/(main)/teams/page.tsx               — Teams list (server)
-app/(main)/teams/TeamsClient.tsx         — Teams UI
-app/(main)/teams/[id]/page.tsx          — Team detail (server)
-app/(main)/teams/[id]/TeamDetailClient.tsx — Team detail UI
-app/(main)/teams/leaderboard/page.tsx   — Team leaderboard
 app/(main)/leaderboard/achievements/page.tsx — Achievement leaderboard
 app/(main)/leaderboard/achievements/AchievementsClient.tsx — Achievement UI
 app/actions/cipher.ts                   — Cipher server actions
@@ -237,7 +210,6 @@ app/actions/writeups.ts                 — Writeup server actions
 app/actions/seasons.ts                  — Season server actions
 app/actions/skilltree.ts                — Skill tree server actions
 app/actions/regex-golf.ts               — Regex golf server actions
-app/actions/teams.ts                    — Team server actions
 components/ctf/ChallengeGrid.tsx         — Challenge grid (stats)
 components/ctf/CategoryProgress.tsx      — Category progress bars
 components/ctf/DifficultyBreakdown.tsx   — Difficulty breakdown
@@ -247,9 +219,6 @@ components/ctf/WriteupForm.tsx           — Writeup form
 components/ctf/WriteupList.tsx           — Writeup list with voting
 components/ctf/SkillNode.tsx             — Skill tree node
 components/ctf/RegexGolfPuzzle.tsx       — Regex puzzle card
-components/teams/TeamCard.tsx            — Team card
-components/teams/CreateTeamModal.tsx     — Create team modal
-components/teams/TeamInviteModal.tsx     — Invite modal
 lib/utils/cipher.ts                     — Cipher generator
 lib/utils/regex-golf.ts                 — Regex validation
 ```

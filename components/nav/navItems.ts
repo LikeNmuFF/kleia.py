@@ -6,7 +6,6 @@ import {
   CalendarDays,
   Users,
   BookOpen,
-  Shield,
   Trophy,
   Flag,
   Braces,
@@ -33,7 +32,6 @@ export const PRIMARY_NAV: NavItem[] = [
   { label: 'Events', href: '/events', icon: CalendarDays },
   { label: 'Members', href: '/members', icon: Users },
   { label: 'Learn', href: '/learn', icon: BookOpen, matchPrefix: true },
-  { label: 'Teams', href: '/teams', icon: Shield, matchPrefix: true },
   { label: 'Leaderboard', href: '/leaderboard', icon: Trophy, matchPrefix: true },
 ]
 
@@ -67,7 +65,7 @@ export const MOBILE_TABS: NavItem[] = [
 export const MOBILE_SHEET_SECTIONS: { title: string; items: NavItem[] }[] = [
   {
     title: 'Community',
-    items: [PRIMARY_NAV[3], PRIMARY_NAV[5], PRIMARY_NAV[6]],
+    items: [PRIMARY_NAV[3], PRIMARY_NAV[5]],
   },
   {
     title: 'Challenges',
@@ -95,7 +93,7 @@ export function isChallengeRouteActive(pathname: string): boolean {
 
 /** True when the current page lives inside the mobile "More" sheet */
 export function isMobileMoreActive(pathname: string): boolean {
-  return isChallengeRouteActive(pathname) || ['/members', '/teams', '/leaderboard'].some((p) =>
+  return isChallengeRouteActive(pathname) || ['/members', '/leaderboard'].some((p) =>
     pathname === p || pathname.startsWith(`${p}/`)
   )
 }

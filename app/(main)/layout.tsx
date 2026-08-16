@@ -11,7 +11,6 @@ import SpecialUserLayout from '@/components/special/SpecialUserLayout'
 import ChatUnreadProvider from '@/components/chat/ChatUnreadProvider'
 import DesktopNav from '@/components/nav/DesktopNav'
 import MobileNav from '@/components/nav/MobileNav'
-import TeamInviteNotification from '@/components/teams/TeamInviteNotification'
 import SupportButton from '@/components/SupportButton'
 
 export default async function MainLayout({
@@ -37,7 +36,6 @@ export default async function MainLayout({
     if (p === '/' || p === '/feed') return true
     if (p === '/chat' || p.startsWith('/chat/')) return true
     if (p === '/events' || p.startsWith('/events/')) return true
-    if (p === '/teams' || p.startsWith('/teams/')) return true
     if (p === '/leaderboard' || p.startsWith('/leaderboard/')) return true
     if (p === '/regex-golf' || p.startsWith('/regex-golf/')) return true
     if (p === '/cipher' || p.startsWith('/cipher/')) return true
@@ -85,7 +83,6 @@ export default async function MainLayout({
             {/* User Menu */}
             <div className="flex items-center gap-2 lg:gap-3 shrink-0">
               <SupportButton variant="nav" />
-              <TeamInviteNotification />
               <ThemeToggle />
               <Link
                 href="/profile"
