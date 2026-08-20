@@ -1,9 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { Plus, Pencil, Trash2, X, Check, Eye, EyeOff, TestTube } from 'lucide-react'
-import { createRegexPuzzle, updateRegexPuzzle, deleteRegexPuzzle } from '@/app/actions/admin'
+import { getAdminRegexPuzzles, createRegexPuzzle, updateRegexPuzzle, deleteRegexPuzzle } from '@/app/actions/admin'
 
 const DANGEROUS_PATTERNS = /\(\?.*?\)|\(\?\=|\(\?!|\(\?\<|\(\?<=|\(\?<!|\\A|\\Z|\{[0-9]{3,}\}|\\\w\+\+|\\\w\*\*/
 
@@ -59,12 +58,10 @@ export default function RegexGolfAdminTab() {
   }, [])
 
   async function loadPuzzles() {
-    const supabase = createClient()
-    const { data } = await supabase
-      .from('regex_golf_puzzles')
-      .select('id, title, description, difficulty, solution_regex, match_strings, reject_strings, min_length, xp_reward, is_active, created_at')
-      .order('created_at', { ascending: false })
-    setPuzzles((data as Puzzle[]) || [])
+    const { puzzles } = await getAdminRegexPuzzles()
+    setPuzzles(
+      [...puzzles].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    )
     setLoading(false)
   }
 

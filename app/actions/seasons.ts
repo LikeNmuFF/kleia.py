@@ -3,21 +3,9 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { logEvent } from '@/lib/logEvent'
+import { isAdmin } from '@/lib/admin'
 import { getEffectiveSeasonStatus } from './competition-status'
 import { parseManilaLocal } from '@/lib/utils/time'
-
-async function checkAdmin(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return false
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  return profile?.role === 'admin'
-}
 
 export async function getAllSeasons() {
   const supabase = await createClient()
@@ -265,7 +253,7 @@ export async function updateSeason(seasonId: string, data: {
 }) {
   const start = Date.now()
   const supabase = await createClient()
-  if (!(await checkAdmin(supabase))) {
+  if (!(await isAdmin(supabase))) {
     return { error: 'Unauthorized' }
   }
 
@@ -304,7 +292,7 @@ export async function updateSeason(seasonId: string, data: {
 export async function deleteSeason(seasonId: string) {
   const start = Date.now()
   const supabase = await createClient()
-  if (!(await checkAdmin(supabase))) {
+  if (!(await isAdmin(supabase))) {
     return { error: 'Unauthorized' }
   }
 
@@ -325,7 +313,7 @@ export async function deleteSeason(seasonId: string) {
 
 export async function addChallengeToSeason(seasonId: string, challengeId: string, bonusPoints: number = 0) {
   const supabase = await createClient()
-  if (!(await checkAdmin(supabase))) return { error: 'Unauthorized' }
+  if (!(await isAdmin(supabase))) return { error: 'Unauthorized' }
 
   const { error } = await supabase
     .from('ctf_season_challenges')
@@ -342,7 +330,7 @@ export async function addChallengeToSeason(seasonId: string, challengeId: string
 
 export async function removeChallengeFromSeason(seasonId: string, challengeId: string) {
   const supabase = await createClient()
-  if (!(await checkAdmin(supabase))) return { error: 'Unauthorized' }
+  if (!(await isAdmin(supabase))) return { error: 'Unauthorized' }
 
   const { error } = await supabase
     .from('ctf_season_challenges')
@@ -368,7 +356,7 @@ export async function createSeason(data: {
 }) {
   const start = Date.now()
   const supabase = await createClient()
-  if (!(await checkAdmin(supabase))) {
+  if (!(await isAdmin(supabase))) {
     const { data: { user } } = await supabase.auth.getUser()
     await logEvent({ endpoint: 'seasons.createSeason', status: 'error', durationMs: Date.now() - start, errorMessage: 'Unauthorized', userId: user?.id })
     return { error: 'Unauthorized' }

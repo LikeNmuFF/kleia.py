@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { logEvent } from '@/lib/logEvent'
+import { isAdmin } from '@/lib/admin'
 import { getCompetitionAccess } from './competition'
 
 async function isParticipantLocked() {
@@ -228,4 +229,46 @@ export async function getUnreadCount() {
     .neq('sender_id', user.id)
 
   return count || 0
+}
+
+// ---- Admin moderation ----
+
+export async function deleteMessage(messageId: string) {
+  const start = Date.now()
+  const supabase = await createClient()
+  if (!(await isAdmin(supabase))) return { error: 'Unauthorized' }
+
+  const { error } = await supabase
+    .from('messages')
+    .delete()
+    .eq('id', messageId)
+
+  if (error) {
+    await logEvent({ endpoint: 'chat.deleteMessage', status: 'error', durationMs: Date.now() - start, errorMessage: error.message })
+    return { error: error.message }
+  }
+
+  await logEvent({ endpoint: 'chat.deleteMessage', status: 'success', durationMs: Date.now() - start })
+  revalidatePath('/chat')
+  return { success: true }
+}
+
+export async function deleteConversation(conversationId: string) {
+  const start = Date.now()
+  const supabase = await createClient()
+  if (!(await isAdmin(supabase))) return { error: 'Unauthorized' }
+
+  const { error } = await supabase
+    .from('conversations')
+    .delete()
+    .eq('id', conversationId)
+
+  if (error) {
+    await logEvent({ endpoint: 'chat.deleteConversation', status: 'error', durationMs: Date.now() - start, errorMessage: error.message })
+    return { error: error.message }
+  }
+
+  await logEvent({ endpoint: 'chat.deleteConversation', status: 'success', durationMs: Date.now() - start })
+  revalidatePath('/chat')
+  return { success: true }
 }

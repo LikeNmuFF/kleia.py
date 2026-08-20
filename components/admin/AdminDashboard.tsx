@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Users, BarChart3, MessageSquare, Shield, Flag, LayoutDashboard, Regex, Trophy, Mail } from 'lucide-react'
+import { Users, MessageSquare, Shield, Flag, LayoutDashboard, Regex, Trophy, Mail } from 'lucide-react'
 import OverviewTab from './OverviewTab'
 import UsersTab from './UsersTab'
 import ContentTab from './ContentTab'
@@ -16,7 +16,7 @@ const TABS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
   { id: 'users', label: 'Users', icon: Users },
   { id: 'content', label: 'Content', icon: MessageSquare },
-  { id: 'chat', label: 'Chat', icon: BarChart3 },
+  { id: 'chat', label: 'Chat', icon: MessageSquare },
   { id: 'ctf', label: 'CTF', icon: Flag },
   { id: 'seasons', label: 'Seasons', icon: Trophy },
   { id: 'regex-golf', label: 'Regex Golf', icon: Regex },

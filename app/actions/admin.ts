@@ -1,29 +1,15 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { logEvent } from '@/lib/logEvent'
+import { requireAdmin } from '@/lib/admin'
 
 const FREE_TIER_BYTES = 500 * 1024 * 1024 // 500MB
 
-async function checkAdmin(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (profile?.role !== 'admin') redirect('/feed')
-  return user
-}
-
 export async function getDashboardStats() {
   const supabase = await createClient()
-  await checkAdmin(supabase)
+  await requireAdmin(supabase)
 
   const [
     { count: totalUsers },
@@ -58,7 +44,7 @@ export async function getDashboardStats() {
 
 export async function getDatabaseUsage() {
   const supabase = await createClient()
-  await checkAdmin(supabase)
+  await requireAdmin(supabase)
 
   const [dbResult, tablesResult] = await Promise.all([
     supabase.rpc('get_db_size'),
@@ -102,7 +88,7 @@ export async function getDatabaseUsage() {
 
 export async function getCloudinaryUsage() {
   const supabase = await createClient()
-  await checkAdmin(supabase)
+  await requireAdmin(supabase)
 
   const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
   const apiKey = process.env.CLOUDINARY_API_KEY
@@ -156,7 +142,7 @@ export async function getCloudinaryUsage() {
 
 export async function getSecurityReports() {
   const supabase = await createClient()
-  await checkAdmin(supabase)
+  await requireAdmin(supabase)
 
   const [latestResult, historyResult] = await Promise.all([
     supabase
@@ -180,7 +166,7 @@ export async function getSecurityReports() {
 
 export async function getSecurityEvents(limit = 50) {
   const supabase = await createClient()
-  await checkAdmin(supabase)
+  await requireAdmin(supabase)
 
   const [eventsResult, ipsResult, typesResult] = await Promise.all([
     supabase
@@ -257,7 +243,7 @@ export async function getSecurityEvents(limit = 50) {
 
 export async function getAdminAnalytics() {
   const supabase = await createClient()
-  await checkAdmin(supabase)
+  await requireAdmin(supabase)
 
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString()
@@ -303,7 +289,7 @@ export async function getAdminAnalytics() {
 
 export async function getAdminUsers() {
   const supabase = await createClient()
-  const user = await checkAdmin(supabase)
+  const user = await requireAdmin(supabase)
 
   const { data: users } = await supabase
     .from('profiles')
@@ -315,7 +301,7 @@ export async function getAdminUsers() {
 
 export async function updateUserRole(userId: string, role: string) {
   const supabase = await createClient()
-  await checkAdmin(supabase)
+  await requireAdmin(supabase)
 
   const { error } = await supabase
     .from('profiles')
@@ -328,7 +314,7 @@ export async function updateUserRole(userId: string, role: string) {
 
 export async function resetUserStreak(userId: string) {
   const supabase = await createClient()
-  await checkAdmin(supabase)
+  await requireAdmin(supabase)
 
   const { error } = await supabase
     .from('profiles')
@@ -341,7 +327,7 @@ export async function resetUserStreak(userId: string) {
 
 export async function adjustUserScore(userId: string, score: number) {
   const supabase = await createClient()
-  await checkAdmin(supabase)
+  await requireAdmin(supabase)
 
   const { error } = await supabase
     .from('profiles')
@@ -354,7 +340,7 @@ export async function adjustUserScore(userId: string, score: number) {
 
 export async function deleteUser(userId: string) {
   const supabase = await createClient()
-  await checkAdmin(supabase)
+  await requireAdmin(supabase)
 
   const { error } = await supabase.auth.admin.deleteUser(userId)
   if (error) return { error: error.message }
@@ -363,7 +349,7 @@ export async function deleteUser(userId: string) {
 
 export async function getAdminPosts() {
   const supabase = await createClient()
-  await checkAdmin(supabase)
+  await requireAdmin(supabase)
 
   const { data: posts } = await supabase
     .from('posts')
@@ -376,7 +362,7 @@ export async function getAdminPosts() {
 
 export async function deletePost(postId: string) {
   const supabase = await createClient()
-  await checkAdmin(supabase)
+  await requireAdmin(supabase)
 
   const { error } = await supabase.from('posts').delete().eq('id', postId)
   if (error) return { error: error.message }
@@ -385,7 +371,7 @@ export async function deletePost(postId: string) {
 
 export async function getAdminComments() {
   const supabase = await createClient()
-  await checkAdmin(supabase)
+  await requireAdmin(supabase)
 
   const { data: comments } = await supabase
     .from('comments')
@@ -398,7 +384,7 @@ export async function getAdminComments() {
 
 export async function deleteComment(commentId: string) {
   const supabase = await createClient()
-  await checkAdmin(supabase)
+  await requireAdmin(supabase)
 
   const { error } = await supabase.from('comments').delete().eq('id', commentId)
   if (error) return { error: error.message }
@@ -411,14 +397,23 @@ export async function deleteComment(commentId: string) {
 
 export async function getAdminRegexPuzzles() {
   const supabase = await createClient()
-  await checkAdmin(supabase)
+  await requireAdmin(supabase)
 
-  const { data: puzzles } = await supabase
-    .from('regex_golf_puzzles')
-    .select('id, title, description, difficulty, solution_regex, match_strings, reject_strings, min_length, xp_reward, is_active, created_at')
-    .order('created_at', { ascending: false })
+  const { data: puzzles } = await supabase.rpc('get_admin_regex_puzzles')
 
-  return { puzzles: puzzles ?? [] }
+  return { puzzles: (puzzles as Array<{
+    id: string
+    title: string
+    description: string | null
+    difficulty: string
+    solution_regex: string
+    match_strings: string[]
+    reject_strings: string[]
+    min_length: number | null
+    xp_reward: number
+    is_active: boolean
+    created_at: string
+  }>) ?? [] }
 }
 
 export async function createRegexPuzzle(data: {
@@ -432,7 +427,7 @@ export async function createRegexPuzzle(data: {
   xp_reward: number
 }) {
   const supabase = await createClient()
-  await checkAdmin(supabase)
+  await requireAdmin(supabase)
 
   if (!data.title.trim()) return { error: 'Title is required' }
   if (!data.solution_regex.trim()) return { error: 'Solution regex is required' }
@@ -471,7 +466,7 @@ export async function updateRegexPuzzle(id: string, data: Partial<{
   is_active: boolean
 }>) {
   const supabase = await createClient()
-  await checkAdmin(supabase)
+  await requireAdmin(supabase)
 
   const { error } = await supabase
     .from('regex_golf_puzzles')
@@ -486,7 +481,7 @@ export async function updateRegexPuzzle(id: string, data: Partial<{
 
 export async function deleteRegexPuzzle(id: string) {
   const supabase = await createClient()
-  await checkAdmin(supabase)
+  await requireAdmin(supabase)
 
   const { error } = await supabase.from('regex_golf_puzzles').delete().eq('id', id)
   if (error) return { error: error.message }

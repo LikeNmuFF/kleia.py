@@ -2,7 +2,7 @@
 
 import nodemailer from 'nodemailer'
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+import { requireAdmin } from '@/lib/admin'
 
 interface SendResult {
   email: string
@@ -37,16 +37,7 @@ export async function sendInviteEmails(
   body: string
 ): Promise<{ success: boolean; error?: string; sent: number; failed: number; results: SendResult[] }> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (profile?.role !== 'admin') redirect('/feed')
+  await requireAdmin(supabase)
 
   const cleanedSubject = subject.trim()
   const cleanedBody = body.trim()

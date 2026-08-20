@@ -8,6 +8,7 @@ import { Ellipsis, Swords, X } from 'lucide-react'
 import NavLink from './NavLink'
 import { useChatUnread } from '@/components/chat/ChatUnreadProvider'
 import {
+  ADMIN_NAV,
   isMobileMoreActive,
   isNavItemActive,
   MOBILE_SHEET_SECTIONS,
@@ -55,7 +56,7 @@ function TabLink({
   )
 }
 
-export default function MobileNav({ competitionHref }: { competitionHref?: string | null }) {
+export default function MobileNav({ competitionHref, isAdmin }: { competitionHref?: string | null; isAdmin?: boolean }) {
   const pathname = usePathname()
   const [sheetOpen, setSheetOpen] = useState(false)
   const chat = useChatUnread()
@@ -68,7 +69,11 @@ export default function MobileNav({ competitionHref }: { competitionHref?: strin
         ...PRIMARY_NAV.filter((i) => i.href === '/learn' || i.href === '/members'),
       ]
     : MOBILE_TABS
-  const sheetSections = competitionHref ? [] : MOBILE_SHEET_SECTIONS
+  const sheetSections = competitionHref
+    ? []
+    : isAdmin
+      ? [...MOBILE_SHEET_SECTIONS, { title: 'Staff', items: [ADMIN_NAV] }]
+      : MOBILE_SHEET_SECTIONS
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {

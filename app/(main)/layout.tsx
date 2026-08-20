@@ -49,8 +49,10 @@ export default async function MainLayout({
   }
 
   const { data: profile } = user
-    ? await supabase.from('profiles').select('avatar_url').eq('id', user.id).single()
+    ? await supabase.from('profiles').select('avatar_url, role').eq('id', user.id).single()
     : { data: null }
+
+  const isAdmin = profile?.role === 'admin'
 
   return (
     <ChatUnreadProvider userId={user?.id || null}>
@@ -78,7 +80,7 @@ export default async function MainLayout({
             </Link>
 
             {/* Desktop Navigation Links */}
-            <DesktopNav competitionHref={competitionHref} />
+            <DesktopNav competitionHref={competitionHref} isAdmin={isAdmin} />
 
             {/* User Menu */}
             <div className="flex items-center gap-2 lg:gap-3 shrink-0">
@@ -123,7 +125,7 @@ export default async function MainLayout({
       </div>
 
       {/* Mobile bottom navigation */}
-      <MobileNav competitionHref={competitionHref} />
+      <MobileNav competitionHref={competitionHref} isAdmin={isAdmin} />
     </ChatUnreadProvider>
   )
 }

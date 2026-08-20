@@ -1,8 +1,49 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Users, MessageSquare, FileText, Flame, Trophy, TrendingUp, Activity } from 'lucide-react'
-import { getAdminAnalytics } from '@/app/actions/admin'
+import { Users, MessageSquare, FileText, Flame, Trophy, TrendingUp, Activity, Database, Cloud, AlertTriangle } from 'lucide-react'
+import { getAdminAnalytics, getDatabaseUsage, getCloudinaryUsage, getDashboardStats } from '@/app/actions/admin'
+
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(1024))
+  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${units[Math.min(i, units.length - 1)]}`
+}
+
+function colorClass(percent: number): string {
+  if (percent >= 90) return 'bg-red-500'
+  if (percent >= 70) return 'bg-yellow-500'
+  return 'bg-emerald-500'
+}
+
+function textColor(percent: number): string {
+  if (percent >= 90) return 'text-red-400'
+  if (percent >= 70) return 'text-yellow-400'
+  return 'text-emerald-400'
+}
+
+function UsageBar({ label, used, limit, percent }: { label: string; used: number; limit: number; percent: number }) {
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{label}</span>
+        <span className={`text-xs font-medium ${textColor(percent)}`}>{percent.toFixed(1)}%</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--input-bg)' }}>
+          <div
+            className={`h-full rounded-full transition-all ${colorClass(percent)}`}
+            style={{ width: `${Math.min(percent, 100)}%` }}
+          />
+        </div>
+        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+          {formatBytes(used)} / {formatBytes(limit)}
+        </span>
+      </div>
+    </div>
+  )
+}
 
 interface Analytics {
   totalUsers: number
@@ -48,8 +89,18 @@ export default function OverviewTab() {
   const [data, setData] = useState<Analytics | null>(null)
   const [loading, setLoading] = useState(true)
 
+  const [dashData, setDashData] = useState<Awaited<ReturnType<typeof getDashboardStats>> | null>(null)
+  const [dbData, setDbData] = useState<Awaited<ReturnType<typeof getDatabaseUsage>> | null>(null)
+  const [cloudData, setCloudData] = useState<Awaited<ReturnType<typeof getCloudinaryUsage>> | null>(null)
+
   useEffect(() => {
     getAdminAnalytics().then(d => { setData(d); setLoading(false) })
+  }, [])
+
+  useEffect(() => {
+    getDashboardStats().then(setDashData)
+    getDatabaseUsage().then(setDbData)
+    getCloudinaryUsage().then(setCloudData)
   }, [])
 
   if (loading) {
@@ -145,6 +196,131 @@ export default function OverviewTab() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* System Health */}
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Database Usage */}
+        <div className="rounded-xl p-5" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
+          <h3 className="font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+            <Database className="w-4 h-4 text-emerald-400" />
+            Database
+          </h3>
+          {dbData && !dbData.error ? (
+            <>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{formatBytes(dbData.totalBytes)} / {formatBytes(dbData.freeTierBytes)}</span>
+                <span className={`text-sm font-medium ${textColor(dbData.percentUsed)}`}>{dbData.percentUsed.toFixed(1)}%</span>
+              </div>
+              <div className="w-full h-3 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--input-bg)' }}>
+                <div
+                  className={`h-full rounded-full transition-all ${colorClass(dbData.percentUsed)}`}
+                  style={{ width: `${Math.min(dbData.percentUsed, 100)}%` }}
+                />
+              </div>
+              {dbData.largestTables.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-xs font-medium mb-2" style={{ color: 'var(--text-muted)' }}>Largest Tables</p>
+                  <div className="space-y-1">
+                    {dbData.largestTables.map((t: { table_name: string; size_bytes: number }) => (
+                      <div key={t.table_name} className="flex items-center justify-between text-xs">
+                        <span style={{ color: 'var(--text-primary)' }} className="font-mono">{t.table_name}</span>
+                        <span style={{ color: 'var(--text-secondary)' }}>{formatBytes(t.size_bytes)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <p className="text-sm text-red-400">{dbData?.error || 'Loading...'}</p>
+          )}
+        </div>
+
+        {/* Cloudinary Usage */}
+        <div className="rounded-xl p-5" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
+          <h3 className="font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+            <Cloud className="w-4 h-4 text-cyan-400" />
+            Cloudinary
+          </h3>
+          {cloudData?.error ? (
+            <p className="text-sm text-red-400">{cloudData.error}</p>
+          ) : cloudData && cloudData.storage ? (
+            <div className="space-y-4">
+              <UsageBar label="Storage" used={cloudData.storage.used} limit={cloudData.storage.limit} percent={cloudData.storage.percentUsed} />
+              <UsageBar label="Bandwidth" used={cloudData.bandwidth.used} limit={cloudData.bandwidth.limit} percent={cloudData.bandwidth.percentUsed} />
+              <UsageBar label="Transformations" used={cloudData.transformations.used} limit={cloudData.transformations.limit} percent={cloudData.transformations.percentUsed} />
+            </div>
+          ) : (
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Loading...</p>
+          )}
+        </div>
+      </div>
+
+      {/* Recent Errors */}
+      <div className="rounded-xl p-5" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
+        <h3 className="font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+          <AlertTriangle className="w-4 h-4 text-red-400" />
+          Recent Errors
+        </h3>
+        {!dashData || dashData.recentErrors.length === 0 ? (
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No errors logged</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ color: 'var(--text-muted)' }}>
+                  <th className="text-left pb-2 pr-4">Endpoint</th>
+                  <th className="text-left pb-2 pr-4">Error</th>
+                  <th className="text-left pb-2 pr-4">Duration</th>
+                  <th className="text-left pb-2">Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dashData.recentErrors.map((e: { id: string; endpoint: string; error_message: string | null; duration_ms: number; created_at: string }) => (
+                  <tr key={e.id} className="border-t" style={{ borderColor: 'var(--border-color)' }}>
+                    <td className="py-2 pr-4 font-mono text-xs" style={{ color: 'var(--text-primary)' }}>{e.endpoint}</td>
+                    <td className="py-2 pr-4 text-red-400">{e.error_message || 'Unknown'}</td>
+                    <td className="py-2 pr-4" style={{ color: 'var(--text-secondary)' }}>{e.duration_ms}ms</td>
+                    <td className="py-2 text-xs" style={{ color: 'var(--text-muted)' }}>{new Date(e.created_at).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Requests by Endpoint */}
+      <div className="rounded-xl p-5" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
+        <h3 className="font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+          <Activity className="w-4 h-4 text-violet-400" />
+          Requests by Endpoint (last 24h)
+        </h3>
+        {!dashData || dashData.endpointStats.length === 0 ? (
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No requests in the last 24 hours</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ color: 'var(--text-muted)' }}>
+                  <th className="text-left pb-2 pr-4">Endpoint</th>
+                  <th className="text-left pb-2 pr-4">Count</th>
+                  <th className="text-left pb-2">Avg Duration</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dashData.endpointStats.map((s: { endpoint: string; request_count: number; avg_duration_ms: number }) => (
+                  <tr key={s.endpoint} className="border-t" style={{ borderColor: 'var(--border-color)' }}>
+                    <td className="py-2 pr-4 font-mono text-xs" style={{ color: 'var(--text-primary)' }}>{s.endpoint}</td>
+                    <td className="py-2 pr-4" style={{ color: 'var(--text-secondary)' }}>{s.request_count}</td>
+                    <td className="py-2" style={{ color: 'var(--text-secondary)' }}>{s.avg_duration_ms}ms</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   )

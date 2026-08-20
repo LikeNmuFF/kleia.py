@@ -29,7 +29,7 @@ export async function submitRegex(puzzleId: string, regex: string, timeSeconds: 
 
   const { data: puzzle } = await supabase
     .from('regex_golf_puzzles')
-    .select('id, match_strings, reject_strings, solution_regex, min_length, xp_reward')
+    .select('id, match_strings, reject_strings, min_length, xp_reward')
     .eq('id', puzzleId)
     .eq('is_active', true)
     .single()
@@ -63,14 +63,18 @@ export async function submitRegex(puzzleId: string, regex: string, timeSeconds: 
     return { error: 'Regex does not reject all forbidden strings' }
   }
 
+  const { data: solutionLength } = await supabase.rpc('get_puzzle_solution_length', {
+    p_puzzle_id: puzzleId,
+  })
+
   const regexLength = regex.length
 
   if (puzzle.min_length && regexLength > puzzle.min_length) {
     return { error: `Regex too long. Reference solution is ${puzzle.min_length} chars, yours is ${regexLength}.` }
   }
 
-  if (regexLength > puzzle.solution_regex.length) {
-    return { error: `Regex must be shorter than or equal to the reference solution (${puzzle.solution_regex.length} chars).` }
+  if ((solutionLength ?? Number.MAX_SAFE_INTEGER) < regexLength) {
+    return { error: `Regex must be shorter than or equal to the reference solution (${solutionLength} chars).` }
   }
 
   const { error: insertError } = await supabase

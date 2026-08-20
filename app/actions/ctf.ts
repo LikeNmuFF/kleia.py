@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { logEvent } from '@/lib/logEvent'
 import { logSecurityEvent } from '@/lib/security-log'
+import { isAdmin } from '@/lib/admin'
 import { hashFlag } from '@/lib/utils/ctf'
 import { checkAndUnlockNodes } from './skilltree'
 import { creditSeasonSolve } from './competition'
@@ -16,19 +17,6 @@ const VALID_DIFFICULTIES = ['easy', 'medium', 'hard']
 const FLAG_WINDOW_MS = 30_000
 const FLAG_MAX_WRONG_PER_WINDOW = 5
 const FLAG_MAX_TOTAL_PER_HOUR = 30
-
-async function checkAdmin(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return false
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  return profile?.role === 'admin'
-}
 
 function isValidCategory(c: string): c is (typeof VALID_CATEGORIES)[number] {
   return VALID_CATEGORIES.includes(c)
@@ -80,7 +68,7 @@ export async function submitFlag(challengeId: string, submittedFlag: string) {
 
   const { data: challenge } = await supabase
     .from('ctf_challenges')
-    .select('id, flag_hash, season_id')
+    .select('id, season_id')
     .eq('id', challengeId)
     .eq('status', 'approved')
     .single()
@@ -127,7 +115,15 @@ export async function submitFlag(challengeId: string, submittedFlag: string) {
     }
   }
 
-  const isCorrect = hashFlag(submittedFlag.trim()) === challenge.flag_hash
+  const { data: isCorrectData, error: checkError } = await supabase.rpc('check_flag', {
+    p_challenge_id: challengeId,
+    p_flag: submittedFlag.trim(),
+  })
+  if (checkError) {
+    await logEvent({ endpoint: 'ctf.submitFlag', status: 'error', durationMs: Date.now() - start, errorMessage: checkError.message, userId: user.id })
+    return { error: 'Submission failed' }
+  }
+  const isCorrect = isCorrectData === true
 
   if (!isCorrect) {
     const windowStart = new Date(Date.now() - FLAG_WINDOW_MS).toISOString()
@@ -229,7 +225,7 @@ export async function createChallenge(data: {
 }) {
   const start = Date.now()
   const supabase = await createClient()
-  if (!(await checkAdmin(supabase))) {
+  if (!(await isAdmin(supabase))) {
     await logEvent({ endpoint: 'ctf.createChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: 'Unauthorized', userId: (await supabase.auth.getUser()).data.user?.id })
     return { error: 'Unauthorized' }
   }
@@ -293,7 +289,7 @@ export async function createSeasonChallenge(seasonId: string, data: {
 }) {
   const start = Date.now()
   const supabase = await createClient()
-  if (!(await checkAdmin(supabase))) {
+  if (!(await isAdmin(supabase))) {
     await logEvent({ endpoint: 'ctf.createSeasonChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: 'Unauthorized', userId: (await supabase.auth.getUser()).data.user?.id })
     return { error: 'Unauthorized' }
   }
@@ -422,7 +418,7 @@ export async function submitChallenge(formData: FormData) {
 export async function approveChallenge(id: string) {
   const start = Date.now()
   const supabase = await createClient()
-  if (!(await checkAdmin(supabase))) {
+  if (!(await isAdmin(supabase))) {
     return { error: 'Unauthorized' }
   }
 
@@ -444,7 +440,7 @@ export async function approveChallenge(id: string) {
 export async function rejectChallenge(id: string) {
   const start = Date.now()
   const supabase = await createClient()
-  if (!(await checkAdmin(supabase))) {
+  if (!(await isAdmin(supabase))) {
     return { error: 'Unauthorized' }
   }
 
@@ -484,7 +480,7 @@ export async function updateChallenge(
 ) {
   const start = Date.now()
   const supabase = await createClient()
-  if (!(await checkAdmin(supabase))) {
+  if (!(await isAdmin(supabase))) {
     const { data: { user } } = await supabase.auth.getUser()
     await logEvent({ endpoint: 'ctf.updateChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: 'Unauthorized', userId: user?.id })
     return { error: 'Unauthorized' }
@@ -563,7 +559,7 @@ export async function updateChallenge(
 export async function deleteChallenge(id: string) {
   const start = Date.now()
   const supabase = await createClient()
-  if (!(await checkAdmin(supabase))) {
+  if (!(await isAdmin(supabase))) {
     const { data: { user } } = await supabase.auth.getUser()
     await logEvent({ endpoint: 'ctf.deleteChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: 'Unauthorized', userId: user?.id })
     return { error: 'Unauthorized' }

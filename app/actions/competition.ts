@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { isAdmin } from '@/lib/admin'
 import { getEffectiveSeasonStatus, type SeasonRow, type SeasonStatus } from './competition-status'
 
 export type { SeasonStatus, SeasonRow } from './competition-status'
@@ -13,16 +14,6 @@ export type CompetitionAccess =
   | { kind: 'none' }
 
 /** Effective status: auto-starts 'upcoming' on start_date, auto-ends 'live'/'upcoming' after end_date. */
-async function isAdmin(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return false
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-  return profile?.role === 'admin'
-}
 
 /**
  * Access context for the current user.

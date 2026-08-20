@@ -12,6 +12,7 @@ import {
   KeyRound,
   GitBranch,
   Swords,
+  ShieldCheck,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -53,6 +54,14 @@ export const CHALLENGE_NAV: NavItem[] = [
   },
 ]
 
+/** Admin-only link, rendered when the current user's profile role is 'admin'. */
+export const ADMIN_NAV: NavItem = {
+  label: 'Admin',
+  href: '/admin',
+  icon: ShieldCheck,
+  matchPrefix: true,
+}
+
 /** Tabs pinned to the mobile bottom bar */
 export const MOBILE_TABS: NavItem[] = [
   PRIMARY_NAV[0],
@@ -93,8 +102,12 @@ export function isChallengeRouteActive(pathname: string): boolean {
 
 /** True when the current page lives inside the mobile "More" sheet */
 export function isMobileMoreActive(pathname: string): boolean {
-  return isChallengeRouteActive(pathname) || ['/members', '/leaderboard'].some((p) =>
-    pathname === p || pathname.startsWith(`${p}/`)
+  return (
+    isChallengeRouteActive(pathname) ||
+    isNavItemActive(pathname, ADMIN_NAV) ||
+    ['/members', '/leaderboard'].some((p) =>
+      pathname === p || pathname.startsWith(`${p}/`)
+    )
   )
 }
 

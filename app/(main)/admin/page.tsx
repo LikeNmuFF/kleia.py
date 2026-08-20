@@ -1,19 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+import { requireAdmin } from '@/lib/admin'
 import AdminDashboard from '@/components/admin/AdminDashboard'
 
 export default async function AdminPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  await requireAdmin(supabase)
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (profile?.role !== 'admin') redirect('/')
-
-  return <AdminDashboard role={profile?.role || 'user'} />
+  return <AdminDashboard role="admin" />
 }

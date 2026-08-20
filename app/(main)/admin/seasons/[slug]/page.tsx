@@ -1,5 +1,6 @@
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { requireAdmin } from '@/lib/admin'
 import { getSeasonBySlug } from '@/app/actions/seasons'
 import { getSeasonParticipants, getSeasonSpectators } from '@/app/actions/competition'
 import { getEffectiveSeasonStatus } from '@/app/actions/competition-status'
@@ -8,15 +9,7 @@ import SeasonAdminClient from './SeasonAdminClient'
 export default async function SeasonAdminPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-  if (profile?.role !== 'admin') redirect('/')
+  await requireAdmin(supabase)
 
   const season = await getSeasonBySlug(slug)
   if (!season) notFound()
