@@ -16,3 +16,4 @@ flags.env
 supabase-migrations/
 docs/superpowers/specs/
 docs/
+.worktrees/
