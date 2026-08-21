@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { getAdminCTFData } from '@/app/actions/admin'
 import AdminCTFClient from '@/app/(main)/admin/ctf/AdminCTFClient'
 
 interface Challenge {
@@ -44,23 +44,10 @@ export default function CTFAdminTab() {
 
   useEffect(() => {
     async function load() {
-      const supabase = createClient()
-      const [{ data }, { data: t }, { data: l }] = await Promise.all([
-        supabase
-          .from('ctf_challenges')
-          .select('id, title, description, category, difficulty, points, hint, is_active, file_url, link_url, author, status, created_at, learn_topic_slug, learn_lesson_slug, season_id')
-          .order('created_at', { ascending: false }),
-        supabase
-          .from('learn_topics')
-          .select('id, slug, title, icon')
-          .order('sort_order', { ascending: true }),
-        supabase
-          .from('learn_lessons')
-          .select('topic_id, slug, title'),
-      ])
-      setChallenges((data as Challenge[]) || [])
-      setTopics((t as TopicLink[]) || [])
-      setLessons((l as LessonLink[]) || [])
+      const data = await getAdminCTFData()
+      setChallenges((data.challenges as Challenge[]) || [])
+      setTopics((data.topics as TopicLink[]) || [])
+      setLessons((data.lessons as LessonLink[]) || [])
       setLoading(false)
     }
     load()

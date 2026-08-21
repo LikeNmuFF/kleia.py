@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { MessageSquare, Hash, Trash2, Users } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
-import { deleteMessage, deleteConversation } from '@/app/actions/chat'
+import { deleteMessage, deleteConversation, getAdminConversations, getAdminRecentMessages } from '@/app/actions/admin'
 
 interface Conversation {
   id: string
@@ -41,22 +40,12 @@ export default function ChatTab() {
   }, [])
 
   async function load() {
-    const supabase = createClient()
-
-    const [conversationsRes, messagesRes] = await Promise.all([
-      supabase
-        .from('conversations')
-        .select('id, name, type, created_at, last_message_at, last_message_preview')
-        .order('last_message_at', { ascending: false, nullsFirst: false })
-        .limit(50),
-      supabase
-        .from('messages')
-        .select('id, content, created_at, sender:profiles!messages_sender_id_fkey(username, avatar_url), conversation:conversations(id, name, type)')
-        .order('created_at', { ascending: false })
-        .limit(20),
+    const [convData, msgData] = await Promise.all([
+      getAdminConversations(),
+      getAdminRecentMessages(),
     ])
-    setConversations((conversationsRes.data as unknown as Conversation[]) ?? [])
-    setRecentMessages((messagesRes.data as unknown as Message[]) ?? [])
+    setConversations((convData.conversations as unknown as Conversation[]) ?? [])
+    setRecentMessages((msgData.messages as unknown as Message[]) ?? [])
     setLoading(false)
   }
 

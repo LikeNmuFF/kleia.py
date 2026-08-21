@@ -2,9 +2,9 @@
 
 import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
 import { Calendar, Plus, Trash2, Edit3, Check, X, Link as LinkIcon, Unlink, Trophy, Settings, Upload } from 'lucide-react'
 import { createSeason, updateSeason, deleteSeason, addChallengeToSeason, removeChallengeFromSeason } from '@/app/actions/seasons'
+import { getAdminSeasonsData } from '@/app/actions/admin'
 import { formatDateTime, toManilaLocalInput } from '@/lib/utils/time'
 
 const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`
@@ -89,24 +89,10 @@ export default function SeasonsAdminTab() {
   }, [])
 
   async function loadData() {
-    const supabase = createClient()
-    const [{ data: s }, { data: c }] = await Promise.all([
-      supabase.from('ctf_seasons').select('*').order('created_at', { ascending: false }),
-      supabase.from('ctf_challenges').select('id, title, category, difficulty, points').eq('status', 'approved').order('title'),
-    ])
-    setSeasons((s as Season[]) || [])
-    setChallenges((c as Challenge[]) || [])
-
-    // Load season challenges for each season
-    const scMap: Record<string, SeasonChallenge[]> = {}
-    for (const season of (s as Season[]) || []) {
-      const { data: sc } = await supabase
-        .from('ctf_season_challenges')
-        .select('challenge_id, bonus_points')
-        .eq('season_id', season.id)
-      scMap[season.id] = (sc as SeasonChallenge[]) || []
-    }
-    setSeasonChallenges(scMap)
+    const data = await getAdminSeasonsData()
+    setSeasons((data.seasons as Season[]) || [])
+    setChallenges((data.challenges as Challenge[]) || [])
+    setSeasonChallenges((data.seasonChallenges as Record<string, SeasonChallenge[]>) || {})
     setLoading(false)
   }
 

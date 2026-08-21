@@ -492,3 +492,92 @@ export async function deleteRegexPuzzle(id: string) {
   revalidatePath('/regex-golf')
   return { success: true }
 }
+
+// ============================================================
+// Admin Chat Actions
+// ============================================================
+
+export async function getAdminConversations() {
+  const supabase = await createClient()
+  await requireAdmin(supabase)
+
+  const { data: conversations } = await supabase
+    .from('conversations')
+    .select('id, name, type, created_at, last_message_at, last_message_preview')
+    .order('last_message_at', { ascending: false, nullsFirst: false })
+    .limit(50)
+
+  return { conversations: conversations ?? [] }
+}
+
+export async function getAdminRecentMessages() {
+  const supabase = await createClient()
+  await requireAdmin(supabase)
+
+  const { data: messages } = await supabase
+    .from('messages')
+    .select('id, content, created_at, sender:profiles!messages_sender_id_fkey(username, avatar_url), conversation:conversations(id, name, type)')
+    .order('created_at', { ascending: false })
+    .limit(20)
+
+  return { messages: messages ?? [] }
+}
+
+// ============================================================
+// Admin CTF Actions
+// ============================================================
+
+export async function getAdminCTFData() {
+  const supabase = await createClient()
+  await requireAdmin(supabase)
+
+  const [{ data: challenges }, { data: topics }, { data: lessons }] = await Promise.all([
+    supabase
+      .from('ctf_challenges')
+      .select('id, title, description, category, difficulty, points, hint, is_active, file_url, link_url, author, status, created_at, learn_topic_slug, learn_lesson_slug, season_id')
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('learn_topics')
+      .select('id, slug, title, icon')
+      .order('sort_order', { ascending: true }),
+    supabase
+      .from('learn_lessons')
+      .select('topic_id, slug, title'),
+  ])
+
+  return {
+    challenges: challenges ?? [],
+    topics: topics ?? [],
+    lessons: lessons ?? [],
+  }
+}
+
+// ============================================================
+// Admin Seasons Actions
+// ============================================================
+
+export async function getAdminSeasonsData() {
+  const supabase = await createClient()
+  await requireAdmin(supabase)
+
+  const [{ data: seasons }, { data: challenges }] = await Promise.all([
+    supabase.from('ctf_seasons').select('*').order('created_at', { ascending: false }),
+    supabase.from('ctf_challenges').select('id, title, category, difficulty, points').eq('status', 'approved').order('title'),
+  ])
+
+  // Load season challenges for each season
+  const scMap: Record<string, Array<{ challenge_id: string; bonus_points: number }>> = {}
+  for (const season of seasons ?? []) {
+    const { data: sc } = await supabase
+      .from('ctf_season_challenges')
+      .select('challenge_id, bonus_points')
+      .eq('season_id', season.id)
+    scMap[season.id] = sc ?? []
+  }
+
+  return {
+    seasons: seasons ?? [],
+    challenges: challenges ?? [],
+    seasonChallenges: scMap,
+  }
+}
