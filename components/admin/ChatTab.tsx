@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { MessageSquare, Hash, Trash2, Users } from 'lucide-react'
-import { deleteMessage, deleteConversation, getAdminConversations, getAdminRecentMessages } from '@/app/actions/admin'
+import { getAdminConversations, getAdminRecentMessages } from '@/app/actions/admin'
+import { deleteMessage, deleteConversation } from '@/app/actions/chat'
 
 interface Conversation {
   id: string
