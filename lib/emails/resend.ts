@@ -4,13 +4,15 @@ export interface EmailResult {
   error?: string
 }
 
-const apiKey = process.env.RESEND_API_KEY
+import { Resend } from 'resend'
+
+const apiKey = process.env.RESEND_API_KEY as string
 if (!apiKey) {
   throw new Error("RESEND_API_KEY is missing")
 }
-export const resend = new (require("resend").Resend)(apiKey)
+export const resend = new Resend(apiKey)
 
-const fromAddress = process.env.EMAIL_FROM
+const fromAddress = process.env.EMAIL_FROM as string
 if (!fromAddress) {
   throw new Error("EMAIL_FROM is missing")
 }
