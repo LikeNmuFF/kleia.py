@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Coffee, Copy, Check, X } from 'lucide-react'
-import QRCode from 'qrcode'
 
 const GCASH_NUMBER = '0926 739 0274'
 
@@ -16,15 +15,9 @@ export default function SupportButton({
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [mounted, setMounted] = useState(false)
-  const [qrDataUrl, setQrDataUrl] = useState('')
 
   useEffect(() => {
     setMounted(true)
-    QRCode.toDataURL(GCASH_NUMBER.replace(/\s/g, ''), {
-      width: 200,
-      margin: 2,
-      color: { dark: '#1a1a2e', light: '#ffffff' },
-    }).then(setQrDataUrl)
   }, [])
 
   const handleCopy = async () => {
@@ -121,11 +114,9 @@ export default function SupportButton({
                     GCash
                   </p>
                   <div className="flex flex-col items-center gap-3">
-                    {qrDataUrl && (
-                      <div className="rounded-xl p-2 bg-white">
-                        <img src={qrDataUrl} alt="GCash QR Code" width={160} height={160} />
-                      </div>
-                    )}
+                    <div className="rounded-xl p-2 bg-white">
+                      <img src="/instapay.png" alt="GCash Instapay QR Code" width={160} height={160} />
+                    </div>
                     <div className="w-full">
                       <div className="flex items-center justify-between gap-3">
                         <span className="text-lg font-bold tracking-wide" style={{ color: 'var(--text-primary)' }}>
