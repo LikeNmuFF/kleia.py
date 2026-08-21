@@ -16,6 +16,8 @@ export default async function MembersPage({
 }) {
   const { q } = await searchParams
   const term = q?.trim() ?? ''
+  // Strip ILIKE wildcards to prevent pattern injection
+  const safeTerm = term.replace(/[%*_]/g, '')
   const supabase = await createClient()
 
   let query = supabase
@@ -23,7 +25,7 @@ export default async function MembersPage({
     .select('id, username, full_name, avatar_url, bio, status, last_seen, current_streak, longest_streak')
 
   if (term) {
-    query = query.or(`username.ilike.*${term}*,full_name.ilike.*${term}*,bio.ilike.*${term}*`)
+    query = query.or(`username.ilike.*${safeTerm}*,full_name.ilike.*${safeTerm}*,bio.ilike.*${safeTerm}*`)
   }
 
   const { data: members } = await query.order('username')

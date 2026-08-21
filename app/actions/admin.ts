@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { getServiceClient } from '@/lib/supabase/service'
 import { revalidatePath } from 'next/cache'
 import { logEvent } from '@/lib/logEvent'
 import { requireAdmin } from '@/lib/admin'
@@ -343,11 +343,7 @@ export async function deleteUser(userId: string) {
   const supabase = await createClient()
   await requireAdmin(supabase)
 
-  const adminClient = createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false } }
-  )
+  const adminClient = getServiceClient()
 
   const { error } = await adminClient.auth.admin.deleteUser(userId)
   if (error) return { error: error.message }

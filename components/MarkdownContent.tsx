@@ -2,12 +2,14 @@
 
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import rehypeSanitize from 'rehype-sanitize'
 
 export default function MarkdownContent({ content }: { content: string }) {
   return (
     <div className="markdown-body text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeSanitize]}
         components={{
           h1: ({ children }) => (
             <h1 className="text-xl font-bold mt-4 mb-2 first:mt-0" style={{ color: 'var(--text-primary)' }}>{children}</h1>

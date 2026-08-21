@@ -13,25 +13,17 @@ export async function addXp(amount: number, reason: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not logged in' }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('total_xp')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile) return { error: 'Profile not found' }
-
-  const newTotal = (profile.total_xp || 0) + amount
-
-  const { error } = await supabase
-    .from('profiles')
-    .update({ total_xp: newTotal })
-    .eq('id', user.id)
+  // Use atomic RPC to prevent race conditions (read-then-write).
+  // SECURITY DEFINER function handles the increment in a single UPDATE.
+  const { data: newTotal, error } = await supabase.rpc('increment_xp', {
+    p_user_id: user.id,
+    p_amount: amount,
+  })
 
   if (error) return { error: error.message }
 
   await checkBadges()
-  return { success: true, totalXp: newTotal }
+  return { success: true, totalXp: newTotal ?? 0 }
 }
 
 export async function getBadges(userId?: string) {

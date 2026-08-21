@@ -9,6 +9,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ users: [] })
   }
 
+  // Strip ILIKE wildcards to prevent pattern injection
+  const safeQuery = query.replace(/[%*_]/g, '')
+
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -19,7 +22,7 @@ export async function GET(request: NextRequest) {
   const { data: users } = await supabase
     .from('profiles')
     .select('username, avatar_url')
-    .ilike('username', `%${query}%`)
+    .ilike('username', `%${safeQuery}%`)
     .limit(10)
 
   return NextResponse.json({ users: users || [] })

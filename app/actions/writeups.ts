@@ -179,7 +179,7 @@ export async function getViewCost(): Promise<{ cost: number; freeViewsRemaining:
   let cost = 0
 
   if (freeViewsRemaining <= 0) {
-    cost = 25 + (viewCount - 1) * 25
+    cost = Math.min(75, 25 + (viewCount - 1) * 25)
   }
 
   return {
@@ -222,7 +222,7 @@ export async function viewWriteup(writeupId: string) {
   let cost = 0
 
   if (freeViewsRemaining <= 0) {
-    cost = 25 + (viewCount - 1) * 25
+    cost = Math.min(75, 25 + (viewCount - 1) * 25)
   }
 
   if (cost > 0 && (profile.total_xp || 0) < cost) {

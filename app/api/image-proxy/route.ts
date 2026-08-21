@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { resolveAndCheckHost, hasCredentials } from '@/lib/ssrf-guard'
 import { logSecurityEvent } from '@/lib/security-log'
+import { checkNamedRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 const MAX_URL_LENGTH = 2048
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB
@@ -32,6 +33,16 @@ export async function GET(request: NextRequest) {
     request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
     request.headers.get('cf-connecting-ip') ||
     null
+
+  // Rate limit: 10 requests per minute per IP
+  const ipForRateLimit = clientIp || 'unknown'
+  const { allowed, retryAfter } = checkNamedRateLimit('image-proxy', ipForRateLimit, {
+    windowMs: 60 * 1000,
+    maxRequests: 10,
+  })
+  if (!allowed && retryAfter) {
+    return rateLimitResponse(retryAfter)
+  }
 
   if (parsed.protocol !== 'https:') {
     void logSecurityEvent({

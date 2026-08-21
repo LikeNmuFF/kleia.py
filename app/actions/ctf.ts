@@ -7,6 +7,8 @@ import { logEvent } from '@/lib/logEvent'
 import { logSecurityEvent } from '@/lib/security-log'
 import { isAdmin } from '@/lib/admin'
 import { hashFlag } from '@/lib/utils/ctf'
+import { checkNamedRateLimit } from '@/lib/rate-limit'
+import { extractClientIp } from '@/lib/logEvent'
 import { checkAndUnlockNodes } from './skilltree'
 import { creditSeasonSolve } from './competition'
 import { getEffectiveSeasonStatus } from './competition-status'
@@ -61,6 +63,18 @@ export async function submitFlag(challengeId: string, submittedFlag: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not logged in' }
+
+  // Middleware-level rate limit: 20 flag submissions per minute per IP
+  const { headers } = await import('next/headers')
+  const headersList = await headers()
+  const ip = extractClientIp(headersList) || 'unknown'
+  const { allowed, retryAfter } = checkNamedRateLimit('ctf-flag', ip, {
+    windowMs: 60 * 1000,
+    maxRequests: 20,
+  })
+  if (!allowed) {
+    return { error: 'Too many submissions. Please slow down.' }
+  }
 
   if (!submittedFlag.trim()) {
     return { error: 'Flag cannot be empty' }

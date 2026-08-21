@@ -1,4 +1,4 @@
-import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { getServiceClient } from '@/lib/supabase/service'
 
 export type SecuritySeverity = 'low' | 'medium' | 'high' | 'critical'
 
@@ -18,11 +18,7 @@ export async function logSecurityEvent({
   details?: Record<string, unknown>
 }) {
   try {
-    const supabase = createServiceClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      { auth: { persistSession: false } }
-    )
+    const supabase = getServiceClient()
     await supabase.from('security_events').insert({
       event_type: eventType,
       severity,

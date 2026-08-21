@@ -27,19 +27,20 @@ const RATE_LIMITS: Record<string, RateLimitConfig> = {
   signup: { windowMs: 60 * 60 * 1000, maxRequests: 3 },
   'forgot-password': { windowMs: 60 * 60 * 1000, maxRequests: 3 },
   'reset-password': { windowMs: 60 * 60 * 1000, maxRequests: 5 },
+  // Proxy endpoints — prevent abuse as open proxies
+  'api/link-preview': { windowMs: 60 * 1000, maxRequests: 10 },
+  'api/image-proxy': { windowMs: 60 * 1000, maxRequests: 10 },
 }
 
-export function checkRateLimit(
-  pathname: string,
-  ip: string
+/**
+ * General-purpose rate limiter for named actions.
+ * Use this from API route handlers that don't match pathname-based lookup.
+ */
+export function checkNamedRateLimit(
+  action: string,
+  ip: string,
+  config: RateLimitConfig
 ): { allowed: boolean; retryAfter?: number } {
-  const action = Object.keys(RATE_LIMITS).find((key) => pathname.startsWith(`/${key}`))
-
-  if (!action) {
-    return { allowed: true }
-  }
-
-  const config = RATE_LIMITS[action]
   const key = `${action}:${ip}`
   const now = Date.now()
 
@@ -57,6 +58,20 @@ export function checkRateLimit(
 
   entry.count++
   return { allowed: true }
+}
+
+export function checkRateLimit(
+  pathname: string,
+  ip: string
+): { allowed: boolean; retryAfter?: number } {
+  const action = Object.keys(RATE_LIMITS).find((key) => pathname.startsWith(`/${key}`))
+
+  if (!action) {
+    return { allowed: true }
+  }
+
+  const config = RATE_LIMITS[action]
+  return checkNamedRateLimit(action, ip, config)
 }
 
 export function rateLimitResponse(retryAfter: number): NextResponse {

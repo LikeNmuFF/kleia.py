@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { resolveAndCheckHost, hasCredentials } from '@/lib/ssrf-guard'
+import { checkNamedRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 interface LinkPreview {
   url: string
@@ -87,12 +88,32 @@ function extractSiteName(html: string): string | null {
   return extractOgSiteName(html)
 }
 
+function getClientIp(request: NextRequest): string {
+  const vercelIp = request.headers.get('x-vercel-forwarded-for')
+  if (vercelIp) return vercelIp.split(',')[0].trim()
+  const forwarded = request.headers.get('x-forwarded-for')
+  if (forwarded) return forwarded.split(',')[0].trim()
+  const cfIp = request.headers.get('cf-connecting-ip')
+  if (cfIp) return cfIp.trim()
+  return 'unknown'
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const url = searchParams.get('url')
 
   if (!url) {
     return NextResponse.json({ error: 'URL parameter required' }, { status: 400 })
+  }
+
+  // Rate limit: 10 requests per minute per IP
+  const ip = getClientIp(request)
+  const { allowed, retryAfter } = checkNamedRateLimit('link-preview', ip, {
+    windowMs: 60 * 1000,
+    maxRequests: 10,
+  })
+  if (!allowed && retryAfter) {
+    return rateLimitResponse(retryAfter)
   }
 
   let parsed: URL
