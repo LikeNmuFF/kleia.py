@@ -10,7 +10,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 scripts/
-!scripts/summarize-security-report.ts
 tsconfig.tsbuildinfo
 flags.env
 supabase-migrations/
