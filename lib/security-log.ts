@@ -26,7 +26,7 @@ export async function logSecurityEvent({
       user_id: userId ?? null,
       challenge_id: challengeId ?? null,
       details,
-    })
+    } as any)
   } catch {
     // Security logging must never break the request
   }
