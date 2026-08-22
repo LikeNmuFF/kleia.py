@@ -24,6 +24,7 @@ export default function UsersTab() {
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState('all')
   const [sortBy, setSortBy] = useState<'created_at' | 'current_streak' | 'username'>('created_at')
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     getAdminUsers().then(d => { setUsers(d.users); setCurrentUserId(d.currentUserId); setLoading(false) })
@@ -42,25 +43,34 @@ export default function UsersTab() {
     })
 
   const handleRoleChange = async (userId: string, role: string) => {
+    setError(null)
     const result = await updateUserRole(userId, role)
     if (!result.error) {
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, role } : u))
+    } else {
+      setError(result.error)
     }
   }
 
   const handleResetStreak = async (userId: string) => {
     if (!confirm('Reset this user\'s streak to 0?')) return
+    setError(null)
     const result = await resetUserStreak(userId)
     if (!result.error) {
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, current_streak: 0 } : u))
+    } else {
+      setError(result.error)
     }
   }
 
   const handleDelete = async (userId: string) => {
     if (!confirm('Delete this user permanently? This cannot be undone.')) return
+    setError(null)
     const result = await deleteUser(userId)
     if (!result.error) {
       setUsers(prev => prev.filter(u => u.id !== userId))
+    } else {
+      setError(result.error)
     }
   }
 
@@ -111,6 +121,12 @@ export default function UsersTab() {
       <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
         {filtered.length} user{filtered.length !== 1 ? 's' : ''}
       </p>
+
+      {error && (
+        <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+          {error}
+        </div>
+      )}
 
       {/* User List */}
       <div className="space-y-2">

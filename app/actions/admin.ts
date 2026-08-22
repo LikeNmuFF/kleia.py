@@ -341,12 +341,66 @@ export async function adjustUserScore(userId: string, score: number) {
 
 export async function deleteUser(userId: string) {
   const supabase = await createClient()
-  await requireAdmin(supabase)
+  const currentUser = await requireAdmin(supabase)
+
+  if (userId === currentUser.id) {
+    return { error: 'You cannot delete your own admin account from here.' }
+  }
 
   const adminClient = getServiceClient()
 
-  const { error } = await adminClient.auth.admin.deleteUser(userId)
-  if (error) return { error: error.message }
+  const cleanupSteps: Array<{
+    table: string
+    column: string
+  }> = [
+    { table: 'writeup_votes', column: 'user_id' },
+    { table: 'writeups', column: 'user_id' },
+    { table: 'challenge_reviews', column: 'user_id' },
+    { table: 'user_hint_unlocks', column: 'user_id' },
+    { table: 'regex_golf_solves', column: 'user_id' },
+    { table: 'daily_cipher_solves', column: 'user_id' },
+    { table: 'daily_missions', column: 'user_id' },
+    { table: 'user_badges', column: 'user_id' },
+    { table: 'user_skill_progress', column: 'user_id' },
+    { table: 'learn_progress', column: 'user_id' },
+    { table: 'ctf_season_spectators', column: 'user_id' },
+    { table: 'ctf_season_spectators', column: 'added_by' },
+    { table: 'ctf_season_participants', column: 'user_id' },
+    { table: 'ctf_submissions', column: 'user_id' },
+    { table: 'event_attendees', column: 'user_id' },
+    { table: 'post_likes', column: 'user_id' },
+    { table: 'comments', column: 'author_id' },
+    { table: 'posts', column: 'author_id' },
+    { table: 'messages', column: 'sender_id' },
+    { table: 'conversation_members', column: 'user_id' },
+    { table: 'security_events', column: 'user_id' },
+    { table: 'events_log', column: 'user_id' },
+  ]
+
+  for (const step of cleanupSteps) {
+    const { error } = await adminClient
+      .from(step.table)
+      .delete()
+      .eq(step.column, userId)
+
+    if (error && error.code !== '42P01' && error.code !== '42703') {
+      return { error: `Could not remove ${step.table}.${step.column}: ${error.message}` }
+    }
+  }
+
+  const { error: profileError } = await adminClient
+    .from('profiles')
+    .delete()
+    .eq('id', userId)
+
+  if (profileError) {
+    return { error: `Could not remove profile: ${profileError.message}` }
+  }
+
+  const { error: authError } = await adminClient.auth.admin.deleteUser(userId)
+  if (authError) return { error: `Could not remove Supabase Auth user: ${authError.message}` }
+
+  revalidatePath('/admin')
   return { success: true }
 }
 
