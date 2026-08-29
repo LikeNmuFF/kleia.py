@@ -9,7 +9,15 @@ import SubjectPicker from './SubjectPicker'
 
 function extractHttpsUrl(text: string): string | null {
   const match = text.match(/https:\/\/[^\s]+/)
-  return match ? match[0] : null
+  return match ? match[0].replace(/[),.;!?]+$/, '') : null
+}
+
+async function fetchLinkPreview(url: string): Promise<LinkPreviewData | null> {
+  const res = await fetch(`/api/link-preview?url=${encodeURIComponent(url)}`)
+  if (!res.ok) return null
+
+  const data = await res.json()
+  return data.title || data.image ? data : null
 }
 
 export default function CreatePost() {
@@ -28,17 +36,7 @@ export default function CreatePost() {
     lastFetchedUrl.current = url
     setFetchingPreview(true)
     try {
-      const res = await fetch(`/api/link-preview?url=${encodeURIComponent(url)}`)
-      if (res.ok) {
-        const data = await res.json()
-        if (data.title || data.image) {
-          setPreview(data)
-        } else {
-          setPreview(null)
-        }
-      } else {
-        setPreview(null)
-      }
+      setPreview(await fetchLinkPreview(url))
     } catch {
       setPreview(null)
     } finally {
@@ -73,7 +71,28 @@ export default function CreatePost() {
     setLoading(true)
     setError('')
 
-    const result = await createPost(content, preview ?? undefined, subjects)
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current)
+      debounceRef.current = null
+    }
+
+    const url = extractHttpsUrl(content)
+    let previewToSave = preview
+
+    if (url && preview?.url !== url) {
+      setFetchingPreview(true)
+      try {
+        previewToSave = await fetchLinkPreview(url)
+        setPreview(previewToSave)
+        lastFetchedUrl.current = url
+      } catch {
+        previewToSave = null
+      } finally {
+        setFetchingPreview(false)
+      }
+    }
+
+    const result = await createPost(content, previewToSave ?? undefined, subjects)
 
     if (result.error) {
       setError(result.error)

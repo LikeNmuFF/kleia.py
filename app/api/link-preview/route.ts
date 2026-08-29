@@ -31,12 +31,14 @@ const OG_DESC_1 = /<meta[^>]*property=["']og:description["'][^>]*content=["']([^
 const OG_DESC_2 = /<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:description["']/i
 const OG_IMAGE_1 = /<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i
 const OG_IMAGE_2 = /<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/i
+const OG_IMAGE_SECURE_1 = /<meta[^>]*property=["']og:image:secure_url["'][^>]*content=["']([^"']+)["']/i
+const OG_IMAGE_SECURE_2 = /<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image:secure_url["']/i
 const OG_SITE_1 = /<meta[^>]*property=["']og:site_name["'][^>]*content=["']([^"']+)["']/i
 const OG_SITE_2 = /<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:site_name["']/i
 const META_DESC_1 = /<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i
 const META_DESC_2 = /<meta[^>]*content=["']([^"']+)["'][^>]*name=["']description["']/i
-const TW_IMAGE_1 = /<meta[^>]*name=["']twitter:image["'][^>]*content=["']([^"']+)["']/i
-const TW_IMAGE_2 = /<meta[^>]*content=["']([^"']+)["'][^>]*name=["']twitter:image["']/i
+const TW_IMAGE_1 = /<meta[^>]*(?:name|property)=["']twitter:image(?::src)?["'][^>]*content=["']([^"']+)["']/i
+const TW_IMAGE_2 = /<meta[^>]*content=["']([^"']+)["'][^>]*(?:name|property)=["']twitter:image(?::src)?["']/i
 
 function extractOgTitle(html: string): string | null {
   const raw = html.match(OG_TITLE_1)?.[1] || html.match(OG_TITLE_2)?.[1]
@@ -49,7 +51,7 @@ function extractOgDescription(html: string): string | null {
 }
 
 function extractOgImage(html: string): string | null {
-  return html.match(OG_IMAGE_1)?.[1] || html.match(OG_IMAGE_2)?.[1] || null
+  return html.match(OG_IMAGE_1)?.[1] || html.match(OG_IMAGE_2)?.[1] || html.match(OG_IMAGE_SECURE_1)?.[1] || html.match(OG_IMAGE_SECURE_2)?.[1] || null
 }
 
 function extractOgSiteName(html: string): string | null {
@@ -194,7 +196,7 @@ export async function GET(request: NextRequest) {
     const reader = response.body?.getReader()
     const chunks: Uint8Array[] = []
     let totalBytes = 0
-    const MAX_BYTES = 50000
+    const MAX_BYTES = 250000
 
     if (reader) {
       while (true) {
