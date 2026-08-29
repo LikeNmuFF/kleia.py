@@ -17,3 +17,20 @@ supabase/
 docs/superpowers/specs/
 docs/
 .worktrees/
+
+# Local agent/tooling state
+.agents/
+.claude/
+.superpowers/
+skills-lock.json
+
+# Local challenge-solving scratch files
+backup_*.sql
+build-map.cjs
+challenge-map.json
+check-*.cjs
+dump-*.cjs
+fix-*.cjs
+kleia-*.mjs
+remaining.cjs
+solve-*.cjs
