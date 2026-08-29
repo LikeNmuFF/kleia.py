@@ -2,7 +2,8 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
-import { normalizeSubjects } from '@/lib/feed/constants'
+import { isPostReaction, normalizeSubjects, type ReactionType } from '@/lib/feed/constants'
+import { emptyReactionCounts, type ReactionCounts } from '@/lib/feed/types'
 import { logEvent } from '@/lib/logEvent'
 
 interface LinkPreviewData {
@@ -99,14 +100,79 @@ export async function createPost(content: string, linkPreview?: LinkPreviewData,
   return { success: true }
 }
 
+export async function toggleReaction(postId: string, reactionType: ReactionType | string) {
+  const start = Date.now()
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not logged in' }
+  if (!isPostReaction(reactionType)) return { error: 'Unsupported reaction' }
+
+  const { data: existing } = await supabase
+    .from('post_reactions')
+    .select('post_id')
+    .eq('user_id', user.id)
+    .eq('post_id', postId)
+    .eq('reaction_type', reactionType)
+    .maybeSingle()
+
+  if (existing) {
+    const { error } = await supabase
+      .from('post_reactions')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('post_id', postId)
+      .eq('reaction_type', reactionType)
+
+    if (error) {
+      await logEvent({ endpoint: 'posts.toggleReaction', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
+      return { error: error.message }
+    }
+  } else {
+    const { error } = await supabase
+      .from('post_reactions')
+      .insert({ user_id: user.id, post_id: postId, reaction_type: reactionType })
+
+    if (error) {
+      await logEvent({ endpoint: 'posts.toggleReaction', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
+      return { error: error.message }
+    }
+  }
+
+  const { data: rows, error: countsError } = await supabase
+    .from('post_reactions')
+    .select('reaction_type')
+    .eq('post_id', postId)
+
+  if (countsError) {
+    await logEvent({ endpoint: 'posts.toggleReaction.counts', status: 'error', durationMs: Date.now() - start, errorMessage: countsError.message, userId: user.id })
+    return { error: countsError.message }
+  }
+
+  const counts: ReactionCounts = emptyReactionCounts()
+  for (const row of rows ?? []) {
+    if (isPostReaction(row.reaction_type)) counts[row.reaction_type] += 1
+  }
+
+  await logEvent({ endpoint: 'posts.toggleReaction', status: 'success', durationMs: Date.now() - start, userId: user.id })
+  revalidatePath('/feed')
+  revalidatePath('/feed/saved')
+  return { selected: !existing, counts }
+}
+
 export async function toggleLike(postId: string) {
+  const result = await toggleReaction(postId, 'like')
+  if (result.error) return result
+  return { liked: result.selected, likesCount: result.counts?.like ?? 0 }
+}
+
+export async function toggleSavedPost(postId: string) {
   const start = Date.now()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not logged in' }
 
   const { data: existing } = await supabase
-    .from('post_likes')
+    .from('saved_posts')
     .select('post_id')
     .eq('user_id', user.id)
     .eq('post_id', postId)
@@ -114,35 +180,30 @@ export async function toggleLike(postId: string) {
 
   if (existing) {
     const { error } = await supabase
-      .from('post_likes')
+      .from('saved_posts')
       .delete()
       .eq('user_id', user.id)
       .eq('post_id', postId)
 
     if (error) {
-      await logEvent({ endpoint: 'posts.toggleLike', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
+      await logEvent({ endpoint: 'posts.toggleSavedPost', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
       return { error: error.message }
     }
   } else {
     const { error } = await supabase
-      .from('post_likes')
+      .from('saved_posts')
       .insert({ user_id: user.id, post_id: postId })
 
     if (error) {
-      await logEvent({ endpoint: 'posts.toggleLike', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
+      await logEvent({ endpoint: 'posts.toggleSavedPost', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
       return { error: error.message }
     }
   }
 
-  const { data: post } = await supabase
-    .from('posts')
-    .select('likes_count')
-    .eq('id', postId)
-    .single()
-
-  await logEvent({ endpoint: 'posts.toggleLike', status: 'success', durationMs: Date.now() - start, userId: user.id })
+  await logEvent({ endpoint: 'posts.toggleSavedPost', status: 'success', durationMs: Date.now() - start, userId: user.id })
   revalidatePath('/feed')
-  return { liked: !existing, likesCount: post?.likes_count ?? 0 }
+  revalidatePath('/feed/saved')
+  return { saved: !existing }
 }
 
 export async function getComments(postId: string) {

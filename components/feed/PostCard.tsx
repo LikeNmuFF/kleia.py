@@ -1,10 +1,11 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { toggleLike, togglePin, updatePost, deletePost } from '@/app/actions/posts'
+import { togglePin, updatePost, deletePost } from '@/app/actions/posts'
 import CommentSection from './CommentSection'
 import LinkPreviewCard from './LinkPreviewCard'
+import ReactionBar from './ReactionBar'
+import SavePostButton from './SavePostButton'
 import SubjectChips from './SubjectChips'
 import Avatar from '@/components/Avatar'
 import TulipBadge from '@/components/special/TulipBadge'
@@ -19,15 +20,12 @@ interface Profile {
 interface PostCardProps {
   post: FeedPost
   currentUserId?: string
-  initialLiked?: boolean
   isAdmin?: boolean
   initialProfile?: Profile | null
 }
 
-export default function PostCard({ post, currentUserId, initialLiked = false, isAdmin = false, initialProfile = null }: PostCardProps) {
-  const [profile, setProfile] = useState<Profile | null>(initialProfile)
-  const [liked, setLiked] = useState(initialLiked)
-  const [likesCount, setLikesCount] = useState(post.likes_count || 0)
+export default function PostCard({ post, currentUserId, isAdmin = false, initialProfile = null }: PostCardProps) {
+  const [profile] = useState<Profile | null>(initialProfile)
   const [commentsCount, setCommentsCount] = useState(post.comments_count || 0)
   const [showComments, setShowComments] = useState(false)
   const [pinned, setPinned] = useState(post.is_pinned)
@@ -45,22 +43,6 @@ export default function PostCard({ post, currentUserId, initialLiked = false, is
       editRef.current.setSelectionRange(editRef.current.value.length, editRef.current.value.length)
     }
   }, [editing])
-
-  const handleLike = async () => {
-    const prevLiked = liked
-    const prevCount = likesCount
-    setLiked(!prevLiked)
-    setLikesCount(prevLiked ? Math.max(0, prevCount - 1) : prevCount + 1)
-
-    const result = await toggleLike(post.id)
-    if (result.error) {
-      setLiked(prevLiked)
-      setLikesCount(prevCount)
-    } else {
-      setLiked(result.liked ?? !prevLiked)
-      setLikesCount(result.likesCount ?? prevCount)
-    }
-  }
 
   const handlePin = async () => {
     const prev = pinned
@@ -147,6 +129,7 @@ export default function PostCard({ post, currentUserId, initialLiked = false, is
 
         {/* Admin pin + Owner edit/delete */}
         <div className="ml-auto flex items-center gap-1">
+          {currentUserId && <SavePostButton postId={post.id} initialSaved={post.saved_by_user} />}
           {isAdmin && (
             <button
               onClick={handlePin}
@@ -250,24 +233,13 @@ export default function PostCard({ post, currentUserId, initialLiked = false, is
         </div>
       )}
 
-      {/* Like + Comment buttons */}
+      {/* Reaction + Comment buttons */}
       <div className="flex items-center gap-4 mt-4 pt-3 border-t" style={{ borderColor: 'var(--border-color)' }}>
-        <button
-          onClick={handleLike}
-          className="flex items-center gap-1.5 text-sm transition-colors"
-          style={{ color: liked ? '#ef4444' : 'var(--text-muted)' }}
-        >
-          {liked ? (
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-            </svg>
-          ) : (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
-            </svg>
-          )}
-          <span>{likesCount}</span>
-        </button>
+        <ReactionBar
+          postId={post.id}
+          initialCounts={post.reaction_counts}
+          initialUserReactions={post.user_reactions}
+        />
 
         <button
           onClick={() => setShowComments(!showComments)}
