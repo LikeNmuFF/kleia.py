@@ -1,10 +1,12 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { getUpcomingRegistration } from '@/app/actions/competition'
+import { getAuthorProfiles, getFeedPosts } from '@/lib/feed/queries'
 import PostCard from '@/components/feed/PostCard'
 import CreatePost from '@/components/feed/CreatePost'
 import DailyMissions from '@/components/gamification/DailyMissions'
 import CompetitionBanner from '@/components/competition/CompetitionBanner'
+import FeedTabs from '@/components/feed/FeedTabs'
 
 export const metadata: Metadata = {
   title: 'Feed',
@@ -15,47 +17,16 @@ export default async function FeedPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const [postsResult, profileResult, upcomingRegistration] = await Promise.all([
-    supabase
-      .from('posts')
-      .select('id, content, type, author_id, created_at, is_pinned, likes_count, comments_count, link_preview')
-      .order('is_pinned', { ascending: false })
-      .order('created_at', { ascending: false }),
+  const [posts, profileResult, upcomingRegistration] = await Promise.all([
+    getFeedPosts(user?.id),
     user
       ? supabase.from('profiles').select('id, role, username, avatar_url').eq('id', user.id).single()
       : Promise.resolve({ data: null }),
     getUpcomingRegistration(),
   ])
 
-  const rawPosts = postsResult.data
-  const posts = rawPosts || []
+  const authorMap = await getAuthorProfiles(posts)
   const isAdmin = profileResult.data?.role === 'admin'
-
-  // Batch fetch author profiles for all posts (1 query instead of N)
-  const authorIds = Array.from(new Set(posts.map(p => p.author_id)))
-  let authorMap: Record<string, { username: string; avatar_url: string | null; role?: string }> = {}
-  if (authorIds.length > 0) {
-    const { data: profiles } = await supabase
-      .from('profiles')
-      .select('id, username, avatar_url, role')
-      .in('id', authorIds)
-    for (const p of profiles || []) {
-      authorMap[p.id] = { username: p.username, avatar_url: p.avatar_url, role: p.role }
-    }
-  }
-
-  // Batch fetch all user likes for loaded posts (1 query instead of N)
-  let likedPostIds: string[] = []
-  if (user && posts.length > 0) {
-    const postIds = posts.map((p) => p.id)
-    const { data: likes } = await supabase
-      .from('post_likes')
-      .select('post_id')
-      .eq('user_id', user.id)
-      .in('post_id', postIds)
-
-    if (likes) likedPostIds = likes.map((l) => l.post_id)
-  }
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4">
@@ -67,6 +38,8 @@ export default async function FeedPage() {
         <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Feed</h1>
         <p style={{ color: 'var(--text-secondary)' }}>Share updates, resources, and discussions</p>
       </div>
+
+      <FeedTabs active="all" />
 
       {/* Create Post */}
       <CreatePost />
@@ -86,7 +59,6 @@ export default async function FeedPage() {
               key={post.id}
               post={post}
               currentUserId={user?.id}
-              initialLiked={likedPostIds.includes(post.id)}
               isAdmin={isAdmin}
               initialProfile={authorMap[post.author_id] || null}
             />
