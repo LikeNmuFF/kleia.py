@@ -59,6 +59,7 @@ export default async function FeedPage() {
               key={post.id}
               post={post}
               currentUserId={user?.id}
+              initialLiked={post.user_reactions.like}
               isAdmin={isAdmin}
               initialProfile={authorMap[post.author_id] || null}
             />

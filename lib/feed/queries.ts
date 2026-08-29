@@ -2,7 +2,7 @@ import 'server-only'
 
 import { createClient } from '@/lib/supabase/server'
 import { emptyReactionCounts, emptyUserReactionState, type FeedPost, type FeedProfile } from './types'
-import { POST_REACTIONS, type FeedSubject, type ReactionType } from './constants'
+import { isFeedSubject, POST_REACTIONS, type ReactionType } from './constants'
 
 type BasePost = Omit<FeedPost, 'subjects' | 'reaction_counts' | 'user_reactions' | 'saved_by_user'>
 
@@ -36,8 +36,8 @@ async function hydratePosts(posts: BasePost[], userId?: string | null): Promise<
 
   for (const tag of tagsResult.data ?? []) {
     const post = postMap.get(tag.post_id)
-    if (post && !post.subjects.includes(tag.subject as FeedSubject)) {
-      post.subjects.push(tag.subject as FeedSubject)
+    if (post && isFeedSubject(tag.subject) && !post.subjects.includes(tag.subject)) {
+      post.subjects.push(tag.subject)
     }
   }
 
@@ -55,6 +55,10 @@ async function hydratePosts(posts: BasePost[], userId?: string | null): Promise<
   for (const saved of savedResult.data ?? []) {
     const post = postMap.get(saved.post_id)
     if (post) post.saved_by_user = true
+  }
+
+  for (const post of postMap.values()) {
+    post.likes_count = post.reaction_counts.like
   }
 
   return posts.map((post) => postMap.get(post.id)!).filter(Boolean)
