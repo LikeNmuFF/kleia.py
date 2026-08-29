@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { normalizeSubjects } from '@/lib/feed/constants'
 import { logEvent } from '@/lib/logEvent'
 
 interface LinkPreviewData {
@@ -12,7 +13,7 @@ interface LinkPreviewData {
   siteName: string | null
 }
 
-export async function createPost(content: string, linkPreview?: LinkPreviewData) {
+export async function createPost(content: string, linkPreview?: LinkPreviewData, subjects: string[] = []) {
   const start = Date.now()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -40,11 +41,36 @@ export async function createPost(content: string, linkPreview?: LinkPreviewData)
     insertData.type = 'resource'
   }
 
-  const { error } = await supabase.from('posts').insert(insertData)
+  const { data: post, error } = await supabase
+    .from('posts')
+    .insert(insertData)
+    .select('id')
+    .single()
 
   if (error) {
     await logEvent({ endpoint: 'posts.createPost', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
     return { error: error.message }
+  }
+
+  const normalizedSubjects = normalizeSubjects(subjects)
+  if (post && normalizedSubjects.length > 0) {
+    const { error: tagError } = await supabase.from('post_subject_tags').insert(
+      normalizedSubjects.map((subject) => ({
+        post_id: post.id,
+        subject,
+      }))
+    )
+
+    if (tagError) {
+      await logEvent({
+        endpoint: 'posts.createPost.tags',
+        status: 'error',
+        durationMs: Date.now() - start,
+        errorMessage: tagError.message,
+        userId: user.id,
+      })
+      return { error: tagError.message }
+    }
   }
 
   await logEvent({ endpoint: 'posts.createPost', status: 'success', durationMs: Date.now() - start, userId: user.id })

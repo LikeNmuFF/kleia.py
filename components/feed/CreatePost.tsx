@@ -3,7 +3,9 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createPost } from '@/app/actions/posts'
+import type { FeedSubject } from '@/lib/feed/constants'
 import LinkPreviewCard, { type LinkPreviewData } from './LinkPreviewCard'
+import SubjectPicker from './SubjectPicker'
 
 function extractHttpsUrl(text: string): string | null {
   const match = text.match(/https:\/\/[^\s]+/)
@@ -15,6 +17,7 @@ export default function CreatePost() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [preview, setPreview] = useState<LinkPreviewData | null>(null)
+  const [subjects, setSubjects] = useState<FeedSubject[]>([])
   const [fetchingPreview, setFetchingPreview] = useState(false)
   const router = useRouter()
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -70,7 +73,7 @@ export default function CreatePost() {
     setLoading(true)
     setError('')
 
-    const result = await createPost(content, preview ?? undefined)
+    const result = await createPost(content, preview ?? undefined, subjects)
 
     if (result.error) {
       setError(result.error)
@@ -80,6 +83,7 @@ export default function CreatePost() {
 
     setContent('')
     setPreview(null)
+    setSubjects([])
     lastFetchedUrl.current = null
     router.refresh()
     setLoading(false)
@@ -122,6 +126,10 @@ export default function CreatePost() {
           )}
         </div>
       )}
+
+      <div className="mt-3">
+        <SubjectPicker selected={subjects} onChange={setSubjects} />
+      </div>
 
       {error && (
         <p className="mt-2 text-sm text-red-400">{error}</p>

@@ -5,8 +5,10 @@ import { createClient } from '@/lib/supabase/client'
 import { toggleLike, togglePin, updatePost, deletePost } from '@/app/actions/posts'
 import CommentSection from './CommentSection'
 import LinkPreviewCard from './LinkPreviewCard'
+import SubjectChips from './SubjectChips'
 import Avatar from '@/components/Avatar'
 import TulipBadge from '@/components/special/TulipBadge'
+import type { FeedPost } from '@/lib/feed/types'
 
 interface Profile {
   username: string
@@ -14,26 +16,8 @@ interface Profile {
   role?: string
 }
 
-interface LinkPreviewData {
-  url: string
-  title: string | null
-  description: string | null
-  image: string | null
-  siteName: string | null
-}
-
 interface PostCardProps {
-  post: {
-    id: string
-    content: string
-    type: string
-    author_id: string
-    created_at: string
-    is_pinned: boolean
-    likes_count: number
-    comments_count: number
-    link_preview?: LinkPreviewData | null
-  }
+  post: FeedPost
   currentUserId?: string
   initialLiked?: boolean
   isAdmin?: boolean
@@ -236,6 +220,8 @@ export default function PostCard({ post, currentUserId, initialLiked = false, is
       ) : (
         <p className="whitespace-pre-wrap leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{post.content}</p>
       )}
+
+      {!editing && <SubjectChips subjects={post.subjects} />}
 
       {post.link_preview && !editing && (
         <LinkPreviewCard preview={post.link_preview} />
