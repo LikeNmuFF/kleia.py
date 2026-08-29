@@ -26,6 +26,7 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://www.kleia.site'),
   title: {
     default: 'Kleia | Learn Together, Grow Together',
     template: '%s | Kleia',
