@@ -62,6 +62,22 @@ export async function createPost(content: string, linkPreview?: LinkPreviewData,
     )
 
     if (tagError) {
+      const { error: cleanupError } = await supabase
+        .from('posts')
+        .delete()
+        .eq('id', post.id)
+        .eq('author_id', user.id)
+
+      if (cleanupError) {
+        await logEvent({
+          endpoint: 'posts.createPost.tags.cleanup',
+          status: 'error',
+          durationMs: Date.now() - start,
+          errorMessage: cleanupError.message,
+          userId: user.id,
+        })
+      }
+
       await logEvent({
         endpoint: 'posts.createPost.tags',
         status: 'error',

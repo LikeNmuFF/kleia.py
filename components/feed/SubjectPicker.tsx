@@ -35,6 +35,7 @@ export default function SubjectPicker({ selected, onChange }: SubjectPickerProps
           <button
             key={subject}
             type="button"
+            aria-pressed={active}
             onClick={() => toggle(subject)}
             className="px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors"
             style={{
