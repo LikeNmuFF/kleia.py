@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { logEvent } from '@/lib/logEvent'
 import { isAdmin } from '@/lib/admin'
 import { getCompetitionAccess } from './competition'
+import { getSafeErrorMessage } from '@/lib/errorHandler'
 
 async function isParticipantLocked() {
   const access = await getCompetitionAccess()
@@ -113,11 +114,11 @@ export async function startConversation(otherUserId: string) {
 
   if (rpcError) {
     await logEvent({ endpoint: 'chat.startConversation', status: 'error', durationMs: Date.now() - start, errorMessage: rpcError.message, userId: user.id })
-    return { error: rpcError.message }
+    return { error: getSafeErrorMessage(rpcError, 'Failed to start conversation. Please try again.') }
   }
   if (existing.error) {
     await logEvent({ endpoint: 'chat.startConversation', status: 'error', durationMs: Date.now() - start, errorMessage: existing.error, userId: user.id })
-    return { error: existing.error }
+    return { error: getSafeErrorMessage(existing.error, 'Failed to start conversation.') }
   }
 
   await logEvent({ endpoint: 'chat.startConversation', status: 'success', durationMs: Date.now() - start, userId: user.id })
@@ -143,20 +144,20 @@ export async function createGroupConversation(memberIds: string[], name: string)
   // Deduplicate and ensure creator is not in the list
   const uniqueMemberIds = [...new Set(memberIds.filter((id) => id !== user.id))]
 
-  // Create the conversation
+  // Create the conversation (conversations table has no created_by column - tracked via conversation_members)
   const { data: conv, error: convError } = await supabase
     .from('conversations')
     .insert({
       name: name.trim(),
       type: 'group',
-      created_by: user.id,
     })
     .select('id')
     .single()
 
   if (convError || !conv) {
+    const safeMsg = getSafeErrorMessage(convError, 'Failed to create group chat. Please try again.')
     await logEvent({ endpoint: 'chat.createGroupConversation', status: 'error', durationMs: Date.now() - start, errorMessage: convError?.message || 'Failed to create conversation', userId: user.id })
-    return { error: convError?.message || 'Failed to create conversation' }
+    return { error: safeMsg }
   }
 
   // Add all members (including creator)
@@ -169,7 +170,7 @@ export async function createGroupConversation(memberIds: string[], name: string)
     // Rollback: delete the conversation
     await supabase.from('conversations').delete().eq('id', conv.id)
     await logEvent({ endpoint: 'chat.createGroupConversation', status: 'error', durationMs: Date.now() - start, errorMessage: memberError.message, userId: user.id })
-    return { error: memberError.message }
+    return { error: getSafeErrorMessage(memberError, 'Failed to add members. Please try again.') }
   }
 
   await logEvent({ endpoint: 'chat.createGroupConversation', status: 'success', durationMs: Date.now() - start, userId: user.id })
@@ -195,7 +196,7 @@ export async function sendMessage(conversationId: string, content: string) {
 
   if (memberError) {
     await logEvent({ endpoint: 'chat.sendMessage', status: 'error', durationMs: Date.now() - start, errorMessage: memberError.message, userId: user.id })
-    return { error: memberError.message }
+    return { error: getSafeErrorMessage(memberError, 'Failed to send message.') }
   }
 
   if (!count || count === 0) return { error: 'Not a member of this conversation' }
@@ -208,7 +209,7 @@ export async function sendMessage(conversationId: string, content: string) {
 
   if (error) {
     await logEvent({ endpoint: 'chat.sendMessage', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
-    return { error: error.message }
+    return { error: getSafeErrorMessage(error, 'Failed to send message. Please try again.') }
   }
 
   await logEvent({ endpoint: 'chat.sendMessage', status: 'success', durationMs: Date.now() - start, userId: user.id })
@@ -265,7 +266,7 @@ export async function markAsRead(conversationId: string) {
     .neq('sender_id', user.id)
     .eq('read', false)
 
-  if (error) return { error: error.message }
+  if (error) return { error: getSafeErrorMessage(error, 'Failed to mark as read.') }
   return { success: true }
 }
 
@@ -297,7 +298,7 @@ export async function deleteMessage(messageId: string) {
 
   if (error) {
     await logEvent({ endpoint: 'chat.deleteMessage', status: 'error', durationMs: Date.now() - start, errorMessage: error.message })
-    return { error: error.message }
+    return { error: getSafeErrorMessage(error, 'Failed to delete message.') }
   }
 
   await logEvent({ endpoint: 'chat.deleteMessage', status: 'success', durationMs: Date.now() - start })
@@ -317,7 +318,7 @@ export async function deleteConversation(conversationId: string) {
 
   if (error) {
     await logEvent({ endpoint: 'chat.deleteConversation', status: 'error', durationMs: Date.now() - start, errorMessage: error.message })
-    return { error: error.message }
+    return { error: getSafeErrorMessage(error, 'Failed to delete conversation.') }
   }
 
   await logEvent({ endpoint: 'chat.deleteConversation', status: 'success', durationMs: Date.now() - start })
