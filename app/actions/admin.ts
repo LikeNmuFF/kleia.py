@@ -301,12 +301,15 @@ export async function getAdminUsers() {
 }
 
 export async function updateUserRole(userId: string, role: string) {
+  const allowed = ['user', 'admin', 'special', 'faculty']
+  if (!allowed.includes(role)) return { error: `Invalid role: ${role}` }
   const supabase = await createClient()
   await requireAdmin(supabase)
 
-  const { error } = await supabase
+  const adminClient = getServiceClient()
+  const { error } = await (adminClient as any)
     .from('profiles')
-    .update({ role })
+    .update({ role } as any)
     .eq('id', userId)
 
   if (error) return { error: error.message }
@@ -317,9 +320,10 @@ export async function resetUserStreak(userId: string) {
   const supabase = await createClient()
   await requireAdmin(supabase)
 
-  const { error } = await supabase
+  const adminClient = getServiceClient()
+  const { error } = await (adminClient as any)
     .from('profiles')
-    .update({ current_streak: 0 })
+    .update({ current_streak: 0 } as any)
     .eq('id', userId)
 
   if (error) return { error: error.message }
