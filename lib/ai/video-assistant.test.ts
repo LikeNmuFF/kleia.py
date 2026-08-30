@@ -5,6 +5,7 @@ import {
   buildSummaryPrompt,
   extractYouTubeVideoId,
   getAiLimitStatus,
+  cleanAiResponseText,
   sanitizePromptText,
 } from './video-assistant'
 
@@ -29,8 +30,13 @@ describe('video assistant helpers', () => {
 
     expect(prompt[0].role).toBe('system')
     expect(prompt[0].content).toContain('Only use the provided video transcript')
+    expect(prompt[0].content).toContain('plain text')
     expect(prompt[1].content).toContain('Python loops')
     expect(prompt[1].content).toContain('A loop repeats a block')
+  })
+
+  it('cleans markdown styling from AI responses', () => {
+    expect(cleanAiResponseText('**Overview**\n- Loops repeat work.\n### Practice')).toBe('Overview\nLoops repeat work.\nPractice')
   })
 
   it('builds a question prompt with bounded recent history and sanitized input', () => {

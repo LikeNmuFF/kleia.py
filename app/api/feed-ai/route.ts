@@ -8,6 +8,7 @@ import { createTranscriptFromCaptionSegments, type VideoTranscript } from '@/lib
 import {
   buildQuestionPrompt,
   buildSummaryPrompt,
+  cleanAiResponseText,
   getAiLimitStatus,
   type AiChatMessage,
 } from '@/lib/ai/video-assistant'
@@ -159,10 +160,10 @@ async function generateOrReadSummary({
   let summary: string
   try {
     transcript = await getTranscriptForPost(post, videoId)
-    summary = await runGroqChat(buildSummaryPrompt({
+    summary = cleanAiResponseText(await runGroqChat(buildSummaryPrompt({
       title,
       transcript: transcript.text,
-    }))
+    })))
   } catch (error) {
     return NextResponse.json({ error: getAiErrorMessage(error) }, { status: 502 })
   }
@@ -227,12 +228,12 @@ async function answerQuestion({
 
   const history = ((rawPreviousMessages ?? []) as unknown as VideoAiMessage[]).reverse() as AiChatMessage[]
   try {
-    answer = await runGroqChat(buildQuestionPrompt({
+    answer = cleanAiResponseText(await runGroqChat(buildQuestionPrompt({
       title,
       transcript: transcript.text,
       question,
       history,
-    }))
+    })))
   } catch (error) {
     return NextResponse.json({ error: getAiErrorMessage(error) }, { status: 502 })
   }
