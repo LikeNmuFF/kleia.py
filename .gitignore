@@ -18,6 +18,7 @@ supabase/*
 supabase/migrations/*
 !supabase/migrations/20260829000100_skill_snapshots_view.sql
 !supabase/migrations/20260830010000_youtube_post_data.sql
+!supabase/migrations/20260831040000_faculty_role.sql
 !supabase/tests/
 supabase/tests/*
 !supabase/tests/skill_snapshots_rls.sql
