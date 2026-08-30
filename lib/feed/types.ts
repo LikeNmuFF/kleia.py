@@ -1,4 +1,5 @@
 import type { FeedSubject, ReactionType } from './constants'
+import type { YouTubeData } from '@/lib/youtube/types'
 
 export interface LinkPreviewData {
   url: string
@@ -27,6 +28,7 @@ export interface FeedPost {
   likes_count: number
   comments_count: number
   link_preview?: LinkPreviewData | null
+  youtube_data?: YouTubeData | null
   subjects: FeedSubject[]
   reaction_counts: ReactionCounts
   user_reactions: UserReactionState
