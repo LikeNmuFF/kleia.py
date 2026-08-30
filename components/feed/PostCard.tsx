@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { togglePin, updatePost, deletePost } from '@/app/actions/posts'
 import CommentSection from './CommentSection'
 import LinkPreviewCard from './LinkPreviewCard'
+import YouTubeEmbed from './YouTubeEmbed'
+import TranscriptViewer from './TranscriptViewer'
 import ReactionBar from './ReactionBar'
 import SavePostButton from './SavePostButton'
 import SubjectChips from './SubjectChips'
@@ -206,7 +208,14 @@ export default function PostCard({ post, currentUserId, isAdmin = false, initial
 
       {!editing && <SubjectChips subjects={post.subjects} />}
 
-      {post.link_preview && !editing && (
+      {post.youtube_data && !editing && (
+        <>
+          <YouTubeEmbed data={post.youtube_data} />
+          <TranscriptViewer captions={post.youtube_data.videos[0]?.captions} />
+        </>
+      )}
+
+      {post.link_preview && !post.youtube_data && !editing && (
         <LinkPreviewCard preview={post.link_preview} />
       )}
 
