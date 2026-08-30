@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Check, X, Loader2, Trophy, ArrowRight } from 'lucide-react'
@@ -60,20 +61,20 @@ export default function LessonQuiz({
           </p>
         </div>
         <div className="flex gap-3">
-          <a
+          <Link
             href={`/learn/${topicSlug}`}
             className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
             style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-primary)' }}
           >
             Back to topic
-          </a>
-          <a
+          </Link>
+          <Link
             href="/learn"
             className="px-4 py-2 rounded-lg text-sm font-medium text-white transition-all"
             style={{ background: 'linear-gradient(90deg, #7c3aed, #06b6d4)' }}
           >
             Browse lessons
-          </a>
+          </Link>
         </div>
       </div>
     )
@@ -106,20 +107,20 @@ export default function LessonQuiz({
           )}
         </div>
         <div className="flex gap-3">
-          <a
+          <Link
             href={`/learn/${topicSlug}`}
             className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
             style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-primary)' }}
           >
             Back to topic
-          </a>
-          <a
+          </Link>
+          <Link
             href="/learn"
             className="px-4 py-2 rounded-lg text-sm font-medium text-white transition-all"
             style={{ background: 'linear-gradient(90deg, #7c3aed, #06b6d4)' }}
           >
             Browse lessons
-          </a>
+          </Link>
         </div>
       </div>
     )

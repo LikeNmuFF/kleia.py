@@ -4,6 +4,7 @@ import HintUnlockButton from './HintUnlockButton'
 import ChallengeReviewForm from '@/components/ctf/ChallengeReviewForm'
 import ChallengeReviews from '@/components/ctf/ChallengeReviews'
 import AIFairPlayBanner from '@/components/ctf/AIFairPlayBanner'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 const DIFFICULTY_COLORS: Record<string, string> = {
@@ -87,13 +88,13 @@ export default async function ChallengePage({ params }: { params: Promise<{ id: 
 
   return (
     <div className="max-w-3xl mx-auto py-8 px-4">
-      <a
+      <Link
         href="/ctf"
         className="inline-flex items-center gap-1 text-sm mb-6 hover:opacity-80"
         style={{ color: 'var(--text-muted)' }}
       >
         ← Back to Challenges
-      </a>
+      </Link>
 
       <AIFairPlayBanner />
 
@@ -164,7 +165,7 @@ export default async function ChallengePage({ params }: { params: Promise<{ id: 
 
         {learnLessonTitle && challenge.learn_topic_slug && challenge.learn_lesson_slug && (
           <div className="mb-6 pt-4 border-t" style={{ borderColor: 'var(--border-color)' }}>
-            <a
+            <Link
               href={`/learn/${challenge.learn_topic_slug}/${challenge.learn_lesson_slug}`}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:scale-[1.02]"
               style={{
@@ -175,7 +176,7 @@ export default async function ChallengePage({ params }: { params: Promise<{ id: 
             >
               <span className="text-base">📖</span>
               Learn more: {learnLessonTitle}
-            </a>
+            </Link>
           </div>
         )}
 
@@ -222,7 +223,7 @@ export default async function ChallengePage({ params }: { params: Promise<{ id: 
         )}
 
         <div className="mb-6 pt-4 border-t flex flex-wrap gap-3" style={{ borderColor: 'var(--border-color)' }}>
-          <a
+          <Link
             href={`/ctf/${challenge.id}/writeups`}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:scale-[1.02]"
             style={{
@@ -233,7 +234,7 @@ export default async function ChallengePage({ params }: { params: Promise<{ id: 
           >
             <span className="text-base">📝</span>
             {solved ? 'Write a Writeup' : 'View Writeups'}
-          </a>
+          </Link>
         </div>
 
         <FlagSubmitForm challengeId={challenge.id} alreadySolved={solved} />
