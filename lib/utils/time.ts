@@ -18,15 +18,28 @@ export function getRelativeTime(dateString: string | null): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
+const ONLINE_STATUS_FRESH_MS = 2 * 60 * 1000
+
+function hasFreshPresence(lastSeen: string | null): boolean {
+  if (!lastSeen) return false
+
+  const lastSeenTime = new Date(lastSeen).getTime()
+  if (Number.isNaN(lastSeenTime)) return false
+
+  return Date.now() - lastSeenTime <= ONLINE_STATUS_FRESH_MS
+}
+
 export function getStatusInfo(
   status: string | null,
   lastSeen: string | null
 ): { text: string; color: string; isOnline: boolean } {
-  if (status === 'online') {
+  const isFresh = hasFreshPresence(lastSeen)
+
+  if (status === 'online' && isFresh) {
     return { text: 'Online', color: 'bg-emerald-400', isOnline: true }
   }
 
-  if (status === 'studies') {
+  if (status === 'studies' && isFresh) {
     return { text: 'Studying', color: 'bg-violet-400', isOnline: true }
   }
 
