@@ -1,6 +1,9 @@
 import 'server-only'
 
 import type { AiChatMessage } from './video-assistant'
+import { getGroqModel } from './groq-model'
+
+export { getGroqModel } from './groq-model'
 
 interface GroqChoice {
   message?: {
@@ -13,10 +16,6 @@ interface GroqChatResponse {
   error?: {
     message?: string
   }
-}
-
-export function getGroqModel(): string {
-  return process.env.GROQ_MODEL || 'llama-3.1-8b-instant'
 }
 
 export async function runGroqChat(messages: AiChatMessage[]): Promise<string> {
