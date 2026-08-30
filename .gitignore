@@ -13,7 +13,14 @@ scripts/
 tsconfig.tsbuildinfo
 flags.env
 supabase-migrations/
-supabase/
+supabase/*
+!supabase/migrations/
+supabase/migrations/*
+!supabase/migrations/20260830020000_video_ai_assistant.sql
+!supabase/tests/
+supabase/tests/*
+!supabase/tests/video_ai_assistant_rls.sql
+supabase/.temp/
 docs/superpowers/specs/
 docs/
 .worktrees/
