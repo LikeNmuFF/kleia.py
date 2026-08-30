@@ -29,11 +29,13 @@ interface ChatSidebarProps {
   selectedId: string | null
   onSelect: (id: string) => void
   onNewChat: () => void
+  onNewGroupChat: () => void
   currentUserId: string
 }
 
-export default function ChatSidebar({ conversations, selectedId, onSelect, onNewChat, currentUserId }: ChatSidebarProps) {
+export default function ChatSidebar({ conversations, selectedId, onSelect, onNewChat, onNewGroupChat, currentUserId }: ChatSidebarProps) {
   const [memberMap, setMemberMap] = useState<Record<string, MemberInfo>>({})
+  const [groupMemberCounts, setGroupMemberCounts] = useState<Record<string, number>>({})
   const onlineUsers = useOnlineUsers()
   const supabase = createClient()
   const unreadCtx = useChatUnread()
@@ -58,14 +60,26 @@ export default function ChatSidebar({ conversations, selectedId, onSelect, onNew
         .in('conversation_id', convIds)
         .neq('user_id', currentUserId)
 
+      // Track all other members per conversation (for groups)
+      const convToMembers: Record<string, string[]> = {}
       const otherIds = new Set<string>()
-      const convToOther: Record<string, string> = {}
       for (const m of allMemberships || []) {
-        if (!convToOther[m.conversation_id]) {
-          convToOther[m.conversation_id] = m.user_id
-          otherIds.add(m.user_id)
+        if (!convToMembers[m.conversation_id]) {
+          convToMembers[m.conversation_id] = []
+        }
+        convToMembers[m.conversation_id].push(m.user_id)
+        otherIds.add(m.user_id)
+      }
+
+      // Store member counts for group chats
+      const counts: Record<string, number> = {}
+      for (const conv of conversations) {
+        if (conv.type === 'group') {
+          // +1 for current user
+          counts[conv.id] = (convToMembers[conv.id]?.length || 0) + 1
         }
       }
+      setGroupMemberCounts(counts)
 
       if (otherIds.size === 0) { setMemberMap({}); return }
 
@@ -76,9 +90,10 @@ export default function ChatSidebar({ conversations, selectedId, onSelect, onNew
 
       const map: Record<string, MemberInfo> = {}
       for (const conv of conversations) {
-        const otherId = convToOther[conv.id]
-        if (otherId) {
-          const profile = (profiles || []).find((p: { id: string }) => p.id === otherId)
+        // For DMs, show the single other member; for groups, show the first other member as the avatar
+        const firstOtherId = convToMembers[conv.id]?.[0]
+        if (firstOtherId) {
+          const profile = (profiles || []).find((p: { id: string }) => p.id === firstOtherId)
           if (profile) map[conv.id] = profile
         }
       }
@@ -116,6 +131,16 @@ export default function ChatSidebar({ conversations, selectedId, onSelect, onNew
             )}
           </button>
           <button
+            onClick={onNewGroupChat}
+            className="p-2 rounded-lg transition-all"
+            style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-secondary)' }}
+            title="New group chat"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          </button>
+          <button
             onClick={onNewChat}
             className="p-2 rounded-lg transition-all"
             style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-secondary)' }}
@@ -139,6 +164,9 @@ export default function ChatSidebar({ conversations, selectedId, onSelect, onNew
             const liveOnline = member ? onlineUsers.has(member.id) : false
             const convUnread = unreadCounts[conv.id] ?? conv.unread_count ?? 0
             const hasUnread = convUnread > 0
+            const isGroup = conv.type === 'group'
+            const displayName = isGroup ? (conv.name || 'Unnamed Group') : (member?.username || 'Unknown')
+            const groupCount = groupMemberCounts[conv.id]
 
             return (
               <button
@@ -153,7 +181,11 @@ export default function ChatSidebar({ conversations, selectedId, onSelect, onNew
                 <div className="flex items-center gap-3">
                   <div className="relative">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
-                      {member?.avatar_url ? (
+                      {isGroup ? (
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                      ) : member?.avatar_url ? (
                         <Avatar src={member.avatar_url} size={40} />
                       ) : (
                         <span className="text-white font-medium text-sm">
@@ -161,14 +193,14 @@ export default function ChatSidebar({ conversations, selectedId, onSelect, onNew
                         </span>
                       )}
                     </div>
-                    {statusInfo && (
+                    {!isGroup && statusInfo && (
                       <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 ${liveOnline ? 'bg-emerald-400' : statusInfo.color}`} style={{ borderColor: 'var(--bg-primary)' }} />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <p className={`truncate ${hasUnread ? 'font-semibold' : 'font-medium'}`} style={{ color: 'var(--text-primary)' }}>
-                        {member?.username || 'Unknown'}
+                        {displayName}
                       </p>
                       {hasUnread && (
                         <span className="flex-shrink-0 min-w-[20px] h-5 flex items-center justify-center px-1.5 text-[10px] font-bold text-white bg-red-500 rounded-full">
@@ -179,6 +211,10 @@ export default function ChatSidebar({ conversations, selectedId, onSelect, onNew
                     {conv.last_message_preview ? (
                       <p className={`text-xs truncate ${hasUnread ? 'font-medium' : ''}`} style={{ color: hasUnread ? 'var(--text-primary)' : 'var(--text-muted)' }}>
                         {conv.last_message_preview}
+                      </p>
+                    ) : isGroup ? (
+                      <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
+                        {groupCount ? `${groupCount} members` : 'Group'}
                       </p>
                     ) : (
                       <p className={`text-xs truncate ${liveOnline ? 'text-emerald-400' : ''}`} style={!liveOnline ? { color: 'var(--text-muted)' } : undefined}>

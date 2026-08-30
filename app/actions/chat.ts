@@ -125,6 +125,58 @@ export async function startConversation(otherUserId: string) {
   return existing as { conversationId: string }
 }
 
+export async function createGroupConversation(memberIds: string[], name: string) {
+  const start = Date.now()
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not logged in' }
+
+  if (await isParticipantLocked()) {
+    return { error: 'Messaging is disabled during the competition' }
+  }
+
+  if (memberIds.length < 1) return { error: 'Select at least one other member' }
+  if (memberIds.length > 50) return { error: 'Group chat limited to 50 members' }
+  if (name.trim().length === 0) return { error: 'Group name is required' }
+  if (name.trim().length > 100) return { error: 'Group name must be 100 characters or fewer' }
+
+  // Deduplicate and ensure creator is not in the list
+  const uniqueMemberIds = [...new Set(memberIds.filter((id) => id !== user.id))]
+
+  // Create the conversation
+  const { data: conv, error: convError } = await supabase
+    .from('conversations')
+    .insert({
+      name: name.trim(),
+      type: 'group',
+      created_by: user.id,
+    })
+    .select('id')
+    .single()
+
+  if (convError || !conv) {
+    await logEvent({ endpoint: 'chat.createGroupConversation', status: 'error', durationMs: Date.now() - start, errorMessage: convError?.message || 'Failed to create conversation', userId: user.id })
+    return { error: convError?.message || 'Failed to create conversation' }
+  }
+
+  // Add all members (including creator)
+  const allMemberIds = [user.id, ...uniqueMemberIds]
+  const { error: memberError } = await supabase
+    .from('conversation_members')
+    .insert(allMemberIds.map((uid) => ({ conversation_id: conv.id, user_id: uid })))
+
+  if (memberError) {
+    // Rollback: delete the conversation
+    await supabase.from('conversations').delete().eq('id', conv.id)
+    await logEvent({ endpoint: 'chat.createGroupConversation', status: 'error', durationMs: Date.now() - start, errorMessage: memberError.message, userId: user.id })
+    return { error: memberError.message }
+  }
+
+  await logEvent({ endpoint: 'chat.createGroupConversation', status: 'success', durationMs: Date.now() - start, userId: user.id })
+  revalidatePath('/chat')
+  return { conversationId: conv.id }
+}
+
 export async function sendMessage(conversationId: string, content: string) {
   const start = Date.now()
   const supabase = await createClient()

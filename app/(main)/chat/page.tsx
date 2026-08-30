@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import ChatSidebar from '@/components/chat/ChatSidebar'
 import ChatWindow from '@/components/chat/ChatWindow'
 import NewChatModal from '@/components/chat/NewChatModal'
+import NewGroupChatModal from '@/components/chat/NewGroupChatModal'
 
 interface Conversation {
   id: string
@@ -22,6 +23,7 @@ export default function ChatPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
   const [showNewChat, setShowNewChat] = useState(false)
+  const [showNewGroupChat, setShowNewGroupChat] = useState(false)
   const [mobileShowChat, setMobileShowChat] = useState(false)
   const searchParams = useSearchParams()
   const supabase = createClient()
@@ -96,6 +98,7 @@ export default function ChatPage() {
 
   const handleNewChat = (conversationId: string) => {
     setShowNewChat(false)
+    setShowNewGroupChat(false)
     fetchConversations()
     setSelectedId(conversationId)
     setMobileShowChat(true)
@@ -110,6 +113,7 @@ export default function ChatPage() {
           selectedId={selectedId}
           onSelect={handleSelect}
           onNewChat={() => setShowNewChat(true)}
+          onNewGroupChat={() => setShowNewGroupChat(true)}
           currentUserId={userId || ''}
         />
       </div>
@@ -136,6 +140,14 @@ export default function ChatPage() {
         <NewChatModal
           currentUserId={userId || ''}
           onClose={() => setShowNewChat(false)}
+          onCreated={handleNewChat}
+        />
+      )}
+
+      {showNewGroupChat && (
+        <NewGroupChatModal
+          currentUserId={userId || ''}
+          onClose={() => setShowNewGroupChat(false)}
           onCreated={handleNewChat}
         />
       )}
