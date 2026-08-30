@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Check, X, Loader2, Trophy, ArrowRight } from 'lucide-react'
 import { completeLesson } from '@/app/actions/learn'

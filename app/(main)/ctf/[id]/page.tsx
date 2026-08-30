@@ -4,8 +4,8 @@ import HintUnlockButton from './HintUnlockButton'
 import ChallengeReviewForm from '@/components/ctf/ChallengeReviewForm'
 import ChallengeReviews from '@/components/ctf/ChallengeReviews'
 import AIFairPlayBanner from '@/components/ctf/AIFairPlayBanner'
-import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   easy: '#22c55e',
