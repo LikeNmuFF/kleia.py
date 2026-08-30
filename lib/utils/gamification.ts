@@ -90,6 +90,12 @@ export const BADGES: BadgeDef[] = [
   { id: 'bug_finder', name: 'Bug Reporter', description: 'Reported a bug that was fixed', icon: '🪲', category: 'social' },
   { id: 'level_5', name: 'Halfway There', description: 'Reach level 5', icon: '🎯', category: 'level' },
   { id: 'level_10', name: 'Maxed Out', description: 'Reach level 10', icon: '💎', category: 'level' },
+  { id:'tutor_helpful', name:'Mentor', description:'Help 3 peers via tutoring', icon:'🤝', category:'social' },
+  { id:'study_group_joined', name:'Study Buddy', description:'Join a study group', icon:'👥', category:'social' },
+  { id:'cohort_complete', name:'Cohort Star', description:'Complete a cohort assignment', icon:'🎓', category:'learn' },
+  { id:'peer_endorsed', name:'Endorsed', description:'Receive a peer endorsement', icon:'⭐', category:'social' },
+  { id:'cohort_faculty', name:'Faculty Guide', description:'Create a cohort as faculty', icon:'🏫', category:'social' },
+  { id:'skill_bridge', name:'Bridge Builder', description:'Improve a weakness into a strength', icon:'🌉', category:'learn' },
 ]
 
 export function getBadgeById(id: string): BadgeDef | undefined {
