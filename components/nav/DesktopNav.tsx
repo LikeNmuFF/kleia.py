@@ -4,6 +4,7 @@ import { BookOpen, Swords, Users } from 'lucide-react'
 import ChatNavLink from '@/components/chat/ChatNavLink'
 import NavLink from './NavLink'
 import ChallengesDropdown from './ChallengesDropdown'
+import CommunityDropdown from './CommunityDropdown'
 import { ADMIN_NAV, PRIMARY_NAV } from './navItems'
 
 export default function DesktopNav({ competitionHref, isAdmin }: { competitionHref?: string | null; isAdmin?: boolean }) {
@@ -27,6 +28,7 @@ export default function DesktopNav({ competitionHref, isAdmin }: { competitionHr
           <NavLink key={item.href} item={item} />
         )
       )}
+      <CommunityDropdown />
       <ChallengesDropdown />
       {isAdmin && <NavLink item={ADMIN_NAV} />}
     </div>

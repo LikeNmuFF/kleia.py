@@ -40,6 +40,14 @@ export const PRIMARY_NAV: NavItem[] = [
   { label: 'Leaderboard', href: '/leaderboard', icon: Trophy, matchPrefix: true },
 ]
 
+/** Items grouped under "Community" dropdown on desktop only */
+export const COMMUNITY_NAV: NavItem[] = [
+  PRIMARY_NAV[3], // Members
+  PRIMARY_NAV[4], // Cohorts
+  PRIMARY_NAV[5], // Peer Matching
+  PRIMARY_NAV[2], // Events
+]
+
 export const CHALLENGE_NAV: NavItem[] = [
   {
     label: 'CTF',
