@@ -19,6 +19,13 @@ interface SenderInfo {
   avatar_url: string | null
 }
 
+interface ConversationInfo {
+  name: string | null
+  type: string
+  memberCount: number
+  otherMember: SenderInfo | null
+}
+
 interface ChatWindowProps {
   conversationId: string
   currentUserId: string
@@ -28,6 +35,7 @@ interface ChatWindowProps {
 export default function ChatWindow({ conversationId, currentUserId, onBack }: ChatWindowProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [senderMap, setSenderMap] = useState<Record<string, SenderInfo>>({})
+  const [convInfo, setConvInfo] = useState<ConversationInfo | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
   const unreadCtx = useChatUnread()
@@ -42,6 +50,40 @@ export default function ChatWindow({ conversationId, currentUserId, onBack }: Ch
   }
 
   useEffect(() => {
+    const fetchConversationInfo = async () => {
+      const { data: conv } = await supabase
+        .from('conversations')
+        .select('name, type')
+        .eq('id', conversationId)
+        .single()
+
+      if (!conv) return
+
+      const { data: members } = await supabase
+        .from('conversation_members')
+        .select('user_id')
+        .eq('conversation_id', conversationId)
+
+      const memberCount = (members?.length || 0)
+      let otherMember: SenderInfo | null = null
+
+      if (conv.type === 'direct' && members) {
+        const otherId = members.find((m: { user_id: string }) => m.user_id !== currentUserId)?.user_id
+        if (otherId) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('username, avatar_url')
+            .eq('id', otherId)
+            .single()
+          if (profile) otherMember = profile
+        }
+      }
+
+      setConvInfo({ name: conv.name, type: conv.type, memberCount, otherMember })
+    }
+
+    fetchConversationInfo()
+
     const fetchMessages = async () => {
       const { data } = await supabase
         .from('messages')
@@ -129,26 +171,55 @@ export default function ChatWindow({ conversationId, currentUserId, onBack }: Ch
     scrollToBottom()
   }, [messages])
 
+  const displayName = convInfo
+    ? convInfo.type === 'group'
+      ? (convInfo.name || 'Unnamed Group')
+      : (convInfo.otherMember?.username || 'Unknown')
+    : ''
+
   return (
     <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--bg-primary)' }}>
-      {/* Mobile back button */}
-      {onBack && (
-        <div className="md:hidden p-2 flex items-center" style={{ borderBottom: '1px solid var(--border-color)' }}>
+      {/* Conversation Header */}
+      <div className="flex items-center gap-3 px-4 py-3 shrink-0" style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-primary)' }}>
+        {onBack && (
           <button
             onClick={onBack}
-            className="flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors hover:bg-white/5"
+            className="md:hidden p-1.5 -ml-1 rounded-lg transition-colors hover:bg-white/5"
             style={{ color: 'var(--text-secondary)' }}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
-            <span className="text-sm font-medium">Back</span>
           </button>
+        )}
+        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center shrink-0">
+          {convInfo?.type === 'group' ? (
+            <svg className="w-4.5 h-4.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          ) : convInfo?.otherMember?.avatar_url ? (
+            <Avatar src={convInfo.otherMember.avatar_url} size={36} />
+          ) : (
+            <span className="text-white text-sm font-medium">
+              {displayName?.[0]?.toUpperCase() || '?'}
+            </span>
+          )}
         </div>
-      )}
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-sm truncate" style={{ color: 'var(--text-primary)' }}>
+            {displayName || 'Loading...'}
+          </p>
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            {convInfo?.type === 'group'
+              ? `${convInfo.memberCount} members`
+              : (convInfo?.otherMember ? 'Online' : '')
+            }
+          </p>
+        </div>
+      </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 md:px-6 lg:px-8 py-4 space-y-4">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <p style={{ color: 'var(--text-muted)' }}>No messages yet. Start the conversation!</p>
@@ -175,7 +246,7 @@ export default function ChatWindow({ conversationId, currentUserId, onBack }: Ch
                   </div>
                 )}
                 <div
-                  className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
+                  className={`max-w-[85%] sm:max-w-xs md:max-w-sm lg:max-w-lg xl:max-w-xl px-4 py-3 rounded-2xl ${
                     isOwn
                       ? 'bg-gradient-to-r from-violet-600 to-cyan-600 text-white'
                       : ''

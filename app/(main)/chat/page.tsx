@@ -127,11 +127,22 @@ export default function ChatPage() {
             onBack={handleBack}
           />
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-gray-500 gap-4">
-            <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-            <p>Select a conversation or start a new one</p>
+          <div className="flex flex-col items-center justify-center h-full px-6">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-violet-500/20 to-cyan-500/20 flex items-center justify-center mb-5">
+              <svg className="w-10 h-10" fill="none" stroke="url(#chat-gradient)" viewBox="0 0 24 24">
+                <defs>
+                  <linearGradient id="chat-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#8b5cf6" />
+                    <stop offset="100%" stopColor="#06b6d4" />
+                  </linearGradient>
+                </defs>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Welcome to Chat</h3>
+            <p className="text-sm text-center max-w-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+              Select a conversation from the sidebar or start a new chat to begin messaging.
+            </p>
           </div>
         )}
       </div>

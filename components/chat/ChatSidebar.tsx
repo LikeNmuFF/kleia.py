@@ -106,7 +106,7 @@ export default function ChatSidebar({ conversations, selectedId, onSelect, onNew
   }, [conversations, currentUserId, supabase])
 
   return (
-    <div className="w-72 h-full flex flex-col" style={{ borderRight: '1px solid var(--border-color)', backgroundColor: 'var(--bg-primary)' }}>
+    <div className="w-72 lg:w-80 xl:w-96 h-full flex flex-col shrink-0" style={{ borderRight: '1px solid var(--border-color)', backgroundColor: 'var(--bg-primary)' }}>
       <div className="p-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-color)' }}>
         <h2 className="font-semibold" style={{ color: 'var(--text-primary)' }}>Messages</h2>
         <div className="flex items-center gap-1">

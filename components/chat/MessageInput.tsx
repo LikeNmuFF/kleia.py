@@ -24,20 +24,45 @@ export default function MessageInput({ conversationId }: MessageInputProps) {
     setLoading(false)
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSend(e)
+    }
+  }
+
   return (
-    <form onSubmit={handleSend} className="p-4" style={{ borderTop: '1px solid var(--border-color)' }}>
-      <div className="flex gap-3">
-        <input
-          type="text"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder="Type a message..."
-          className="input-field"
-        />
+    <div className="px-4 py-3 shrink-0" style={{ borderTop: '1px solid var(--border-color)', backgroundColor: 'var(--bg-primary)' }}>
+      <form onSubmit={handleSend} className="flex items-end gap-3 max-w-4xl mx-auto">
+        <div className="flex-1 relative">
+          <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Type a message..."
+            rows={1}
+            className="w-full px-4 py-3 pr-12 rounded-2xl resize-none text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all"
+            style={{
+              backgroundColor: 'var(--input-bg)',
+              color: 'var(--text-primary)',
+              border: '1px solid var(--border-color)',
+              maxHeight: '120px',
+            }}
+            onInput={(e) => {
+              const target = e.target as HTMLTextAreaElement
+              target.style.height = 'auto'
+              target.style.height = Math.min(target.scrollHeight, 120) + 'px'
+            }}
+          />
+        </div>
         <button
           type="submit"
           disabled={loading || !message.trim()}
-          className="px-5 py-3 bg-gradient-to-r from-violet-600 to-cyan-600 text-white rounded-xl font-medium transition-all hover:from-violet-500 hover:to-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="p-3 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 shrink-0"
+          style={{
+            background: message.trim() ? 'linear-gradient(135deg, #8b5cf6, #06b6d4)' : 'var(--input-bg)',
+            color: message.trim() ? 'white' : 'var(--text-muted)',
+          }}
         >
           {loading ? (
             <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -50,7 +75,7 @@ export default function MessageInput({ conversationId }: MessageInputProps) {
             </svg>
           )}
         </button>
-      </div>
-    </form>
+      </form>
+    </div>
   )
 }
