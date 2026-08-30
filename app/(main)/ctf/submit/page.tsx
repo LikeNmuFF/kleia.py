@@ -49,13 +49,13 @@ export default async function SubmitChallengePage({
 
   return (
     <div className="max-w-3xl mx-auto py-8 px-4">
-      <a
+      <Link
         href="/ctf"
         className="inline-flex items-center gap-1 text-sm mb-6 hover:opacity-80"
         style={{ color: 'var(--text-muted)' }}
       >
         ← Back to Challenges
-      </a>
+      </Link>
 
       <div className="rounded-xl p-6" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
         <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>

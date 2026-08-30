@@ -9,7 +9,7 @@ const contentSecurityPolicy = [
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.cloudinary.com",
   "media-src 'self'",
   "object-src 'none'",
-  "frame-src 'none'",
+  "frame-src 'none' https://www.youtube.com https://player.vimeo.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
 ].join('; ')
