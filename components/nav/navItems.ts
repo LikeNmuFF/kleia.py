@@ -13,6 +13,8 @@ import {
   GitBranch,
   Swords,
   ShieldCheck,
+  GraduationCap,
+  Handshake,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -32,6 +34,8 @@ export const PRIMARY_NAV: NavItem[] = [
   { label: 'Chat', href: '/chat', icon: MessageSquare },
   { label: 'Events', href: '/events', icon: CalendarDays },
   { label: 'Members', href: '/members', icon: Users },
+  { label: 'Cohorts', href: '/cohorts', icon: GraduationCap },
+  { label: 'Peer Matching', href: '/peer-matching', icon: Handshake },
   { label: 'Learn', href: '/learn', icon: BookOpen, matchPrefix: true },
   { label: 'Leaderboard', href: '/leaderboard', icon: Trophy, matchPrefix: true },
 ]

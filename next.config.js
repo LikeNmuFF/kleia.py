@@ -25,6 +25,13 @@ const nextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      { source: '/cohort', destination: '/cohorts', permanent: false },
+      { source: '/cohort/:id*', destination: '/cohorts/:id*', permanent: false },
+      { source: '/peer-match', destination: '/peer-matching', permanent: false },
+    ]
+  },
   async headers() {
     return [
       {
