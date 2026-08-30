@@ -4,6 +4,8 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createPost } from '@/app/actions/posts'
 import type { FeedSubject } from '@/lib/feed/constants'
+import { isYouTubeUrl } from '@/lib/youtube/parse'
+import type { YouTubeData } from '@/lib/youtube/types'
 import LinkPreviewCard, { type LinkPreviewData } from './LinkPreviewCard'
 import SubjectPicker from './SubjectPicker'
 
@@ -20,11 +22,18 @@ async function fetchLinkPreview(url: string): Promise<LinkPreviewData | null> {
   return data.title || data.image ? data : null
 }
 
+async function fetchYouTubeData(url: string): Promise<YouTubeData | null> {
+  const res = await fetch(`/api/youtube?url=${encodeURIComponent(url)}`)
+  if (!res.ok) return null
+  return res.json()
+}
+
 export default function CreatePost() {
   const [content, setContent] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [preview, setPreview] = useState<LinkPreviewData | null>(null)
+  const [youtubeData, setYoutubeData] = useState<YouTubeData | null>(null)
   const [subjects, setSubjects] = useState<FeedSubject[]>([])
   const [fetchingPreview, setFetchingPreview] = useState(false)
   const router = useRouter()
@@ -36,9 +45,17 @@ export default function CreatePost() {
     lastFetchedUrl.current = url
     setFetchingPreview(true)
     try {
-      setPreview(await fetchLinkPreview(url))
+      if (isYouTubeUrl(url)) {
+        setPreview(null)
+        const data = await fetchYouTubeData(url)
+        setYoutubeData(data)
+      } else {
+        setYoutubeData(null)
+        setPreview(await fetchLinkPreview(url))
+      }
     } catch {
       setPreview(null)
+      setYoutubeData(null)
     } finally {
       setFetchingPreview(false)
     }
@@ -54,6 +71,7 @@ export default function CreatePost() {
       debounceRef.current = setTimeout(() => fetchPreview(url), 800)
     } else {
       setPreview(null)
+      setYoutubeData(null)
       lastFetchedUrl.current = null
     }
   }, [fetchPreview])
@@ -78,21 +96,28 @@ export default function CreatePost() {
 
     const url = extractHttpsUrl(content)
     let previewToSave = preview
+    let youtubeDataToSave = youtubeData
 
-    if (url && preview?.url !== url) {
+    if (url && !youtubeData && !preview) {
       setFetchingPreview(true)
       try {
-        previewToSave = await fetchLinkPreview(url)
-        setPreview(previewToSave)
+        if (isYouTubeUrl(url)) {
+          youtubeDataToSave = await fetchYouTubeData(url)
+          setYoutubeData(youtubeDataToSave)
+        } else {
+          previewToSave = await fetchLinkPreview(url)
+          setPreview(previewToSave)
+        }
         lastFetchedUrl.current = url
       } catch {
         previewToSave = null
+        youtubeDataToSave = null
       } finally {
         setFetchingPreview(false)
       }
     }
 
-    const result = await createPost(content, previewToSave ?? undefined, subjects)
+    const result = await createPost(content, previewToSave ?? undefined, subjects, youtubeDataToSave ?? undefined)
 
     if (result.error) {
       setError(result.error)
@@ -102,6 +127,7 @@ export default function CreatePost() {
 
     setContent('')
     setPreview(null)
+    setYoutubeData(null)
     setSubjects([])
     lastFetchedUrl.current = null
     router.refresh()
@@ -118,10 +144,10 @@ export default function CreatePost() {
         rows={3}
       />
 
-      {/* Link Preview */}
-      {(preview || fetchingPreview) && (
+      {/* Link Preview or YouTube Preview */}
+      {(preview || youtubeData || fetchingPreview) && (
         <div className="mt-2">
-          {fetchingPreview && !preview && (
+          {fetchingPreview && !preview && !youtubeData && (
             <div className="flex items-center gap-2 text-xs py-2" style={{ color: 'var(--text-muted)' }}>
               <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -130,7 +156,41 @@ export default function CreatePost() {
               Fetching preview...
             </div>
           )}
-          {preview && (
+          {youtubeData && (
+            <div className="relative rounded-lg overflow-hidden border" style={{ borderColor: 'var(--border-color)' }}>
+              <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                <img
+                  src={youtubeData.videos[0]?.thumbnail ?? undefined}
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                  <svg className="w-12 h-12 text-white opacity-80" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </div>
+              </div>
+              <div className="p-2" style={{ backgroundColor: 'var(--card-bg)' }}>
+                <p className="font-semibold text-sm line-clamp-1" style={{ color: 'var(--text-primary)' }}>
+                  {youtubeData.videos[0]?.title}
+                </p>
+                {youtubeData.type === 'playlist' && (
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                    Playlist · {youtubeData.videos.length} videos
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => { setYoutubeData(null); lastFetchedUrl.current = null }}
+                className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs transition-colors"
+                style={{ backgroundColor: 'var(--card-bg)', color: 'var(--text-muted)', border: '1px solid var(--border-color)' }}
+              >
+                ✕
+              </button>
+            </div>
+          )}
+          {preview && !youtubeData && (
             <div className="relative">
               <LinkPreviewCard preview={preview} />
               <button

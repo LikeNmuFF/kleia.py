@@ -1,29 +1,17 @@
-// lib/youtube/types.ts
-
-export interface YouTubeCaption {
+export interface CaptionSegment {
   text: string
   start: number
   duration: number
 }
 
 export interface YouTubeVideo {
-  id: string
-  title: string
-  thumbnail: string
-  captions: YouTubeCaption[]
+  video_id: string
+  title: string | null
+  thumbnail: string | null
+  captions?: CaptionSegment[]
 }
 
 export interface YouTubeData {
   type: 'video' | 'playlist'
   videos: YouTubeVideo[]
-}
-
-export interface YouTubeOEmbedResponse {
-  title: string
-  thumbnail_url: string
-  author_name: string
-  author_url: string
-  type: string
-  width: number
-  height: number
 }

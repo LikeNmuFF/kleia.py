@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { isPostReaction, normalizeSubjects, type ReactionType } from '@/lib/feed/constants'
 import { emptyReactionCounts, type ReactionCounts } from '@/lib/feed/types'
 import { logEvent } from '@/lib/logEvent'
+import type { YouTubeData } from '@/lib/youtube/types'
 
 interface LinkPreviewData {
   url: string
@@ -14,7 +15,7 @@ interface LinkPreviewData {
   siteName: string | null
 }
 
-export async function createPost(content: string, linkPreview?: LinkPreviewData, subjects: string[] = []) {
+export async function createPost(content: string, linkPreview?: LinkPreviewData, subjects: string[] = [], youtubeData?: YouTubeData) {
   const start = Date.now()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -37,7 +38,9 @@ export async function createPost(content: string, linkPreview?: LinkPreviewData,
     type: 'text',
   }
 
-  if (linkPreview) {
+  if (youtubeData) {
+    insertData.youtube_data = youtubeData
+  } else if (linkPreview) {
     insertData.link_preview = linkPreview
     insertData.type = 'resource'
   }
