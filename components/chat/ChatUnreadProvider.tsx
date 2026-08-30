@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { markAsRead as markAsReadAction, getUnreadCount } from '@/app/actions/chat'
 
@@ -39,6 +40,12 @@ function generateNotificationSound() {
 }
 
 const ORIGINAL_TITLE = 'Kleia | Learn Together, Grow Together'
+
+interface IncomingMessageNotice {
+  conversationId: string
+  senderName: string
+  preview: string
+}
 
 function setFavicon(unread: boolean) {
   try {
@@ -84,8 +91,10 @@ export default function ChatUnreadProvider({
   const [conversationUnreadCounts, setConversationUnreadCounts] = useState<Record<string, number>>({})
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
   const [isMuted, setIsMuted] = useState(false)
+  const [incomingNotice, setIncomingNotice] = useState<IncomingMessageNotice | null>(null)
   const hasInteracted = useRef(false)
   const supabase = createClient()
+  const router = useRouter()
 
   useEffect(() => {
     const handler = () => { hasInteracted.current = true }
@@ -129,9 +138,15 @@ export default function ChatUnreadProvider({
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages' },
-        async (payload: { new: { conversation_id: string; sender_id: string } }) => {
+        async (payload: { new: { conversation_id: string; sender_id: string; content?: string } }) => {
           const msg = payload.new
           if (msg.sender_id === userId) return
+
+          if (msg.conversation_id === activeConversationId) {
+            await markAsReadAction(msg.conversation_id)
+            await refreshUnread()
+            return
+          }
 
           setUnreadCount((prev) => prev + 1)
           setConversationUnreadCounts((prev) => ({
@@ -139,7 +154,19 @@ export default function ChatUnreadProvider({
             [msg.conversation_id]: (prev[msg.conversation_id] || 0) + 1,
           }))
 
-          if (hasInteracted.current && !isMuted && msg.conversation_id !== activeConversationId) {
+          const { data: sender } = await supabase
+            .from('profiles')
+            .select('username, full_name')
+            .eq('id', msg.sender_id)
+            .maybeSingle()
+
+          setIncomingNotice({
+            conversationId: msg.conversation_id,
+            senderName: sender?.full_name || sender?.username || 'Someone',
+            preview: msg.content?.trim() || 'Sent a message',
+          })
+
+          if (hasInteracted.current && !isMuted) {
             generateNotificationSound()
           }
 
@@ -155,7 +182,7 @@ export default function ChatUnreadProvider({
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [userId, isMuted, activeConversationId, supabase])
+  }, [userId, isMuted, activeConversationId, supabase, refreshUnread])
 
   useEffect(() => {
     if (unreadCount > 0 && document.hidden) {
@@ -184,13 +211,25 @@ export default function ChatUnreadProvider({
   const markAsReadFn = useCallback(async (conversationId: string) => {
     await markAsReadAction(conversationId)
     setConversationUnreadCounts((prev) => {
-      const diff = prev[conversationId] || 0
       const next = { ...prev }
       delete next[conversationId]
-      setUnreadCount((c) => Math.max(0, c - diff))
       return next
     })
-  }, [])
+    await refreshUnread()
+  }, [refreshUnread])
+
+  useEffect(() => {
+    if (!incomingNotice) return
+    const timer = window.setTimeout(() => setIncomingNotice(null), 7000)
+    return () => window.clearTimeout(timer)
+  }, [incomingNotice])
+
+  const openIncomingConversation = useCallback(() => {
+    if (!incomingNotice) return
+    const conversationId = incomingNotice.conversationId
+    setIncomingNotice(null)
+    router.push(`/chat?conversation=${encodeURIComponent(conversationId)}`)
+  }, [incomingNotice, router])
 
   return (
     <ChatUnreadContext.Provider
@@ -206,6 +245,29 @@ export default function ChatUnreadProvider({
       }}
     >
       {children}
+      {incomingNotice && (
+        <button
+          type="button"
+          onClick={openIncomingConversation}
+          className="fixed left-1/2 top-20 z-[60] w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-lg border p-3 text-left shadow-2xl backdrop-blur-xl transition hover:scale-[1.01]"
+          style={{
+            backgroundColor: 'color-mix(in srgb, var(--bg-primary) 92%, transparent)',
+            borderColor: 'var(--border-color)',
+          }}
+        >
+          <div className="flex items-start gap-3">
+            <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-red-500" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                {incomingNotice.senderName} sent a message
+              </p>
+              <p className="mt-0.5 truncate text-xs" style={{ color: 'var(--text-secondary)' }}>
+                {incomingNotice.preview}
+              </p>
+            </div>
+          </div>
+        </button>
+      )}
     </ChatUnreadContext.Provider>
   )
 }

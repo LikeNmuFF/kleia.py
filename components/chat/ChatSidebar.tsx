@@ -40,8 +40,8 @@ export default function ChatSidebar({ conversations, selectedId, onSelect, onNew
   const unreadCounts = unreadCtx?.conversationUnreadCounts || {}
 
   const sorted = [...conversations].sort((a, b) => {
-    const aUnread = unreadCounts[a.id] || a.unread_count || 0
-    const bUnread = unreadCounts[b.id] || b.unread_count || 0
+    const aUnread = unreadCounts[a.id] ?? a.unread_count ?? 0
+    const bUnread = unreadCounts[b.id] ?? b.unread_count ?? 0
     if (aUnread > 0 && bUnread === 0) return -1
     if (aUnread === 0 && bUnread > 0) return 1
     const aTime = a.last_message_at ? new Date(a.last_message_at).getTime() : 0
@@ -137,7 +137,7 @@ export default function ChatSidebar({ conversations, selectedId, onSelect, onNew
             const member = memberMap[conv.id]
             const statusInfo = member ? getStatusInfo(member.status, member.last_seen) : null
             const liveOnline = member ? onlineUsers.has(member.id) : false
-            const convUnread = unreadCounts[conv.id] || conv.unread_count || 0
+            const convUnread = unreadCounts[conv.id] ?? conv.unread_count ?? 0
             const hasUnread = convUnread > 0
 
             return (
