@@ -1,10 +1,11 @@
 import { updatePassword } from './actions'
 
-export default function ResetPasswordPage({
+export default async function ResetPasswordPage({
   searchParams,
 }: {
-  searchParams: { error?: string }
+  searchParams: Promise<{ error?: string }>
 }) {
+  const { error } = await searchParams
   return (
     <div className="backdrop-blur-sm rounded-2xl p-8" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
       <div className="text-center mb-8">
@@ -21,9 +22,9 @@ export default function ResetPasswordPage({
         </p>
       </div>
 
-      {searchParams.error && (
+      {error && (
         <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-          {searchParams.error}
+          {error}
         </div>
       )}
 

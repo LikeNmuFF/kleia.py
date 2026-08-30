@@ -9,8 +9,9 @@ const DIFFICULTIES = ['easy', 'medium', 'hard']
 export default async function SubmitChallengePage({
   searchParams,
 }: {
-  searchParams: { error?: string; success?: string }
+  searchParams: Promise<{ error?: string; success?: string }>
 }) {
+  const params = await searchParams
   const supabase = await createClient()
   const { data: topics } = await supabase
     .from('learn_topics')
@@ -21,7 +22,7 @@ export default async function SubmitChallengePage({
     .from('learn_lessons')
     .select('topic_id, slug, title')
 
-  if (searchParams.success) {
+  if (params.success) {
     return (
       <div className="max-w-3xl mx-auto py-8 px-4">
         <div className="rounded-xl p-8 text-center" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
@@ -65,9 +66,9 @@ export default async function SubmitChallengePage({
           Create a CTF challenge for the community. An admin will review it before publishing.
         </p>
 
-        {searchParams.error && (
+        {params.error && (
           <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-            {searchParams.error}
+            {params.error}
           </div>
         )}
 

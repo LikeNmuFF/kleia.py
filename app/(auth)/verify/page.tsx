@@ -1,18 +1,15 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
-export default function VerifyPage({
-  searchParams,
-}: {
-  searchParams: { email?: string }
-}) {
+export default function VerifyPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [checking, setChecking] = useState(true)
   const [confirmed, setConfirmed] = useState(false)
-  const email = searchParams.email || 'your email'
+  const email = searchParams.get('email') || 'your email'
 
   const checkConfirmation = useCallback(async () => {
     const supabase = createClient()

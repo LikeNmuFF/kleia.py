@@ -1,12 +1,13 @@
 import { resetPassword } from './actions'
 import Link from 'next/link'
 
-export default function ForgotPasswordPage({
+export default async function ForgotPasswordPage({
   searchParams,
 }: {
-  searchParams: { error?: string; sent?: string; email?: string }
+  searchParams: Promise<{ error?: string; sent?: string; email?: string }>
 }) {
-  if (searchParams.sent) {
+  const params = await searchParams
+  if (params.sent) {
     return (
       <div className="backdrop-blur-sm rounded-2xl p-8" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
         <div className="text-center mb-8">
@@ -20,7 +21,7 @@ export default function ForgotPasswordPage({
           </h1>
           <p style={{ color: 'var(--text-secondary)' }}>
             We sent a password reset link to{' '}
-            <span className="font-medium text-violet-400">{searchParams.email}</span>
+            <span className="font-medium text-violet-400">{params.email}</span>
           </p>
         </div>
         <div className="p-4 rounded-xl" style={{ backgroundColor: 'var(--input-bg)', border: '1px solid var(--border-color)' }}>
@@ -57,9 +58,9 @@ export default function ForgotPasswordPage({
         </p>
       </div>
 
-      {searchParams.error && (
+      {params.error && (
         <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-          {searchParams.error}
+          {params.error}
         </div>
       )}
 
