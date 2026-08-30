@@ -7,9 +7,11 @@ import LinkPreviewCard from './LinkPreviewCard'
 import ReactionBar from './ReactionBar'
 import SavePostButton from './SavePostButton'
 import SubjectChips from './SubjectChips'
+import VideoAiAssistant from './VideoAiAssistant'
 import Avatar from '@/components/Avatar'
 import TulipBadge from '@/components/special/TulipBadge'
 import type { FeedPost } from '@/lib/feed/types'
+import { extractYouTubeVideoId } from '@/lib/ai/video-assistant'
 
 interface Profile {
   username: string
@@ -36,6 +38,8 @@ export default function PostCard({ post, currentUserId, isAdmin = false, initial
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const editRef = useRef<HTMLTextAreaElement>(null)
   const isOwnPost = currentUserId === post.author_id
+  const videoUrl = post.link_preview?.url ?? ''
+  const youtubeVideoId = videoUrl ? extractYouTubeVideoId(videoUrl) : null
 
   useEffect(() => {
     if (editing && editRef.current) {
@@ -208,6 +212,15 @@ export default function PostCard({ post, currentUserId, isAdmin = false, initial
 
       {post.link_preview && !editing && (
         <LinkPreviewCard preview={post.link_preview} />
+      )}
+
+      {post.link_preview && !editing && currentUserId && (
+        <VideoAiAssistant
+          postId={post.id}
+          videoUrl={post.link_preview.url}
+          title={post.link_preview.title}
+          enabled={Boolean(youtubeVideoId)}
+        />
       )}
 
       {/* Delete confirmation */}
