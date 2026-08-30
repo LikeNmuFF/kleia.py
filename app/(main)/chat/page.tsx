@@ -50,7 +50,27 @@ export default function ChatPage() {
       .order('last_message_at', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false })
 
-    if (convs) setConversations((convs as Conversation[]).map((c) => ({ ...c, unread_count: 0 })))
+    if (convs) {
+      const convIds = convs.map((c: { id: string }) => c.id)
+
+      // Fetch per-conversation unread counts
+      const { data: unreadRows } = await supabase
+        .from('messages')
+        .select('conversation_id')
+        .in('conversation_id', convIds)
+        .eq('read', false)
+        .neq('sender_id', user.id)
+
+      const unreadMap: Record<string, number> = {}
+      for (const row of (unreadRows || []) as { conversation_id: string }[]) {
+        unreadMap[row.conversation_id] = (unreadMap[row.conversation_id] || 0) + 1
+      }
+
+      setConversations((convs as Conversation[]).map((c) => ({
+        ...c,
+        unread_count: unreadMap[c.id] || 0,
+      })))
+    }
   }
 
   useEffect(() => {

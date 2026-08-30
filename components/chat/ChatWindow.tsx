@@ -11,6 +11,7 @@ interface Message {
   content: string
   created_at: string
   sender_id: string
+  read: boolean
 }
 
 interface SenderInfo {
@@ -44,7 +45,7 @@ export default function ChatWindow({ conversationId, currentUserId, onBack }: Ch
     const fetchMessages = async () => {
       const { data } = await supabase
         .from('messages')
-        .select('id, content, created_at, sender_id')
+        .select('id, content, created_at, sender_id, read')
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true })
         .limit(200)
@@ -64,6 +65,8 @@ export default function ChatWindow({ conversationId, currentUserId, onBack }: Ch
         setSenderMap(map)
 
         unreadCtx?.markAsRead(conversationId)
+        // Optimistically mark all messages from others as read
+        setMessages((prev) => prev.map((m) => m.sender_id !== currentUserId ? { ...m, read: true } : m))
       }
     }
 
@@ -85,6 +88,8 @@ export default function ChatWindow({ conversationId, currentUserId, onBack }: Ch
 
           if (newMsg.sender_id !== currentUserId) {
             unreadCtx?.markAsRead(conversationId)
+            // Optimistically mark existing messages from others as read
+            setMessages((prev) => prev.map((m) => m.sender_id !== currentUserId ? { ...m, read: true } : m))
           }
 
           if (!senderMap[newMsg.sender_id]) {
@@ -98,6 +103,19 @@ export default function ChatWindow({ conversationId, currentUserId, onBack }: Ch
               setSenderMap((prev) => ({ ...prev, [newMsg.sender_id]: profile }))
             }
           }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload: { new: Message }) => {
+          const updated = payload.new as Message
+          setMessages((prev) => prev.map((m) => m.id === updated.id ? { ...m, read: updated.read } : m))
         }
       )
       .subscribe()
@@ -170,12 +188,28 @@ export default function ChatWindow({ conversationId, currentUserId, onBack }: Ch
                     </p>
                   )}
                   <p className="leading-relaxed">{msg.content}</p>
-                  <p className={`text-[10px] mt-1 ${isOwn ? 'text-white/60' : ''}`} style={!isOwn ? { color: 'var(--text-muted)' } : undefined}>
-                    {new Date(msg.created_at).toLocaleTimeString('en-US', {
-                      hour: 'numeric',
-                      minute: '2-digit',
-                    })}
-                  </p>
+                  <div className={`flex items-center gap-1 mt-1 ${isOwn ? 'justify-end' : ''}`}>
+                    <p className={`text-[10px] ${isOwn ? 'text-white/60' : ''}`} style={!isOwn ? { color: 'var(--text-muted)' } : undefined}>
+                      {new Date(msg.created_at).toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                    {isOwn && (
+                      <span className="text-[11px]" title={msg.read ? 'Read' : 'Sent'}>
+                        {msg.read ? (
+                          <svg className="w-3.5 h-3.5 text-blue-300" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M1 8.5l3.5 3.5L10 5" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M5 8.5l3.5 3.5L14 5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        ) : (
+                          <svg className="w-3.5 h-3.5 text-white/50" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M3 8.5l3.5 3.5L13 5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             )
