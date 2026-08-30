@@ -77,6 +77,7 @@ export default function UsersTab() {
   const roleColors: Record<string, string> = {
     admin: '#ef4444',
     special: '#a855f7',
+    faculty: '#0ea5e9',
     user: '#6b7280',
   }
 
@@ -106,6 +107,7 @@ export default function UsersTab() {
           <option value="all">All Roles</option>
           <option value="admin">Admin</option>
           <option value="special">Special</option>
+          <option value="faculty">Faculty</option>
           <option value="user">User</option>
         </select>
         <button
@@ -179,6 +181,15 @@ export default function UsersTab() {
                     title="Make special"
                   >
                     <Star className="w-4 h-4" />
+                  </button>
+                )}
+                {user.role !== 'faculty' && (
+                  <button
+                    onClick={() => handleRoleChange(user.id, 'faculty')}
+                    className="p-1.5 rounded-lg hover:bg-white/5 text-sky-400"
+                    title="Make faculty"
+                  >
+                    <Shield className="w-4 h-4" />
                   </button>
                 )}
                 {user.role !== 'user' && (
