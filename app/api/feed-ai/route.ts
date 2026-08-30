@@ -3,13 +3,16 @@ import { createClient } from '@/lib/supabase/server'
 import { getServiceClient } from '@/lib/supabase/service'
 import { getGroqModel, runGroqChat } from '@/lib/ai/groq'
 import { getYouTubeTranscript } from '@/lib/ai/youtube-transcript'
+import { getFeedVideoAssistantTarget } from '@/lib/ai/video-feed'
+import { createTranscriptFromCaptionSegments, type VideoTranscript } from '@/lib/ai/transcript-source'
 import {
   buildQuestionPrompt,
   buildSummaryPrompt,
-  extractYouTubeVideoId,
   getAiLimitStatus,
   type AiChatMessage,
 } from '@/lib/ai/video-assistant'
+import type { LinkPreviewData } from '@/lib/feed/types'
+import type { YouTubeData } from '@/lib/youtube/types'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,15 +21,11 @@ const DAY_MS = 24 * 60 * 60 * 1000
 type Action = 'summary' | 'question'
 type AiDatabase = Omit<ReturnType<typeof getServiceClient>, 'from'> & { from(table: string): any }
 
-interface LinkPreviewData {
-  url?: string | null
-  title?: string | null
-}
-
 interface PostForAi {
   id: string
   content: string
   link_preview: LinkPreviewData | null
+  youtube_data: YouTubeData | null
 }
 
 interface VideoAiMessage {
@@ -66,7 +65,7 @@ export async function POST(request: NextRequest) {
   const supabase = getServiceClient() as AiDatabase
   const { data: rawPost, error: postError } = await supabase
     .from('posts')
-    .select('id, content, link_preview')
+    .select('id, content, link_preview, youtube_data')
     .eq('id', body.postId)
     .maybeSingle()
 
@@ -79,9 +78,8 @@ export async function POST(request: NextRequest) {
   }
 
   const typedPost = rawPost as unknown as PostForAi
-  const videoUrl = typedPost.link_preview?.url || findHttpsUrl(typedPost.content)
-  const videoId = videoUrl ? extractYouTubeVideoId(videoUrl) : null
-  if (!videoUrl || !videoId) {
+  const videoTarget = getFeedVideoAssistantTarget(typedPost) ?? getContentVideoAssistantTarget(typedPost.content)
+  if (!videoTarget) {
     return NextResponse.json({ error: 'This post does not contain a supported YouTube video' }, { status: 400 })
   }
 
@@ -93,8 +91,9 @@ export async function POST(request: NextRequest) {
       supabase,
       userId: user.id,
       post: typedPost,
-      videoId,
-      videoUrl,
+      videoId: videoTarget.videoId,
+      videoUrl: videoTarget.videoUrl,
+      title: videoTarget.title,
       limitStatus,
     })
   }
@@ -114,7 +113,8 @@ export async function POST(request: NextRequest) {
     supabase,
     userId: user.id,
     post: typedPost,
-    videoId,
+    videoId: videoTarget.videoId,
+    title: videoTarget.title,
     question: body.question,
     limitStatus,
   })
@@ -126,6 +126,7 @@ async function generateOrReadSummary({
   post,
   videoId,
   videoUrl,
+  title,
   limitStatus,
 }: {
   supabase: AiDatabase
@@ -133,6 +134,7 @@ async function generateOrReadSummary({
   post: PostForAi
   videoId: string
   videoUrl: string
+  title: string
   limitStatus: ReturnType<typeof getAiLimitStatus>
 }) {
   const { data: rawCached } = await supabase
@@ -156,9 +158,9 @@ async function generateOrReadSummary({
   let transcript: Awaited<ReturnType<typeof getYouTubeTranscript>>
   let summary: string
   try {
-    transcript = await getYouTubeTranscript(videoId)
+    transcript = await getTranscriptForPost(post, videoId)
     summary = await runGroqChat(buildSummaryPrompt({
-      title: post.link_preview?.title,
+      title,
       transcript: transcript.text,
     }))
   } catch (error) {
@@ -170,7 +172,7 @@ async function generateOrReadSummary({
     post_id: post.id,
     video_id: videoId,
     video_url: videoUrl,
-    title: post.link_preview?.title ?? null,
+    title,
     transcript_hash: transcript.hash,
     summary,
     model,
@@ -195,6 +197,7 @@ async function answerQuestion({
   userId,
   post,
   videoId,
+  title,
   question,
   limitStatus,
 }: {
@@ -202,13 +205,14 @@ async function answerQuestion({
   userId: string
   post: PostForAi
   videoId: string
+  title: string
   question: string
   limitStatus: ReturnType<typeof getAiLimitStatus>
 }) {
-  let transcript: Awaited<ReturnType<typeof getYouTubeTranscript>>
+  let transcript: VideoTranscript
   let answer: string
   try {
-    transcript = await getYouTubeTranscript(videoId)
+    transcript = await getTranscriptForPost(post, videoId)
   } catch (error) {
     return NextResponse.json({ error: getAiErrorMessage(error) }, { status: 502 })
   }
@@ -224,7 +228,7 @@ async function answerQuestion({
   const history = ((rawPreviousMessages ?? []) as unknown as VideoAiMessage[]).reverse() as AiChatMessage[]
   try {
     answer = await runGroqChat(buildQuestionPrompt({
-      title: post.link_preview?.title,
+      title,
       transcript: transcript.text,
       question,
       history,
@@ -288,8 +292,35 @@ async function getCounters(
   }
 }
 
+async function getTranscriptForPost(post: PostForAi, videoId: string): Promise<VideoTranscript> {
+  const matchingVideo = post.youtube_data?.videos.find((video) => video.video_id === videoId)
+  const storedTranscript = createTranscriptFromCaptionSegments(matchingVideo?.captions)
+
+  if (storedTranscript) {
+    return storedTranscript
+  }
+
+  return getYouTubeTranscript(videoId)
+}
+
 function findHttpsUrl(text: string): string | null {
   return text.match(/https:\/\/[^\s]+/)?.[0]?.replace(/[),.;!?]+$/, '') ?? null
+}
+
+function getContentVideoAssistantTarget(content: string) {
+  const videoUrl = findHttpsUrl(content)
+  const videoId = videoUrl ? getFeedVideoAssistantTarget({
+    youtube_data: null,
+    link_preview: {
+      url: videoUrl,
+      title: null,
+      description: null,
+      image: null,
+      siteName: null,
+    },
+  }) : null
+
+  return videoId
 }
 
 function getAiErrorMessage(error: unknown): string {
