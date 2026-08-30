@@ -162,6 +162,59 @@ export async function checkBadges() {
     newBadges.push('level_10')
   }
 
+  // --- Community Bridge badges (Task 5) ---
+  const uid = user.id
+  async function grant(id: string) {
+    if (!owned.has(id)) {
+      await supabase.from('user_badges').insert({ user_id: uid, badge_id: id })
+      newBadges.push(id)
+      owned.add(id)
+    }
+  }
+
+  // Tutor helpful: help 3 peers via accepted peer_matches where helper_id = userId
+  try {
+    const { count: tutorCount } = await supabase.from('peer_matches').select('id', { count: 'exact', head: true }).eq('helper_id', uid).eq('status', 'accepted')
+    if (tutorCount !== null && tutorCount >= 3) await grant('tutor_helpful')
+  } catch {}
+
+  // Study group: cohort_members exists
+  let cohortMemberCount: number | null = null
+  try {
+    const { count } = await supabase.from('cohort_members').select('cohort_id', { count: 'exact', head: true }).eq('user_id', uid)
+    cohortMemberCount = count
+    if (count !== null && count >= 1) await grant('study_group_joined')
+  } catch {}
+
+  // Cohort star: completed assignment — check at least 1 assignment exists in user's cohorts
+  if (cohortMemberCount !== null && cohortMemberCount >= 1) {
+    try {
+      const { data: myCohorts } = await supabase.from('cohort_members').select('cohort_id').eq('user_id', uid)
+      if (myCohorts?.length) {
+        const { count: assignCount } = await supabase.from('cohort_assignments').select('id', { count: 'exact', head: true }).in('cohort_id', myCohorts.map((c: { cohort_id: string }) => c.cohort_id))
+        if (assignCount !== null && assignCount >= 1) await grant('cohort_complete')
+      }
+    } catch {}
+  }
+
+  // Peer endorsed: peer_matches where requester and status accepted
+  try {
+    const { count: endorsedCount } = await supabase.from('peer_matches').select('id', { count: 'exact', head: true }).eq('requester_id', uid).eq('status', 'accepted')
+    if (endorsedCount !== null && endorsedCount >= 1) await grant('peer_endorsed')
+  } catch {}
+
+  // Faculty guide: cohorts where creator_id = userId
+  try {
+    const { count: facultyCohortCount } = await supabase.from('cohorts').select('id', { count: 'exact', head: true }).eq('creator_id', uid)
+    if (facultyCohortCount !== null && facultyCohortCount >= 1) await grant('cohort_faculty')
+  } catch {}
+
+  // Skill bridge: if snapshot strengths length >=2 and weaknesses length <=1
+  try {
+    const { data: snapshot } = await supabase.from('skill_snapshots').select('strengths, weaknesses').eq('user_id', uid).maybeSingle()
+    if (snapshot && Array.isArray((snapshot as { strengths: unknown }).strengths) && (snapshot as { strengths: unknown[] }).strengths.length >= 2 && Array.isArray((snapshot as { weaknesses: unknown }).weaknesses) && (snapshot as { weaknesses: unknown[] }).weaknesses.length <= 1) await grant('skill_bridge')
+  } catch {}
+
   return { earned: newBadges }
 }
 

@@ -21,6 +21,7 @@ interface Challenge {
   learn_topic_slug: string | null
   learn_lesson_slug: string | null
   season_id: string | null
+  ai_review_notes: string | null
 }
 
 interface TopicLink {
