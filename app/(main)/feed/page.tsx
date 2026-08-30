@@ -7,6 +7,7 @@ import CreatePost from '@/components/feed/CreatePost'
 import DailyMissions from '@/components/gamification/DailyMissions'
 import CompetitionBanner from '@/components/competition/CompetitionBanner'
 import FeedTabs from '@/components/feed/FeedTabs'
+import YouTubeComposer from '@/components/feed/YouTubeComposer'
 
 export const metadata: Metadata = {
   title: 'Feed',
@@ -43,6 +44,11 @@ export default async function FeedPage() {
 
       {/* Create Post */}
       <CreatePost />
+
+      {/* YouTube Composer */}
+      <div className="mt-6">
+        <YouTubeComposer />
+      </div>
 
       {/* Daily Missions */}
       {user && (
