@@ -120,7 +120,7 @@ export default function YouTubeComposer() {
           <div className="rounded-lg overflow-hidden border" style={{ borderColor: 'var(--border-color)' }}>
             <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
               <img
-                src={youtubeData.videos[0]?.thumbnail}
+                src={youtubeData.videos[0]?.thumbnail || undefined}
                 alt=""
                 className="absolute inset-0 w-full h-full object-cover"
               />
