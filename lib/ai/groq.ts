@@ -1,6 +1,6 @@
 import 'server-only'
 
-import type { AiChatMessage } from './video-assistant'
+import type { AiChatMessage } from './text'
 import { getGroqModel } from './groq-model'
 
 export { getGroqModel } from './groq-model'

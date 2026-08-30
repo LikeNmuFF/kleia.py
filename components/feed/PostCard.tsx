@@ -9,11 +9,9 @@ import TranscriptViewer from './TranscriptViewer'
 import ReactionBar from './ReactionBar'
 import SavePostButton from './SavePostButton'
 import SubjectChips from './SubjectChips'
-import VideoAiAssistant from './VideoAiAssistant'
 import Avatar from '@/components/Avatar'
 import TulipBadge from '@/components/special/TulipBadge'
 import type { FeedPost } from '@/lib/feed/types'
-import { getFeedVideoAssistantTarget } from '@/lib/ai/video-feed'
 
 interface Profile {
   username: string
@@ -40,7 +38,6 @@ export default function PostCard({ post, currentUserId, isAdmin = false, initial
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const editRef = useRef<HTMLTextAreaElement>(null)
   const isOwnPost = currentUserId === post.author_id
-  const videoAssistantTarget = getFeedVideoAssistantTarget(post)
 
   useEffect(() => {
     if (editing && editRef.current) {
@@ -220,15 +217,6 @@ export default function PostCard({ post, currentUserId, isAdmin = false, initial
 
       {post.link_preview && !post.youtube_data && !editing && (
         <LinkPreviewCard preview={post.link_preview} />
-      )}
-
-      {videoAssistantTarget && !editing && currentUserId && (
-        <VideoAiAssistant
-          postId={post.id}
-          videoUrl={videoAssistantTarget.videoUrl}
-          title={videoAssistantTarget.title}
-          enabled
-        />
       )}
 
       {/* Delete confirmation */}
