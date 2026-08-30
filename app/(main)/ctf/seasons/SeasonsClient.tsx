@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Users, Trophy, Calendar } from 'lucide-react'
 import { formatDateTime } from '@/lib/utils/time'
@@ -51,26 +52,26 @@ export default function SeasonsClient({
 
       {/* Navigation */}
       <div className="flex gap-4 mb-8">
-        <a
+        <Link
           href="/ctf"
           className="px-4 py-2 rounded-lg font-medium text-sm"
           style={{ backgroundColor: 'var(--card-bg)', color: 'var(--text-secondary)' }}
         >
           Challenges
-        </a>
-        <a
+        </Link>
+        <Link
           href="/ctf/leaderboard"
           className="px-4 py-2 rounded-lg font-medium text-sm"
           style={{ backgroundColor: 'var(--card-bg)', color: 'var(--text-secondary)' }}
         >
           Leaderboard
-        </a>
-        <a
+        </Link>
+        <Link
           href="/ctf/seasons"
           className="px-4 py-2 rounded-lg font-medium text-sm bg-gradient-to-r from-violet-600 to-cyan-600 text-white"
         >
           Seasons
-        </a>
+        </Link>
       </div>
 
       {/* Active Season */}

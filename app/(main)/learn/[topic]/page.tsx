@@ -39,13 +39,13 @@ export default async function TopicPage({
 
   return (
     <div className="max-w-3xl mx-auto py-8 px-4">
-      <a
+      <Link
         href="/learn"
         className="inline-flex items-center gap-1 text-sm mb-6 hover:opacity-80"
         style={{ color: 'var(--text-muted)' }}
       >
         ← Back to Learn
-      </a>
+      </Link>
 
       <div
         className="rounded-xl p-6 mb-6"
