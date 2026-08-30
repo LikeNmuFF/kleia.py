@@ -13,7 +13,7 @@ import VideoAiAssistant from './VideoAiAssistant'
 import Avatar from '@/components/Avatar'
 import TulipBadge from '@/components/special/TulipBadge'
 import type { FeedPost } from '@/lib/feed/types'
-import { extractYouTubeVideoId } from '@/lib/ai/video-assistant'
+import { getFeedVideoAssistantTarget } from '@/lib/ai/video-feed'
 
 interface Profile {
   username: string
@@ -40,8 +40,7 @@ export default function PostCard({ post, currentUserId, isAdmin = false, initial
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const editRef = useRef<HTMLTextAreaElement>(null)
   const isOwnPost = currentUserId === post.author_id
-  const videoUrl = post.link_preview?.url ?? ''
-  const youtubeVideoId = videoUrl ? extractYouTubeVideoId(videoUrl) : null
+  const videoAssistantTarget = getFeedVideoAssistantTarget(post)
 
   useEffect(() => {
     if (editing && editRef.current) {
@@ -223,12 +222,12 @@ export default function PostCard({ post, currentUserId, isAdmin = false, initial
         <LinkPreviewCard preview={post.link_preview} />
       )}
 
-      {post.link_preview && !editing && currentUserId && (
+      {videoAssistantTarget && !editing && currentUserId && (
         <VideoAiAssistant
           postId={post.id}
-          videoUrl={post.link_preview.url}
-          title={post.link_preview.title}
-          enabled={Boolean(youtubeVideoId)}
+          videoUrl={videoAssistantTarget.videoUrl}
+          title={videoAssistantTarget.title}
+          enabled
         />
       )}
 
