@@ -82,10 +82,15 @@ export async function GET(request: NextRequest) {
     let response: Response | null = null
 
     for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+      // Derive Referer from the target origin so CDNs that check it (Facebook, etc.) don't reject us
+      const refererOrigin = new URL(currentUrl).origin
+
       response = await fetch(currentUrl, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; KleiaBot/1.0)',
-          'Accept': 'image/*',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+          'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+          'Referer': `${refererOrigin}/`,
+          'Accept-Language': 'en-US,en;q=0.9',
         },
         signal: controller.signal,
         redirect: 'manual',

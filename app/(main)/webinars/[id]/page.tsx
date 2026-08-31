@@ -38,9 +38,10 @@ export default async function WebinarDetailPage({ params }: { params: Promise<{ 
         {webinar.thumbnail_url && (
           <div className="w-full h-56 md:h-72 overflow-hidden" style={{ backgroundColor: 'var(--hover-bg)' }}>
             <img
-              src={webinar.thumbnail_url}
+              src={`/api/image-proxy?url=${encodeURIComponent(webinar.thumbnail_url)}`}
               alt={webinar.title}
               className="w-full h-full object-cover"
+              loading="lazy"
             />
           </div>
         )}
