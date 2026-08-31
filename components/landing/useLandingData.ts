@@ -18,6 +18,16 @@ export interface LandingData {
   challengeCount: number
   onlineCount: number
   topStreaks: StreakMember[]
+  feedback: LandingFeedback[]
+}
+
+export interface LandingFeedback {
+  id: string
+  title: string
+  message: string
+  rating: number
+  display_name: string | null
+  created_at: string
 }
 
 const ONLINE_WINDOW_MS = 3 * 60 * 1000
@@ -33,7 +43,7 @@ export function useLandingData() {
 
     const load = async () => {
       const onlineSince = new Date(Date.now() - ONLINE_WINDOW_MS).toISOString()
-      const [members, posts, challenges, online, streaks] = await Promise.all([
+      const [members, posts, challenges, online, streaks, feedback] = await Promise.all([
         supabase.from('profiles').select('id', { count: 'exact', head: true }),
         supabase.from('posts').select('id', { count: 'exact', head: true }),
         supabase.from('ctf_challenges').select('id', { count: 'exact', head: true }).eq('status', 'approved'),
@@ -45,6 +55,14 @@ export function useLandingData() {
           .gt('current_streak', 0)
           .order('current_streak', { ascending: false })
           .limit(8),
+        supabase
+          .from('feedback_reports')
+          .select('id, title, message, rating, display_name, created_at')
+          .eq('type', 'app_feedback')
+          .eq('allow_public', true)
+          .not('rating', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(6),
       ])
 
       if (cancelled) return
@@ -55,6 +73,7 @@ export function useLandingData() {
         challengeCount: challenges.count ?? 0,
         onlineCount: online.count ?? 0,
         topStreaks: (streaks.data as StreakMember[] | null) ?? [],
+        feedback: (feedback.data as LandingFeedback[] | null) ?? [],
       })
       setLoading(false)
     }

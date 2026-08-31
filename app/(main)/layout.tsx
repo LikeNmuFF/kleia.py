@@ -116,6 +116,7 @@ export default async function MainLayout({
         <footer className="border-t py-6 mt-12" style={{ borderColor: 'var(--border-color)' }}>
           <div className="max-w-6xl mx-auto px-4 flex items-center justify-center gap-4 text-xs" style={{ color: 'var(--text-muted)' }}>
             <span>&copy; {new Date().getFullYear()} Kleia</span>
+            <Link href="/feedback" className="hover:text-violet-400 transition-colors">Feedback</Link>
             <Link href="/security" className="hover:text-violet-400 transition-colors">Security</Link>
             <Link href="/privacy" className="hover:text-violet-400 transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-violet-400 transition-colors">Terms</Link>
