@@ -29,7 +29,8 @@ export default function MessageButton({ userId, blocked = false }: { userId: str
     })
 
     if (rpcError) {
-      setError(rpcError.message)
+      console.error('create_direct_conversation failed', rpcError)
+      setError('Failed to start conversation. Please try again.')
       setLoading(false)
       return
     }

@@ -34,51 +34,63 @@ export default async function WebinarDetailPage({ params }: { params: Promise<{ 
         Back to webinars
       </Link>
 
-      <div className="mt-5 border rounded-lg p-5 md:p-6" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--card-bg)' }}>
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-          <span className="px-2 py-1 rounded text-xs font-semibold" style={{ backgroundColor: 'var(--hover-bg)', color: 'var(--text-primary)' }}>
-            {providerLabels[webinar.provider_type]}
-          </span>
-          <span className="px-2 py-1 rounded text-xs" style={{ color: 'var(--text-muted)', border: '1px solid var(--border-color)' }}>
-            {modeLabels[webinar.verification_mode]}
-          </span>
-        </div>
+      <div className="mt-5 border rounded-lg overflow-hidden" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--card-bg)' }}>
+        {webinar.thumbnail_url && (
+          <div className="w-full h-56 md:h-72 overflow-hidden" style={{ backgroundColor: 'var(--hover-bg)' }}>
+            <img
+              src={webinar.thumbnail_url}
+              alt={webinar.title}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
 
-        <h1 className="text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-          {webinar.title}
-        </h1>
-        <p className="mt-3 max-w-3xl leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-          {webinar.description || 'No description provided.'}
-        </p>
+        <div className="p-5 md:p-6">
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            <span className="px-2 py-1 rounded text-xs font-semibold" style={{ backgroundColor: 'var(--hover-bg)', color: 'var(--text-primary)' }}>
+              {providerLabels[webinar.provider_type]}
+            </span>
+            <span className="px-2 py-1 rounded text-xs" style={{ color: 'var(--text-muted)', border: '1px solid var(--border-color)' }}>
+              {modeLabels[webinar.verification_mode]}
+            </span>
+          </div>
 
-        <dl className="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <div>
-            <dt className="text-xs" style={{ color: 'var(--text-muted)' }}>Schedule</dt>
-            <dd className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{start.toLocaleString()}</dd>
-          </div>
-          <div>
-            <dt className="text-xs" style={{ color: 'var(--text-muted)' }}>Ends</dt>
-            <dd className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{end ? end.toLocaleString() : 'Not specified'}</dd>
-          </div>
-          <div>
-            <dt className="text-xs" style={{ color: 'var(--text-muted)' }}>Capacity</dt>
-            <dd className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{webinar.capacity || 'Open'}</dd>
-          </div>
-          <div>
-            <dt className="text-xs" style={{ color: 'var(--text-muted)' }}>Minimum attendance</dt>
-            <dd className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{webinar.min_attendance_minutes} minutes</dd>
-          </div>
-        </dl>
+          <h1 className="text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+            {webinar.title}
+          </h1>
+          <p className="mt-3 max-w-3xl leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+            {webinar.description || 'No description provided.'}
+          </p>
 
-        <div className="mt-6">
-          <WebinarActions webinar={webinar} registration={result.myRegistration} certificate={result.myCertificate} />
+          <dl className="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div>
+              <dt className="text-xs" style={{ color: 'var(--text-muted)' }}>Schedule</dt>
+              <dd className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{start.toLocaleString()}</dd>
+            </div>
+            <div>
+              <dt className="text-xs" style={{ color: 'var(--text-muted)' }}>Ends</dt>
+              <dd className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{end ? end.toLocaleString() : 'Not specified'}</dd>
+            </div>
+            <div>
+              <dt className="text-xs" style={{ color: 'var(--text-muted)' }}>Capacity</dt>
+              <dd className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{webinar.capacity || 'Open'}</dd>
+            </div>
+            <div>
+              <dt className="text-xs" style={{ color: 'var(--text-muted)' }}>Minimum attendance</dt>
+              <dd className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{webinar.min_attendance_minutes} minutes</dd>
+            </div>
+          </dl>
+
+          <div className="mt-6">
+            <WebinarActions webinar={webinar} registration={result.myRegistration} />
+          </div>
         </div>
       </div>
 
       {result.canManage && (
         <section className="mt-6">
           <div className="mb-3">
-            <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>Attendance and certificates</h2>
+            <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>Attendance</h2>
             <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
               Staff controls are server-side. Students cannot self-report attendance.
             </p>

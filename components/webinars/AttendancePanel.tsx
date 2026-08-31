@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { issueCertificate, recordWebinarAttendance, verifyExternalCompletion } from '@/app/actions/webinars'
+import { recordWebinarAttendance, verifyExternalCompletion } from '@/app/actions/webinars'
 import type { Webinar, WebinarAttendance, WebinarRegistration } from '@/lib/webinars/types'
 
 export default function AttendancePanel({
@@ -83,16 +83,6 @@ export default function AttendancePanel({
                       style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
                     >
                       Verify external
-                    </button>
-                  )}
-                  {webinar.verification_mode !== 'resource_only' && (
-                    <button
-                      type="button"
-                      disabled={waiting}
-                      onClick={() => run(registration.user_id, () => issueCertificate(webinar.id, registration.user_id))}
-                      className="px-3 py-2 rounded-lg bg-emerald-600 text-white text-xs font-medium disabled:opacity-50"
-                    >
-                      Issue certificate
                     </button>
                   )}
                 </div>

@@ -355,7 +355,7 @@ export async function createSeasonChallenge(seasonId: string, data: {
 
   if (insertError) {
     await logEvent({ endpoint: 'ctf.createSeasonChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: insertError.message, userId: user?.id })
-    return { error: insertError.message }
+    return { error: getSafeErrorMessage(insertError, 'Something went wrong. Please try again.') }
   }
 
   const { error: linkError } = await supabase
@@ -364,7 +364,7 @@ export async function createSeasonChallenge(seasonId: string, data: {
 
   if (linkError) {
     await logEvent({ endpoint: 'ctf.createSeasonChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: linkError.message, userId: user?.id })
-    return { error: linkError.message }
+    return { error: getSafeErrorMessage(linkError, 'Something went wrong. Please try again.') }
   }
 
   await logEvent({ endpoint: 'ctf.createSeasonChallenge', status: 'success', durationMs: Date.now() - start, userId: user?.id })

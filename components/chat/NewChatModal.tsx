@@ -57,7 +57,8 @@ export default function NewChatModal({ currentUserId, onClose, onCreated }: NewC
     })
 
     if (rpcError) {
-      setError(rpcError.message)
+      console.error('create_direct_conversation failed', rpcError)
+      setError('Failed to start conversation. Please try again.')
       setCreating(null)
       return
     }

@@ -91,7 +91,7 @@ export async function createPost(content: string, linkPreview?: LinkPreviewData,
         errorMessage: tagError.message,
         userId: user.id,
       })
-      return { error: tagError.message }
+      return { error: getSafeErrorMessage(tagError, 'Something went wrong. Please try again.') }
     }
   }
 
@@ -150,7 +150,7 @@ export async function toggleReaction(postId: string, reactionType: ReactionType 
 
   if (countsError) {
     await logEvent({ endpoint: 'posts.toggleReaction.counts', status: 'error', durationMs: Date.now() - start, errorMessage: countsError.message, userId: user.id })
-    return { error: countsError.message }
+    return { error: getSafeErrorMessage(countsError, 'Something went wrong. Please try again.') }
   }
 
   const counts: ReactionCounts = emptyReactionCounts()

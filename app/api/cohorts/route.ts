@@ -13,14 +13,14 @@ export async function GET(){
     const { data: memberships, error: memErr } = await svc.from('cohort_members').select('cohort_id').eq('user_id', user.id)
     if (memErr) {
       console.error('cohorts GET memberships error', memErr)
-      return NextResponse.json({error: memErr.message, details: memErr}, {status:500})
+      return NextResponse.json({ error: getSafeErrorMessage(memErr, 'Something went wrong. Please try again.') }, { status: 500 })
     }
     const ids = (memberships || []).map((m:any)=> m.cohort_id)
     if (ids.length===0) return NextResponse.json({ cohorts: [] })
     const { data, error } = await svc.from('cohorts').select('id,name,description,code,creator_id,created_at').in('id', ids)
     if(error) {
       console.error('cohorts GET error', error)
-      return NextResponse.json({ error: getSafeErrorMessage(error, 'Something went wrong. Please try again.'), details: error}, {status:500})
+      return NextResponse.json({ error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }, { status: 500 })
     }
     return NextResponse.json({ cohorts: data || [] })
   } catch (e:any) {
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest){
   const { error: memErr } = await svc.from('cohort_members').insert({ cohort_id:data.id, user_id:user.id, role:'faculty' })
   if(memErr) {
     console.error('cohorts POST member error', memErr)
-    return NextResponse.json({error: memErr.message, details: memErr}, {status:500})
+    return NextResponse.json({ error: getSafeErrorMessage(memErr, 'Something went wrong. Please try again.') }, { status: 500 })
   }
   return NextResponse.json({ id:data.id, code:data.code })
 }

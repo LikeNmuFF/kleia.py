@@ -77,15 +77,12 @@ export async function getWebinars() {
   if (error || !webinars) return { webinars: [], role: null }
 
   const ids = webinars.map((webinar: { id: string }) => webinar.id)
-  const [registrationsResult, myRegistrationsResult, myCertificatesResult] = await Promise.all([
+  const [registrationsResult, myRegistrationsResult] = await Promise.all([
     ids.length
       ? supabase.from('webinar_registrations').select('webinar_id').in('webinar_id', ids).neq('status', 'cancelled')
       : Promise.resolve({ data: [] }),
     ids.length
       ? supabase.from('webinar_registrations').select('*').in('webinar_id', ids).eq('user_id', user.id)
-      : Promise.resolve({ data: [] }),
-    ids.length
-      ? supabase.from('webinar_certificates').select('*').in('webinar_id', ids).eq('user_id', user.id)
       : Promise.resolve({ data: [] }),
   ])
 
@@ -95,14 +92,12 @@ export async function getWebinars() {
   }
 
   const myRegistrations = new Map((myRegistrationsResult.data || []).map((row: any) => [row.webinar_id, row]))
-  const myCertificates = new Map((myCertificatesResult.data || []).map((row: any) => [row.webinar_id, row]))
 
   return {
     webinars: webinars.map((webinar: any) => ({
       ...webinar,
       registration_count: counts.get(webinar.id) || 0,
       my_registration: myRegistrations.get(webinar.id) || null,
-      my_certificate: myCertificates.get(webinar.id) || null,
     })),
     role,
   }
@@ -123,9 +118,8 @@ export async function getWebinarDetails(webinarId: string) {
 
   const canManage = await canManageWebinar(supabase, webinarId, user.id, role)
 
-  const [registrationResult, certificateResult, registrationsResult, attendanceResult] = await Promise.all([
+  const [registrationResult, registrationsResult, attendanceResult] = await Promise.all([
     supabase.from('webinar_registrations').select('*').eq('webinar_id', webinarId).eq('user_id', user.id).maybeSingle(),
-    supabase.from('webinar_certificates').select('*').eq('webinar_id', webinarId).eq('user_id', user.id).maybeSingle(),
     canManage
       ? supabase
           .from('webinar_registrations')
@@ -141,7 +135,6 @@ export async function getWebinarDetails(webinarId: string) {
   return {
     webinar,
     myRegistration: registrationResult.data || null,
-    myCertificate: certificateResult.data || null,
     registrations: registrationsResult.data || [],
     attendance: attendanceResult.data || [],
     canManage,
@@ -155,12 +148,12 @@ export async function createWebinar(data: {
   provider_type: WebinarProviderType
   verification_mode: WebinarVerificationMode
   external_url?: string
+  thumbnail_url?: string
   capacity?: number | null
   min_attendance_minutes?: number
   starts_at: string
   ends_at?: string
   skill_category: WebinarSkillCategory
-  certificate_title?: string
 }) {
   const start = Date.now()
   const supabase = await createClient()
@@ -189,6 +182,9 @@ export async function createWebinar(data: {
   const externalUrl = normalizeUrl(data.external_url)
   if (data.external_url?.trim() && !externalUrl) return { error: 'Use a valid http or https link' }
 
+  const thumbnailUrl = normalizeUrl(data.thumbnail_url)
+  if (data.thumbnail_url?.trim() && !thumbnailUrl) return { error: 'Use a valid http or https thumbnail link' }
+
   const { data: webinar, error } = await supabase
     .from('webinars')
     .insert({
@@ -199,12 +195,12 @@ export async function createWebinar(data: {
       provider_type: data.provider_type,
       verification_mode: data.verification_mode,
       external_url: externalUrl,
+      thumbnail_url: thumbnailUrl,
       capacity: data.capacity || null,
       min_attendance_minutes: data.min_attendance_minutes ?? 30,
       starts_at: startsAt.toISOString(),
       ends_at: endsAt.toISOString(),
       skill_category: data.skill_category,
-      certificate_title: normalizeOptionalText(data.certificate_title),
     })
     .select('id')
     .single()
@@ -309,23 +305,4 @@ export async function verifyExternalCompletion(webinarId: string, userId: string
   if (error) return { error: getSafeErrorMessage(error, 'Failed to verify completion') }
   revalidatePath(`/webinars/${webinarId}`)
   return { success: true }
-}
-
-export async function issueCertificate(webinarId: string, userId: string) {
-  const supabase = await createClient()
-  const { user, role } = await getCurrentUserAndRole(supabase)
-  if (!user) return { error: 'Not logged in' }
-  if (!(await canManageWebinar(supabase, webinarId, user.id, role))) return { error: 'Faculty or admin access required' }
-
-  const { data, error } = await supabase.rpc('issue_webinar_certificate', {
-    target_webinar_id: webinarId,
-    target_user_id: userId,
-  })
-
-  if (error) return { error: getSafeErrorMessage(error, 'Failed to issue certificate') }
-  if (data?.error) return { error: String(data.error) }
-
-  revalidatePath('/webinars')
-  revalidatePath(`/webinars/${webinarId}`)
-  return { success: true, certificateId: data?.certificateId as string | undefined }
 }

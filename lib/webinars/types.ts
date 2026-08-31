@@ -13,18 +13,6 @@ export type WebinarSkillCategory =
   | 'career'
   | 'other'
 
-export interface CertificateEligibilityInput {
-  verificationMode: WebinarVerificationMode
-  totalAttendanceMinutes: number
-  minAttendanceMinutes: number
-  externalCompletionVerified: boolean
-}
-
-export interface CertificateEligibility {
-  allowed: boolean
-  reason: 'eligible' | 'attendance_required' | 'external_verification_required' | 'not_certificate_bearing'
-}
-
 export interface Webinar {
   id: string
   creator_id: string
@@ -34,17 +22,16 @@ export interface Webinar {
   provider_type: WebinarProviderType
   verification_mode: WebinarVerificationMode
   external_url: string | null
+  thumbnail_url: string | null
   capacity: number | null
   min_attendance_minutes: number
   starts_at: string
   ends_at: string | null
   skill_category: WebinarSkillCategory
-  certificate_title: string | null
   is_active: boolean
   created_at: string
   registration_count?: number
   my_registration?: WebinarRegistration | null
-  my_certificate?: WebinarCertificate | null
 }
 
 export interface WebinarRegistration {
@@ -71,13 +58,4 @@ export interface WebinarAttendance {
   left_at: string | null
   duration_minutes: number
   created_at: string
-}
-
-export interface WebinarCertificate {
-  id: string
-  webinar_id: string
-  user_id: string
-  certificate_code: string
-  issued_by: string
-  issued_at: string
 }

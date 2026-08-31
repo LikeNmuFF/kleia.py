@@ -44,12 +44,12 @@ export default function WebinarCreateForm() {
         provider_type: String(formData.get('provider_type') || 'internal') as WebinarProviderType,
         verification_mode: String(formData.get('verification_mode') || 'internal_attendance') as WebinarVerificationMode,
         external_url: String(formData.get('external_url') || ''),
+        thumbnail_url: String(formData.get('thumbnail_url') || ''),
         capacity: formData.get('capacity') ? Number(formData.get('capacity')) : null,
         min_attendance_minutes: Number(formData.get('min_attendance_minutes') || 30),
         starts_at: String(formData.get('starts_at') || ''),
         ends_at: String(formData.get('ends_at') || ''),
         skill_category: String(formData.get('skill_category') || 'career') as WebinarSkillCategory,
-        certificate_title: String(formData.get('certificate_title') || ''),
       })
 
       if (result.error) {
@@ -136,8 +136,8 @@ export default function WebinarCreateForm() {
         </label>
 
         <label className="space-y-1">
-          <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Certificate title</span>
-          <input name="certificate_title" className="input-field" placeholder="Optional" />
+          <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Thumbnail URL</span>
+          <input name="thumbnail_url" type="url" className="input-field" placeholder="https://... (optional)" />
         </label>
 
         <label className="space-y-1 md:col-span-2">

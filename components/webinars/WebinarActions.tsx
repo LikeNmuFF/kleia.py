@@ -3,16 +3,14 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { cancelWebinarRegistration, registerForWebinar } from '@/app/actions/webinars'
-import type { Webinar, WebinarCertificate, WebinarRegistration } from '@/lib/webinars/types'
+import type { Webinar, WebinarRegistration } from '@/lib/webinars/types'
 
 export default function WebinarActions({
   webinar,
   registration,
-  certificate,
 }: {
   webinar: Webinar
   registration: WebinarRegistration | null
-  certificate: WebinarCertificate | null
 }) {
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -56,12 +54,6 @@ export default function WebinarActions({
         {webinar.external_url && (
           <a href={webinar.external_url} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg border text-sm font-medium" style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
             Open link
-          </a>
-        )}
-
-        {certificate && (
-          <a href={`/api/webinars/certificates/${certificate.id}`} target="_blank" className="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium">
-            Download certificate
           </a>
         )}
       </div>
