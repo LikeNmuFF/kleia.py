@@ -48,6 +48,14 @@ export const COMMUNITY_NAV: NavItem[] = [
   PRIMARY_NAV[2], // Events
 ]
 
+/** Top-level links shown in the desktop header. Community links live in the dropdown. */
+export const DESKTOP_PRIMARY_NAV: NavItem[] = [
+  PRIMARY_NAV[0], // Feed
+  PRIMARY_NAV[1], // Chat
+  PRIMARY_NAV[6], // Learn
+  PRIMARY_NAV[7], // Leaderboard
+]
+
 export const CHALLENGE_NAV: NavItem[] = [
   {
     label: 'CTF',

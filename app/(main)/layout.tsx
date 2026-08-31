@@ -68,7 +68,7 @@ export default async function MainLayout({
             borderColor: 'var(--border-color)',
           }}
         >
-          <div className="max-w-6xl mx-auto px-4 py-2.5 flex justify-between items-center gap-2">
+          <div className="max-w-6xl lg:max-w-7xl mx-auto px-4 py-2.5 flex justify-between items-center gap-2 lg:grid lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:gap-4 xl:gap-6">
             {/* Logo */}
             <Link href="/feed" className="flex items-center gap-2 shrink-0">
               <span className="text-xl font-bold tracking-tight font-logo" style={{ color: 'var(--text-primary)' }}>
@@ -83,7 +83,7 @@ export default async function MainLayout({
             <DesktopNav competitionHref={competitionHref} isAdmin={isAdmin} />
 
             {/* User Menu */}
-            <div className="flex items-center gap-2 lg:gap-3 shrink-0">
+            <div className="flex items-center justify-end gap-2 lg:gap-2.5 shrink-0">
               <SupportButton variant="nav" />
               <ThemeToggle />
               <Link

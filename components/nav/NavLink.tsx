@@ -83,7 +83,7 @@ export default function NavLink({
   return (
     <Link
       href={item.href}
-      className={`${baseClasses} relative px-3 py-2 text-sm ${active ? '' : 'hover:bg-[var(--hover-bg)]'}`}
+      className={`${baseClasses} relative whitespace-nowrap px-2.5 py-2 text-sm xl:px-3 ${active ? '' : 'hover:bg-[var(--hover-bg)]'}`}
       style={{
         color: active ? 'var(--accent)' : 'var(--text-secondary)',
         background: active

@@ -5,7 +5,7 @@ import ChatNavLink from '@/components/chat/ChatNavLink'
 import NavLink from './NavLink'
 import ChallengesDropdown from './ChallengesDropdown'
 import CommunityDropdown from './CommunityDropdown'
-import { ADMIN_NAV, PRIMARY_NAV } from './navItems'
+import { ADMIN_NAV, DESKTOP_PRIMARY_NAV } from './navItems'
 
 export default function DesktopNav({ competitionHref, isAdmin }: { competitionHref?: string | null; isAdmin?: boolean }) {
   if (competitionHref) {
@@ -20,8 +20,8 @@ export default function DesktopNav({ competitionHref, isAdmin }: { competitionHr
   }
 
   return (
-    <div className="hidden lg:flex items-center gap-0.5 lg:gap-1 flex-1 justify-center min-w-0">
-      {PRIMARY_NAV.map((item) =>
+    <div className="hidden lg:flex items-center gap-1 xl:gap-1.5 flex-1 justify-center min-w-0">
+      {DESKTOP_PRIMARY_NAV.map((item) =>
         item.label === 'Chat' ? (
           <ChatNavLink key={item.href} />
         ) : (
