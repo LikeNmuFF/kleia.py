@@ -60,8 +60,14 @@ export default function LogsTab() {
   const [statusFilter, setStatusFilter] = useState('error')
   const [sourceFilter, setSourceFilter] = useState('all')
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const limit = 50
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300)
+    return () => clearTimeout(timer)
+  }, [search])
 
   const fetchLogs = useCallback(async () => {
     setLoading(true)
@@ -71,7 +77,7 @@ export default function LogsTab() {
       page: String(page),
       limit: String(limit),
     })
-    if (search) params.set('search', search)
+    if (debouncedSearch) params.set('search', debouncedSearch)
 
     try {
       const res = await fetch(`/api/admin/logs?${params}`)
@@ -83,7 +89,7 @@ export default function LogsTab() {
     } finally {
       setLoading(false)
     }
-  }, [statusFilter, sourceFilter, page, search])
+  }, [statusFilter, sourceFilter, page, debouncedSearch])
 
   useEffect(() => {
     fetchLogs()
