@@ -28,6 +28,7 @@ supabase/migrations/*
 !supabase/migrations/20260831051000_fix_search_path_mutable.sql
 !supabase/migrations/20260831052000_add_ai_review_notes.sql
 !supabase/migrations/20260831060000_add_chat_schema.sql
+!supabase/migrations/20260831061000_fix_create_direct_conversation_definer.sql
 !supabase/migrations/20260831070000_phase5a_webinars.sql
 !supabase/tests/
 supabase/tests/*

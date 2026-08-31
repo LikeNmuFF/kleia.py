@@ -147,7 +147,7 @@ with check (
 );
 
 drop function if exists public.create_direct_conversation(uuid) cascade;
-create function public.create_direct_conversation(other_user_id uuid)
+create or replace function public.create_direct_conversation(other_user_id uuid)
 returns jsonb
 language plpgsql
 security invoker

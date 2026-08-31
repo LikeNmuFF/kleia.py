@@ -4,6 +4,7 @@ import {
   House,
   MessageSquare,
   CalendarDays,
+  Presentation,
   Users,
   BookOpen,
   Trophy,
@@ -33,6 +34,7 @@ export const PRIMARY_NAV: NavItem[] = [
   { label: 'Feed', href: '/feed', icon: House },
   { label: 'Chat', href: '/chat', icon: MessageSquare },
   { label: 'Events', href: '/events', icon: CalendarDays },
+  { label: 'Webinars', href: '/webinars', icon: Presentation, matchPrefix: true },
   { label: 'Members', href: '/members', icon: Users },
   { label: 'Cohorts', href: '/cohorts', icon: GraduationCap },
   { label: 'Peer Matching', href: '/peer-matching', icon: Handshake },
@@ -42,18 +44,19 @@ export const PRIMARY_NAV: NavItem[] = [
 
 /** Items grouped under "Community" dropdown on desktop only */
 export const COMMUNITY_NAV: NavItem[] = [
-  PRIMARY_NAV[3], // Members
-  PRIMARY_NAV[4], // Cohorts
-  PRIMARY_NAV[5], // Peer Matching
+  PRIMARY_NAV[4], // Members
+  PRIMARY_NAV[5], // Cohorts
+  PRIMARY_NAV[6], // Peer Matching
   PRIMARY_NAV[2], // Events
+  PRIMARY_NAV[3], // Webinars
 ]
 
 /** Top-level links shown in the desktop header. Community links live in the dropdown. */
 export const DESKTOP_PRIMARY_NAV: NavItem[] = [
   PRIMARY_NAV[0], // Feed
   PRIMARY_NAV[1], // Chat
-  PRIMARY_NAV[6], // Learn
-  PRIMARY_NAV[7], // Leaderboard
+  PRIMARY_NAV[7], // Learn
+  PRIMARY_NAV[8], // Leaderboard
 ]
 
 export const CHALLENGE_NAV: NavItem[] = [
@@ -87,14 +90,14 @@ export const MOBILE_TABS: NavItem[] = [
   PRIMARY_NAV[0],
   PRIMARY_NAV[1],
   PRIMARY_NAV[2],
-  PRIMARY_NAV[4],
+  PRIMARY_NAV[5],
 ]
 
 /** Everything reachable from the mobile "More" sheet, grouped */
 export const MOBILE_SHEET_SECTIONS: { title: string; items: NavItem[] }[] = [
   {
     title: 'Community',
-    items: [PRIMARY_NAV[3], PRIMARY_NAV[5]],
+    items: [PRIMARY_NAV[3], PRIMARY_NAV[4], PRIMARY_NAV[6]],
   },
   {
     title: 'Challenges',
