@@ -39,7 +39,7 @@ function generateNotificationSound() {
   } catch {}
 }
 
-const ORIGINAL_TITLE = 'Kleia | Learn Together, Grow Together'
+const ORIGINAL_TITLE = 'Chat | Kleia'
 
 interface IncomingMessageNotice {
   conversationId: string

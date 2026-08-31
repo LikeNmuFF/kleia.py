@@ -24,6 +24,7 @@ interface Challenge {
   learn_topic_slug: string | null
   learn_lesson_slug: string | null
   season_id: string | null
+  ai_review_notes?: string | null
 }
 
 interface TopicLink {
@@ -60,6 +61,8 @@ export default function AdminCTFClient({
   const [activeTab, setActiveTab] = useState('pending')
   const [uploading, setUploading] = useState<string | null>(null)
   const [fileInputUrl, setFileInputUrl] = useState('')
+  const [aiReviewing, setAiReviewing] = useState<string | null>(null)
+  const [aiNotes, setAiNotes] = useState<Record<string, string>>({})
 
   const clearMessages = () => { setError(''); setSuccess('') }
 
@@ -173,6 +176,24 @@ export default function AdminCTFClient({
       setSuccess('Challenge deleted')
       router.refresh()
     }
+  }
+
+  const handleAiReview = async (id: string) => {
+    clearMessages()
+    setAiReviewing(id)
+    try {
+      const res = await fetch('/api/ai-review-challenge', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ challengeId: id }) })
+      const json = await res.json()
+      if (!res.ok) setError(json.error || 'AI review failed')
+      else {
+        setAiNotes(prev => ({ ...prev, [id]: json.ai_review_notes }))
+        setSuccess('AI review complete — human approve still required')
+        router.refresh()
+      }
+    } catch (e: any) {
+      setError(e.message || 'AI review failed')
+    }
+    setAiReviewing(null)
   }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -324,6 +345,11 @@ export default function AdminCTFClient({
                       )}
                     </div>
                     <p className="text-sm truncate" style={{ color: 'var(--text-muted)' }}>{ch.description}</p>
+                    {(ch.ai_review_notes || aiNotes[ch.id]) && (
+                      <div className="mt-2 p-2 rounded-lg text-xs whitespace-pre-wrap" style={{ backgroundColor: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)', color: 'var(--text-secondary)' }}>
+                        <span className="font-semibold">AI review:</span> {ch.ai_review_notes || aiNotes[ch.id]}
+                      </div>
+                    )}
                     <div className="flex gap-3 mt-1">
                       {ch.author && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>by {ch.author}</span>}
                       {ch.file_url && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>📎 file</span>}
@@ -333,6 +359,7 @@ export default function AdminCTFClient({
                   <div className="flex items-center gap-1 ml-4 flex-shrink-0">
                     {ch.status === 'pending' && (
                       <>
+                        <button onClick={() => handleAiReview(ch.id)} disabled={aiReviewing===ch.id} className="px-2 py-1 text-xs rounded hover:bg-white/5 text-violet-400 disabled:opacity-50">{aiReviewing===ch.id ? 'Reviewing…' : 'AI Review'}</button>
                         <button onClick={() => handleApprove(ch.id)} className="px-2 py-1 text-xs rounded hover:bg-white/5 text-emerald-400">Approve</button>
                         <button onClick={() => handleReject(ch.id)} className="px-2 py-1 text-xs rounded hover:bg-white/5 text-red-400">Reject</button>
                       </>
