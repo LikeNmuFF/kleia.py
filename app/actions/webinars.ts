@@ -306,3 +306,22 @@ export async function verifyExternalCompletion(webinarId: string, userId: string
   revalidatePath(`/webinars/${webinarId}`)
   return { success: true }
 }
+
+export async function deleteWebinar(webinarId: string) {
+  const start = Date.now()
+  const supabase = await createClient()
+  const { user, role } = await getCurrentUserAndRole(supabase)
+  if (!user) return { error: 'Not logged in' }
+  if (!(await canManageWebinar(supabase, webinarId, user.id, role))) return { error: 'Faculty or admin access required' }
+
+  const { error } = await supabase.from('webinars').delete().eq('id', webinarId)
+
+  if (error) {
+    await logEvent({ endpoint: 'webinars.deleteWebinar', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
+    return { error: getSafeErrorMessage(error, 'Failed to delete webinar') }
+  }
+
+  await logEvent({ endpoint: 'webinars.deleteWebinar', status: 'success', durationMs: Date.now() - start, userId: user.id })
+  revalidatePath('/webinars')
+  return { success: true }
+}

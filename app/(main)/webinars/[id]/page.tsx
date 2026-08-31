@@ -83,7 +83,7 @@ export default async function WebinarDetailPage({ params }: { params: Promise<{ 
           </dl>
 
           <div className="mt-6">
-            <WebinarActions webinar={webinar} registration={result.myRegistration} />
+            <WebinarActions webinar={webinar} registration={result.myRegistration} canManage={result.canManage} />
           </div>
         </div>
       </div>

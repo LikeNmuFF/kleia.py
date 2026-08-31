@@ -2,15 +2,17 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { cancelWebinarRegistration, registerForWebinar } from '@/app/actions/webinars'
+import { cancelWebinarRegistration, deleteWebinar, registerForWebinar } from '@/app/actions/webinars'
 import type { Webinar, WebinarRegistration } from '@/lib/webinars/types'
 
 export default function WebinarActions({
   webinar,
   registration,
+  canManage,
 }: {
   webinar: Webinar
   registration: WebinarRegistration | null
+  canManage: boolean
 }) {
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -25,6 +27,11 @@ export default function WebinarActions({
       if (result.error) setError(result.error)
       router.refresh()
     })
+  }
+
+  function handleDelete() {
+    if (!confirm('Delete this webinar? This cannot be undone.')) return
+    run(() => deleteWebinar(webinar.id))
   }
 
   return (
@@ -55,6 +62,17 @@ export default function WebinarActions({
           <a href={webinar.external_url} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg border text-sm font-medium" style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
             Open link
           </a>
+        )}
+
+        {canManage && (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={handleDelete}
+            className="px-4 py-2 rounded-lg bg-red-600/10 border border-red-500/30 text-red-400 text-sm font-medium transition hover:bg-red-600/20 disabled:opacity-50"
+          >
+            Delete
+          </button>
         )}
       </div>
       {error && <p className="text-sm text-red-400">{error}</p>}
