@@ -21,6 +21,7 @@ describe('chat schema migrations', () => {
     expect(sql).toContain('create or replace function public.is_conversation_member')
     expect(sql).toContain('create or replace function public.is_conversation_creator')
     expect(sql).toContain('create or replace function public.create_direct_conversation')
+    expect(sql).toContain('create or replace function public.create_group_conversation')
     expect(sql).toContain('create or replace function public.prevent_message_update_except_read')
   })
 })

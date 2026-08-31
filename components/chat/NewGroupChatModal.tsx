@@ -71,15 +71,13 @@ export default function NewGroupChatModal({ currentUserId, onClose, onCreated }:
 
     const result = await createGroupConversation(Array.from(selectedIds), groupName)
 
-    if (result.error) {
+    if ('error' in result) {
       setError(result.error)
       setCreating(false)
       return
     }
 
-    if (result.conversationId) {
-      onCreated(result.conversationId)
-    }
+    onCreated(result.conversationId)
     setCreating(false)
   }
 

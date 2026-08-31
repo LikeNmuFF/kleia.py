@@ -30,6 +30,7 @@ supabase/migrations/*
 !supabase/migrations/20260831060000_add_chat_schema.sql
 !supabase/migrations/20260831061000_fix_create_direct_conversation_definer.sql
 !supabase/migrations/20260831062000_fix_search_path_public.sql
+!supabase/migrations/20260831063000_add_group_conversation_rpc.sql
 !supabase/migrations/20260831070000_phase5a_webinars.sql
 !supabase/tests/
 supabase/tests/*

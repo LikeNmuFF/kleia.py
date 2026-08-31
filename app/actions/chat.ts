@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { getServiceClient } from '@/lib/supabase/service'
 import { logEvent } from '@/lib/logEvent'
 import { isAdmin } from '@/lib/admin'
 import { getCompetitionAccess } from './competition'
@@ -141,42 +142,26 @@ export async function createGroupConversation(memberIds: string[], name: string)
   if (name.trim().length === 0) return { error: 'Group name is required' }
   if (name.trim().length > 100) return { error: 'Group name must be 100 characters or fewer' }
 
-  // Deduplicate and ensure creator is not in the list
   const uniqueMemberIds = [...new Set(memberIds.filter((id) => id !== user.id))]
 
-  // Create the conversation
-  const { data: conv, error: convError } = await supabase
-    .from('conversations')
-    .insert({
-      name: name.trim(),
-      type: 'group',
-      created_by: user.id,
-    })
-    .select('id')
-    .single()
+  const { data, error: rpcError } = await supabase.rpc('create_group_conversation', {
+    member_ids: uniqueMemberIds,
+    group_name: name.trim(),
+  })
 
-  if (convError || !conv) {
-    const safeMsg = getSafeErrorMessage(convError, 'Failed to create group chat. Please try again.')
-    await logEvent({ endpoint: 'chat.createGroupConversation', status: 'error', durationMs: Date.now() - start, errorMessage: convError?.message || 'Failed to create conversation', userId: user.id })
-    return { error: safeMsg }
+  if (rpcError) {
+    await logEvent({ endpoint: 'chat.createGroupConversation', status: 'error', durationMs: Date.now() - start, errorMessage: rpcError.message, userId: user.id })
+    return { error: getSafeErrorMessage(rpcError, 'Failed to create group chat. Please try again.') }
   }
 
-  // Add all members (including creator)
-  const allMemberIds = [user.id, ...uniqueMemberIds]
-  const { error: memberError } = await supabase
-    .from('conversation_members')
-    .insert(allMemberIds.map((uid) => ({ conversation_id: conv.id, user_id: uid })))
-
-  if (memberError) {
-    // Rollback: delete the conversation
-    await supabase.from('conversations').delete().eq('id', conv.id)
-    await logEvent({ endpoint: 'chat.createGroupConversation', status: 'error', durationMs: Date.now() - start, errorMessage: memberError.message, userId: user.id })
-    return { error: getSafeErrorMessage(memberError, 'Failed to add members. Please try again.') }
+  if (data?.error) {
+    await logEvent({ endpoint: 'chat.createGroupConversation', status: 'error', durationMs: Date.now() - start, errorMessage: data.error, userId: user.id })
+    return { error: getSafeErrorMessage(data.error, 'Failed to create group chat.') }
   }
 
   await logEvent({ endpoint: 'chat.createGroupConversation', status: 'success', durationMs: Date.now() - start, userId: user.id })
   revalidatePath('/chat')
-  return { conversationId: conv.id }
+  return data as { conversationId: string }
 }
 
 export async function sendMessage(conversationId: string, content: string) {
