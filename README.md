@@ -1,444 +1,413 @@
 <div align="center">
-  <img alt="kleia" src="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/logo-animated.svg" width="200">
-  <br/>
-  <br/>
+
+<!-- Animated Logo -->
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b5cf6">
+        <animate attributeName="stop-color" values="#8b5cf6;#06b6d4;#ec4899;#8b5cf6" dur="4s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="100%" style="stop-color:#06b6d4">
+        <animate attributeName="stop-color" values="#06b6d4;#ec4899;#8b5cf6;#06b6d4" dur="4s" repeatCount="indefinite"/>
+      </stop>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- Outer ring -->
+  <circle cx="60" cy="60" r="56" fill="none" stroke="url(#logoGrad)" stroke-width="2.5" opacity="0.6">
+    <animateTransform attributeName="transform" type="rotate" from="0 60 60" to="360 60 60" dur="20s" repeatCount="indefinite"/>
+  </circle>
+  <!-- Orbiting dot -->
+  <circle cx="60" cy="4" r="3" fill="#8b5cf6" filter="url(#glow)">
+    <animateTransform attributeName="transform" type="rotate" from="0 60 60" to="360 60 60" dur="6s" repeatCount="indefinite"/>
+    <animate attributeName="fill" values="#8b5cf6;#06b6d4;#ec4899;#8b5cf6" dur="4s" repeatCount="indefinite"/>
+  </circle>
+  <!-- Inner hexagon -->
+  <polygon points="60,18 97,39 97,81 60,102 23,81 23,39" fill="none" stroke="url(#logoGrad)" stroke-width="1.5" opacity="0.3">
+    <animateTransform attributeName="transform" type="rotate" from="0 60 60" to="-360 60 60" dur="12s" repeatCount="indefinite"/>
+  </polygon>
+  <!-- K letterform -->
+  <g filter="url(#glow)">
+    <path d="M42 35 L42 85 M42 62 L70 35 M42 62 L70 85" fill="none" stroke="url(#logoGrad)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <animate attributeName="stroke-dasharray" values="0,300;180,300;180,300" dur="2s" fill="freeze"/>
+      <animate attributeName="stroke-dashoffset" values="300;0;0" dur="2s" fill="freeze"/>
+    </path>
+  </g>
+  <!-- Pulse ring -->
+  <circle cx="60" cy="60" r="56" fill="none" stroke="url(#logoGrad)" stroke-width="1" opacity="0">
+    <animate attributeName="r" values="40;60" dur="2s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.5;0" dur="2s" repeatCount="indefinite"/>
+  </circle>
+</svg>
+
+<br/>
+
+<h1><code>kleia</code></h1>
+
+<p><b>Learn Together, Grow Together</b></p>
+
+<p>
+A community platform where friends learn skills, solve CTF challenges, track progress, and grow together — all in one place.
+</p>
+
+<br/>
+
+<a href="https://www.kleia.site">
+  <img src="https://img.shields.io/badge/Live-www.kleia.site-8b5cf6?style=for-the-badge&logo=vercel&logoColor=white" alt="Live">
+</a>
+<a href="https://nextjs.org/">
+  <img src="https://img.shields.io/badge/Next.js_16-000000?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js">
+</a>
+<a href="https://supabase.com/">
+  <img src="https://img.shields.io/badge/Supabase-3dcf8e?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase">
+</a>
+<a href="https://tailwindcss.com/">
+  <img src="https://img.shields.io/badge/Tailwind_CSS-38bdf8?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind">
+</a>
+<a href="https://github.com/LikeNmuFF/kleia.py/blob/main/LICENSE.md">
+  <img src="https://img.shields.io/badge/License-MIT-4caf50?style=for-the-badge" alt="License: MIT">
+</a>
+<a href="https://github.com/LikeNmuFF/kleia.py/blob/main/CONTRIBUTING.md">
+  <img src="https://img.shields.io/badge/Contributions-Welcome-8b5cf6?style=for-the-badge" alt="Contributions Welcome">
+</a>
+
 </div>
 
-<p align="center">
-  <a href="https://www.kleia.site">
-    <img src="https://img.shields.io/badge/Live-www.kleia.site-8b5cf6?style=for-the-badge&logo=vercel&logoColor=white" alt="Live">
-  </a>
-  <a href="https://nextjs.org/">
-    <img src="https://img.shields.io/badge/Next.js_16-000000?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js">
-  </a>
-  <a href="https://supabase.com/">
-    <img src="https://img.shields.io/badge/Supabase-3dcf8e?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase">
-  </a>
-  <a href="https://tailwindcss.com/">
-    <img src="https://img.shields.io/badge/Tailwind_CSS-38bdf8?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind">
-  </a>
-  <a href="https://github.com/LikeNmuFF/kleia.py/blob/main/LICENSE.md">
-    <img src="https://img.shields.io/badge/License-MIT-4caf50?style=for-the-badge" alt="License: MIT">
-  </a>
-  <a href="https://github.com/LikeNmuFF/kleia.py/blob/main/CONTRIBUTING.md">
-    <img src="https://img.shields.io/badge/Contributions-Welcome-8b5cf6?style=for-the-badge" alt="Contributions Welcome">
-  </a>
-</p>
-
-<p align="center">
-  <a href="https://github.com/LikeNmuFF/kleia.py/stargazers">
-    <img src="https://img.shields.io/github/stars/LikeNmuFF/kleia.py?style=flat&color=8b5cf6" alt="Stars">
-  </a>
-  <a href="https://github.com/LikeNmuFF/kleia.py/network/members">
-    <img src="https://img.shields.io/github/forks/LikeNmuFF/kleia.py?style=flat&color=38bdf8" alt="Forks">
-  </a>
-  <a href="https://github.com/LikeNmuFF/kleia.py/issues">
-    <img src="https://img.shields.io/github/issues/LikeNmuFF/kleia.py?style=flat&color=f59e0b" alt="Issues">
-  </a>
-  <a href="https://github.com/LikeNmuFF/kleia.py/pulls">
-    <img src="https://img.shields.io/github/issues-pr/LikeNmuFF/kleia.py?style=flat&color=10b981" alt="Pull Requests">
-  </a>
-  <img src="https://img.shields.io/github/last-commit/LikeNmuFF/kleia.py?style=flat&color=6b7280" alt="Last Commit">
-</p>
-
 <br/>
 
-<div align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/hero-dark.svg">
-    <img alt="kleia hero" src="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/hero-dark.svg" width="100%">
-  </picture>
-</div>
+---
 
-<br/>
+## What is Kleia?
 
-<h1 align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/logo-animated.svg">
-    <img alt="kleia" src="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/logo-animated.svg" width="200">
-  </picture>
-</h1>
+Kleia is a **free, open-source community platform** built for study groups, friends, and learners. It combines social features, education, and competitive challenges into a single experience.
 
-<p align="center">
-  <b>Learn Together, Grow Together</b><br/>
-  A community platform for study groups and friends — learn skills, solve CTF challenges, earn XP, and grow together.
-</p>
+Whether you're learning Python, grinding CTF challenges, or just staying in touch with your study group — Kleia keeps everything in one place.
 
 <br/>
 
 ---
 
-## 🎬 Demo
+## Core Modules
 
-> **Live:** [kleia.site](https://www.kleia.site)
+### 📰 Feed & Social
 
-| Feed | Chat | CTF Challenges | Leaderboard |
-|------|------|----------------|-------------|
-| Share posts, resources, and updates | Real-time messaging with friends | Solve web, crypto, pwn, forensics & misc | Earn XP and climb the ranks |
+A shared feed where members post updates, share resources, and discuss topics. Think of it as your group's internal social network — posts with likes, comments, markdown support, and image attachments via Cloudinary.
 
-<br/>
+### 💬 Real-time Chat
 
----
+Direct messages and group conversations powered by Supabase Realtime. Messages are delivered instantly, with presence indicators showing who's online.
 
-## ✨ Features
+### 📚 Learn
 
-<table align="center">
-  <tr>
-    <td align="center" width="200">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/feed-icon.svg">
-        <img src="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/feed-icon.svg" width="40" alt="Feed">
-      </picture>
-      <br/>
-      <b>Posts & Feed</b>
-      <br/>
-      <sub>Share updates, resources, and discussions</sub>
-    </td>
-    <td align="center" width="200">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/chat-icon.svg">
-        <img src="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/chat-icon.svg" width="40" alt="Chat">
-      </picture>
-      <br/>
-      <b>Real-time Chat</b>
-      <br/>
-      <sub>Message friends with instant delivery</sub>
-    </td>
-    <td align="center" width="200">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/events-icon.svg">
-        <img src="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/events-icon.svg" width="40" alt="Events">
-      </picture>
-      <br/>
-      <b>Events</b>
-      <br/>
-      <sub>Schedule study sessions & track RSVPs</sub>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="200">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/members-icon.svg">
-        <img src="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/members-icon.svg" width="40" alt="Members">
-      </picture>
-      <br/>
-      <b>Members</b>
-      <br/>
-      <sub>Find study partners & connect</sub>
-    </td>
-    <td align="center" width="200">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/notes-icon.svg">
-        <img src="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/notes-icon.svg" width="40" alt="Notes">
-      </picture>
-      <br/>
-      <b>Shared Notes</b>
-      <br/>
-      <sub>Collaborate and build knowledge together</sub>
-    </td>
-    <td align="center" width="200">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/progress-icon.svg">
-        <img src="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/progress-icon.svg" width="40" alt="Progress">
-      </picture>
-      <br/>
-      <b>Progress Tracking</b>
-      <br/>
-      <sub>Log study hours & visualize growth</sub>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="200">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/ctf-icon.svg">
-        <img src="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/ctf-icon.svg" width="40" alt="CTF">
-      </picture>
-      <br/>
-      <b>CTF Challenges</b>
-      <br/>
-      <sub>Solve capture-the-flag across web, crypto, pwn, forensics & misc</sub>
-    </td>
-    <td align="center" width="200">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/leaderboard-icon.svg">
-        <img src="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/leaderboard-icon.svg" width="40" alt="Leaderboard">
-      </picture>
-      <br/>
-      <b>CTF Leaderboard</b>
-      <br/>
-      <sub>Earn points and rank against the community</sub>
-    </td>
-    <td align="center" width="200">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/streaks-icon.svg">
-        <img src="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/streaks-icon.svg" width="40" alt="Streaks">
-      </picture>
-      <br/>
-      <b>Daily Streaks</b>
-      <br/>
-      <sub>Stay consistent and track your study streaks</sub>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="200">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/profile-icon.svg">
-        <img src="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/profile-icon.svg" width="40" alt="Profiles">
-      </picture>
-      <br/>
-      <b>Member Profiles</b>
-      <br/>
-      <sub>Bios, XP badges, streaks, and CTF stats</sub>
-    </td>
-    <td align="center" width="200">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/search-icon.svg">
-        <img src="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/search-icon.svg" width="40" alt="Search">
-      </picture>
-      <br/>
-      <b>Member Search</b>
-      <br/>
-      <sub>Find members by name, username, or bio</sub>
-    </td>
-    <td align="center" width="200">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/activity-icon.svg">
-        <img src="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/activity-icon.svg" width="40" alt="Activity">
-      </picture>
-      <br/>
-      <b>Activity Leaderboard</b>
-      <br/>
-      <sub>Ranked by streak, study hours, and posts</sub>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="200">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/feed-icon.svg">
-        <img src="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/feed-icon.svg" width="40" alt="Learn">
-      </picture>
-      <br/>
-      <b>Lessons & Quizzes</b>
-      <br/>
-      <sub>Learn Python, Linux &amp; more with reading material and quizzes</sub>
-    </td>
-    <td align="center" width="200">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/ctf-icon.svg">
-        <img src="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/ctf-icon.svg" width="40" alt="Skill Tree">
-      </picture>
-      <br/>
-      <b>CTF Skill Tree</b>
-      <br/>
-      <sub>Unlock skills as you solve challenges across categories</sub>
-    </td>
-    <td align="center" width="200">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/leaderboard-icon.svg">
-        <img src="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/leaderboard-icon.svg" width="40" alt="Writeups">
-      </picture>
-      <br/>
-      <b>Writeups</b>
-      <br/>
-      <sub>Share solutions with markdown, vote, and earn XP</sub>
-    </td>
-  </tr>
-</table>
+Built-in interactive lessons covering **Python Basics** (8 lessons), **Python Intermediate** (4 lessons), and **Linux Basics** (4 lessons). Each lesson includes reading material and a quiz. Complete quizzes to earn XP and unlock the next lesson.
 
-<br/>
+### 🏴 CTF Challenges
 
----
+A full capture-the-flag platform with five categories:
 
-## 📚 Learn
+| Category | Description |
+|----------|-------------|
+| **Web** | Inspect source, robots.txt, and web tricks |
+| **Crypto** | Ciphers, encodings, and cryptanalysis |
+| **PWN** | Binary exploitation |
+| **Forensics** | Analyze files and artifacts |
+| **Misc** | Everything else |
 
-Kleia ships with a built-in learning platform. Work through topics at your own pace — each lesson includes reading material and a quiz.
+Flags follow the `KLEIA{...}` format and are validated server-side. Challenges can have hints (costing XP to unlock), reviews with star ratings, and community-contributed writeups.
 
-| Topic | Lessons | Description |
-|-------|---------|-------------|
-| **Python Basics** | 8 lessons | Variables, loops, functions, data structures |
-| **Python Intermediate** | 4 lessons | File I/O, error handling, OOP, modules |
-| **Linux Basics** | 4 lessons | Navigation, searching, downloads, file operations |
+### 🌿 Skill Tree
 
-- Each lesson has a **reading material** section with explanations, code examples, and key takeaways.
-- Complete the **quiz** at the end to earn XP and unlock the next lesson.
-- CTF challenges can be **linked to lessons** — see related challenges directly from the lesson page.
+A visual progression system that unlocks as you solve challenges. Nodes are organized by category (Web, Crypto, Forensics, Misc) and difficulty (Easy → Hard). Solve enough challenges in a category to unlock the next tier.
 
-<br/>
+### 🏆 Seasons
 
----
+Monthly themed competitions with separate leaderboards. Admins create seasons with date ranges and bonus-point challenges. Past seasons remain viewable for archival.
 
-## 🏴 Capture The Flag
+### ⚡ Regex Golf
 
-Kleia ships with a built-in CTF platform where anyone can practice offensive security skills. Challenges span five categories:
+A competitive regex puzzle game — write the shortest regex that matches a set of green strings and rejects red strings. Live validation shows results in real-time. Three difficulty tiers.
 
-| Category | Icon | Description |
-|----------|------|-------------|
-| **Web** | 🌐 | Inspect source, robots.txt, and other web tricks |
-| **Crypto** | 🔐 | Ciphers, encodings, and cryptanalysis |
-| **PWN** | 💥 | Binary exploitation |
-| **Forensics** | 🔍 | Analyze files and artifacts |
-| **Misc** | 📌 | Everything that doesn't fit a box |
+### 🔐 Daily Cipher
 
-### Challenge Features
+A new cipher puzzle every day (Caesar, Atbash, Base64, Hex, Reverse, or Vigenère). The plaintext is always `KLEIA{daily_cipher_YYYY-MM-DD}`. Solve it to maintain your streak.
 
-- **Flag format:** `KLEIA{...}` — solved flags are submitted and validated server-side.
-- **Hints** — Free hint or spend XP to unlock additional hints.
-- **Reviews** — Rate challenges with stars and leave comments (only if you've solved it).
-- **Learn links** — Challenges can link to related lessons for deeper learning.
-- **Writeups** — Share your solution with the community using markdown. Earn +20 XP per writeup and escalating view costs.
+### 📊 Leaderboards & Gamification
 
-### Seasons & Leaderboards
-
-- Participate in **seasons** — time-limited competitive periods with separate leaderboards.
-- Earn points per challenge and climb the **overall leaderboard**.
-- Track your progress with the **skill tree** — unlock nodes as you solve challenges in each category.
-
-### Community Challenges
-
-- Community members can **submit their own challenges**, which enter a review queue.
-- Web challenges (like `robots.txt` and a view-source challenge) live right in the deployed site.
-
-<br/>
-
----
-
-## 🎮 Gamification
-
-Kleia rewards your activity with XP and badges across the platform.
+Earn XP across every activity:
 
 | Action | XP |
 |--------|----|
-| Complete a lesson | +10 XP |
-| Submit a writeup | +20 XP |
-| View a writeup | Free once/week, then 25–75 XP |
-| Solve a CTF challenge | +10–100 XP (by difficulty) |
-| Daily login | +5 XP |
+| Complete a lesson | +10 |
+| Submit a writeup | +20 |
+| Solve a CTF challenge | +10–100 (by difficulty) |
+| Solve daily cipher | +25 |
+| Daily login | +5 |
 
-### Badges
+13+ unique badges for milestones, a daily mission system, and streak tracking keep you motivated.
 
-Earn badges for milestones — 13 unique badges including:
+### 👥 Members & Profiles
 
-- **First Steps** — Complete your first lesson
-- **Author** — Submit your first writeup
-- **Prolific Writer** — Submit 5 writeups
-- **CTF Solver** — Solve challenges across categories
-- **Streak Master** — Maintain daily streaks
+Browse the community, search by name/username/bio, and view profiles with XP badges, streaks, CTF stats, and skill trees. Real-time presence shows who's online.
 
-### Daily Missions
+### 📅 Events
 
-Complete daily missions for bonus XP. Missions refresh every day and include activities like logging in, solving challenges, and posting updates.
+Schedule study sessions, workshops, and meetups. Track RSVPs and attendance.
+
+### 🎓 Webinars & Certificates
+
+Admins create free webinars with live links and capacity. Attendance is tracked server-side, and certificates are generated on completion.
+
+### 🏫 Cohorts
+
+Faculty accounts can create cohorts, assign content, and view aggregated skill data for their group — scoped so each faculty only sees their own students.
+
+### 🤝 Peer Matching
+
+Get matched with study partners based on complementary skills — strong in one area, learning in another.
 
 <br/>
 
 ---
 
-## ⚡ Tech Stack
+## Architecture
 
-<p align="center">
-  <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/-Next.js_16-000000?style=flat-square&logo=next.js&logoColor=white" height="30" alt="Next.js 16"></a>
-  <a href="https://react.dev/"><img src="https://img.shields.io/badge/-React_19-61dafb?style=flat-square&logo=react&logoColor=black" height="30" alt="React 19"></a>
-  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/-TypeScript-3178c6?style=flat-square&logo=typescript&logoColor=white" height="30" alt="TypeScript"></a>
-  <a href="https://supabase.com/"><img src="https://img.shields.io/badge/-Supabase-3dcf8e?style=flat-square&logo=supabase&logoColor=white" height="30" alt="Supabase"></a>
-  <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/-Tailwind_CSS-38bdf8?style=flat-square&logo=tailwind-css&logoColor=black" height="30" alt="Tailwind CSS"></a>
-  <a href="https://www.postgresql.org/"><img src="https://img.shields.io/badge/-PostgreSQL-4169e1?style=flat-square&logo=postgresql&logoColor=white" height="30" alt="PostgreSQL"></a>
-  <a href="https://framer.com/motion"><img src="https://img.shields.io/badge/-Framer_Motion-0055ff?style=flat-square&logo=framer&logoColor=white" height="30" alt="Framer Motion"></a>
-  <a href="https://cloudinary.com/"><img src="https://img.shields.io/badge/-Cloudinary-3448c5?style=flat-square&logo=cloudinary&logoColor=white" height="30" alt="Cloudinary"></a>
-  <a href="https://vercel.com/"><img src="https://img.shields.io/badge/-Vercel-000000?style=flat-square&logo=vercel&logoColor=white" height="30" alt="Vercel"></a>
-</p>
+```mermaid
+graph TB
+    subgraph Client["Client (Browser)"]
+        UI["Next.js 16 App Router<br/>React 19 · Tailwind CSS · Framer Motion"]
+    end
+
+    subgraph Vercel["Vercel Edge"]
+        MW["Middleware<br/>Auth · Redirects"]
+        RSC["Server Components"]
+        API["API Routes<br/>Server Actions"]
+    end
+
+    subgraph Supabase["Supabase"]
+        Auth["Supabase Auth<br/>Google · GitHub OAuth"]
+        DB["PostgreSQL<br/>Row Level Security"]
+        RT["Supabase Realtime<br/>Chat · Presence"]
+    end
+
+    subgraph External["External Services"]
+        CLD["Cloudinary<br/>Avatar & Image Uploads"]
+        RES["Resend<br/>Transactional Email"]
+        YT["YouTube Transcript API<br/>Video Summaries"]
+    end
+
+    Client --> MW
+    MW --> RSC
+    MW --> API
+    RSC --> DB
+    API --> DB
+    API --> Auth
+    RSC --> Auth
+    RT --> Client
+    API --> CLD
+    API --> RES
+    API --> YT
+```
+
+### Data Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant N as Next.js
+    participant S as Supabase
+    participant C as Cloudinary
+
+    U->>N: Interact (post, solve, chat)
+    N->>S: Auth check (RLS enforced)
+    S-->>N: Authorized
+    N->>S: Database query / mutation
+    S-->>N: Result
+    N-->>U: Updated UI
+
+    alt File Upload
+        U->>N: Select image
+        N->>C: Upload to Cloudinary
+        C-->>N: Secure URL
+        N->>S: Store URL in DB
+    end
+
+    alt Real-time Chat
+        S-->>U: New message (WebSocket)
+    end
+```
+
+### Database Schema Overview
+
+```mermaid
+erDiagram
+    profiles ||--o{ posts : authors
+    profiles ||--o{ comments : authors
+    profiles ||--o{ ctf_solves : solvers
+    profiles ||--o{ writeups : authors
+    profiles ||--o{ daily_cipher_solves : solvers
+    profiles ||--o{ regex_golf_solves : solvers
+    profiles ||--o{ user_skill_progress : tracks
+    profiles ||--o{ user_badges : earns
+    profiles ||--o{ user_hint_unlocks : unlocks
+
+    ctf_challenges ||--o{ ctf_solves : solved_by
+    ctf_challenges ||--o{ challenge_reviews : reviewed_by
+    ctf_challenges ||--o{ writeups : written_for
+    ctf_challenges ||--o{ hints : has_hints
+    ctf_challenges }o--o{ ctf_seasons : belongs_to
+
+    ctf_seasons ||--o{ ctf_season_challenges : includes
+    ctf_seasons ||--o{ ctf_season_participants : joined_by
+
+    learn_lessons ||--o{ quiz_submissions : quizzed_by
+    learn_topics ||--o{ learn_lessons : contains
+
+    events ||--o{ event_rsvps : attended_by
+    webinars ||--o{ webinar_registrations : registered
+
+    profiles {
+        uuid id PK
+        text username
+        text full_name
+        text avatar_url
+        int xp
+        int streak
+        text role
+    }
+
+    ctf_challenges {
+        uuid id PK
+        text title
+        text category
+        text difficulty
+        text flag_hash
+        int points
+    }
+
+    posts {
+        uuid id PK
+        uuid author_id FK
+        text content
+        int likes_count
+        int comments_count
+    }
+```
+
+<br/>
+
+---
+
+## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
 | **Framework** | [Next.js 16](https://nextjs.org/) (App Router) |
 | **Language** | [TypeScript](https://www.typescriptlang.org/) |
-| **Styling** | [Tailwind CSS](https://tailwindcss.com/) |
-| **Database** | [Supabase](https://supabase.com/) (PostgreSQL) |
+| **UI** | [Tailwind CSS](https://tailwindcss.com/) + [Framer Motion](https://www.framer.com/motion/) |
+| **Database** | [Supabase](https://supabase.com/) (PostgreSQL with RLS) |
 | **Auth** | [Supabase Auth](https://supabase.com/auth) (Google + GitHub OAuth) |
-| **ORM/DB** | [Supabase](https://supabase.com/) with RLS + Triggers |
-| **Realtime** | [Supabase Realtime](https://supabase.com/realtime) |
-| **Animations** | [Framer Motion](https://www.framer.com/motion/) |
-| **Uploads** | [Cloudinary](https://cloudinary.com/) |
+| **Realtime** | [Supabase Realtime](https://supabase.com/realtime) (Chat + Presence) |
+| **Uploads** | [Cloudinary](https://cloudinary.com/) (Avatar & Image uploads) |
+| **Email** | [Resend](https://resend.com/) (Transactional email) |
 | **Markdown** | [react-markdown](https://github.com/remarkjs/react-markdown) + remark-gfm |
+| **3D** | [Three.js](https://threejs.org/) (Landing page background) |
 | **Deployment** | [Vercel](https://vercel.com/) |
 
 <br/>
 
 ---
 
-## 🚀 Getting Started
+## Project Structure
 
-### Prerequisites
-- Node.js 20.9+ (Node 22 recommended)
-- A Supabase project (free tier works)
-- Cloudinary account (for avatar uploads)
-
-### Environment Variables
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
-NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your-cloud-name
 ```
-
-### Install & Run
-
-```bash
-# Clone the repo
-git clone https://github.com/LikeNmuFF/kleia.py.git
-
-# Install dependencies
-npm install
-
-# Run development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Start production server
-npm start
+kleia.py/
+├── app/
+│   ├── (auth)/              # Login, signup, forgot/reset password
+│   ├── (main)/              # Authenticated app pages
+│   │   ├── admin/           # Admin dashboard & CTF review queue
+│   │   ├── ctf/             # Challenges, seasons, skill tree, writeups
+│   │   ├── chat/            # Real-time messaging
+│   │   ├── cipher/          # Daily cipher puzzle
+│   │   ├── cohorts/         # Cohort management & assignments
+│   │   ├── events/          # Event scheduling & RSVPs
+│   │   ├── feed/            # Social feed with posts
+│   │   ├── learn/           # Interactive lessons & quizzes
+│   │   ├── leaderboard/     # CTF & achievement leaderboards
+│   │   ├── members/         # Member directory & profiles
+│   │   ├── peer-matching/   # Study partner matching
+│   │   ├── profile/         # User profile & settings
+│   │   ├── regex-golf/      # Regex puzzle game
+│   │   └── webinars/        # Webinar registration & certificates
+│   ├── (legal)/             # Terms, privacy, security pages
+│   ├── actions/             # Server actions (DB mutations)
+│   ├── api/                 # API route handlers
+│   └── auth/                # Auth callback handlers
+├── components/              # Reusable React components
+│   ├── admin/               # Admin-specific UI
+│   ├── ctf/                 # Challenge cards, reviews, writeups
+│   ├── chat/                # Chat interface & providers
+│   ├── cohorts/             # Cohort UI
+│   ├── events/              # Event cards & forms
+│   ├── feed/                # Post composer & feed items
+│   ├── gamification/        # Badges, XP, missions
+│   ├── landing/             # Landing page sections
+│   ├── learn/               # Lesson reader & quiz
+│   ├── members/             # Member cards & search
+│   ├── nav/                 # Desktop & mobile navigation
+│   ├── peer-matching/       # Match request UI
+│   ├── profile/             # Profile settings & display
+│   ├── webinars/            # Webinar forms & attendance
+│   └── ui/                  # Shared UI primitives
+├── lib/
+│   ├── supabase/            # Supabase client helpers
+│   ├── utils/               # Cipher, regex-golf, helpers
+│   ├── hooks/               # Custom React hooks
+│   └── context/             # React context providers
+├── public/                  # Static assets (logo, robots.txt, sitemap)
+└── supabase-migrations/     # SQL migrations (000–033)
 ```
-
-### Database Setup
-
-Apply the migrations in `supabase-migrations/` to your Supabase project via the SQL Editor. They create all tables, RLS policies, triggers, and auto-update functions for `likes_count` and `comments_count`.
 
 <br/>
 
 ---
 
-## 🤝 Contributing
+## Security
 
-This is a community project — contributions, ideas, and bug reports are all welcome! Check out the **[Contributing Guide](CONTRIBUTING.md)** to get started (setup, code style, and how to submit CTF challenges).
+Kleia takes security seriously. Key practices:
 
-### Quick Start for Contributors
+- **Row Level Security (RLS)** enforced on all Supabase tables
+- **Server-side validation** for all user input — never trust client-side alone
+- **Auth middleware** verifies sessions on every protected route
+- **Secrets** live only in environment variables, never committed
+- **CTF flags** are stored as hashes; plaintext flags are never in the repository
+- **Rate limiting** on AI-powered endpoints to prevent abuse
+- **Dependency scanning** via `npm audit` and GitHub Actions
 
-```bash
-# Fork and clone
-git clone https://github.com/YOUR_USERNAME/kleia.py.git
-cd kleia.py
-
-# Install dependencies
-npm install
-
-# Copy env template
-cp .env.example .env.local
-
-# Start dev server
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) and start hacking. PRs that fix bugs or add features are always appreciated!
-
-For how to responsibly report a security vulnerability, see **[SECURITY.md](SECURITY.md)**.
+See [SECURITY.md](SECURITY.md) for the full vulnerability disclosure policy.
 
 <br/>
 
 ---
 
-## 📄 License
+## Contributing
 
-This project is open source and licensed under the **[MIT License](LICENSE.md)**.
+We welcome contributions of all kinds — bug reports, features, documentation, and CTF challenge submissions.
+
+See **[CONTRIBUTING.md](CONTRIBUTING.md)** for setup instructions, code style guidelines, and how to submit CTF challenges.
+
+<br/>
+
+---
+
+## License
+
+This project is licensed under the **[MIT License](LICENSE.md)**.
 
 Copyright © 2026 Kleia (LikeNmuFF)
 
@@ -446,14 +415,10 @@ Copyright © 2026 Kleia (LikeNmuFF)
 
 ---
 
-<p align="center">
-  Made with ❤️ by <a href="https://github.com/LikeNmuFF">LikeNmuFF</a>
-  <br/>
-  <br/>
-  <a href="https://www.kleia.site">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/footer-badge.svg">
-      <img src="https://raw.githubusercontent.com/LikeNmuFF/kleia.py/main/.github/assets/footer-badge.svg" width="180" alt="www.kleia.site">
-    </picture>
-  </a>
-</p>
+<div align="center">
+
+Made with ❤️ by **[LikeNmuFF](https://github.com/LikeNmuFF)**
+
+**[kleia.site](https://www.kleia.site)** · [Security](SECURITY.md) · [Privacy](https://www.kleia.site/privacy) · [Terms](https://www.kleia.site/terms) · [Contributing](CONTRIBUTING.md)
+
+</div>
