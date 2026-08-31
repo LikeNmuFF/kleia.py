@@ -2,11 +2,16 @@ create table if not exists public.conversations (
   id uuid primary key default gen_random_uuid(),
   name text check (name is null or char_length(name) between 1 and 100),
   type text not null check (type in ('direct', 'group')),
-  created_by uuid not null default auth.uid() references public.profiles(id) on delete cascade,
+  created_by uuid references public.profiles(id) on delete cascade,
   created_at timestamptz not null default now(),
   last_message_at timestamptz,
   last_message_preview text
 );
+
+-- ensure columns exist on pre-existing table (000 created without created_by / last_message_*)
+alter table public.conversations add column if not exists created_by uuid references public.profiles(id) on delete cascade;
+alter table public.conversations add column if not exists last_message_at timestamptz;
+alter table public.conversations add column if not exists last_message_preview text;
 
 create table if not exists public.conversation_members (
   conversation_id uuid not null references public.conversations(id) on delete cascade,

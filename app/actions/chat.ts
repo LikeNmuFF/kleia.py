@@ -144,12 +144,13 @@ export async function createGroupConversation(memberIds: string[], name: string)
   // Deduplicate and ensure creator is not in the list
   const uniqueMemberIds = [...new Set(memberIds.filter((id) => id !== user.id))]
 
-  // Create the conversation (conversations table has no created_by column - tracked via conversation_members)
+  // Create the conversation
   const { data: conv, error: convError } = await supabase
     .from('conversations')
     .insert({
       name: name.trim(),
       type: 'group',
+      created_by: user.id,
     })
     .select('id')
     .single()
