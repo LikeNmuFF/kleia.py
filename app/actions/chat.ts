@@ -144,24 +144,33 @@ export async function createGroupConversation(memberIds: string[], name: string)
 
   const uniqueMemberIds = [...new Set(memberIds.filter((id) => id !== user.id))]
 
-  const { data, error: rpcError } = await supabase.rpc('create_group_conversation', {
-    member_ids: uniqueMemberIds,
-    group_name: name.trim(),
-  })
+  // Use service client to bypass RLS for group creation (fixes missing RPC create_group_conversation)
+  const svc = getServiceClient() as any
+  const { data: conv, error: convError } = await svc
+    .from('conversations')
+    .insert({ name: name.trim(), type: 'group', created_by: user.id })
+    .select('id')
+    .single()
 
-  if (rpcError) {
-    await logEvent({ endpoint: 'chat.createGroupConversation', status: 'error', durationMs: Date.now() - start, errorMessage: rpcError.message, userId: user.id })
-    return { error: getSafeErrorMessage(rpcError, 'Failed to create group chat. Please try again.') }
+  if (convError || !conv) {
+    await logEvent({ endpoint: 'chat.createGroupConversation', status: 'error', durationMs: Date.now() - start, errorMessage: convError?.message || 'Failed to create conversation', userId: user.id })
+    return { error: getSafeErrorMessage(convError, 'Failed to create group chat. Please try again.') }
   }
 
-  if (data?.error) {
-    await logEvent({ endpoint: 'chat.createGroupConversation', status: 'error', durationMs: Date.now() - start, errorMessage: data.error, userId: user.id })
-    return { error: getSafeErrorMessage(data.error, 'Failed to create group chat.') }
+  const allMemberIds = [user.id, ...uniqueMemberIds]
+  const { error: memberError } = await svc
+    .from('conversation_members')
+    .insert(allMemberIds.map((uid) => ({ conversation_id: conv.id, user_id: uid })))
+
+  if (memberError) {
+    await svc.from('conversations').delete().eq('id', conv.id)
+    await logEvent({ endpoint: 'chat.createGroupConversation', status: 'error', durationMs: Date.now() - start, errorMessage: memberError.message, userId: user.id })
+    return { error: getSafeErrorMessage(memberError, 'Failed to add members.') }
   }
 
   await logEvent({ endpoint: 'chat.createGroupConversation', status: 'success', durationMs: Date.now() - start, userId: user.id })
   revalidatePath('/chat')
-  return data as { conversationId: string }
+  return { conversationId: conv.id }
 }
 
 export async function sendMessage(conversationId: string, content: string) {
