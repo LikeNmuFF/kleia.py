@@ -1,5 +1,7 @@
 'use server'
 
+import { getSafeErrorMessage } from '@/lib/errorHandler'
+
 import { createClient } from '@/lib/supabase/server'
 import { getServiceClient } from '@/lib/supabase/service'
 import { revalidatePath } from 'next/cache'
@@ -312,7 +314,7 @@ export async function updateUserRole(userId: string, role: string) {
     .update({ role } as any)
     .eq('id', userId)
 
-  if (error) return { error: error.message }
+  if (error) return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   return { success: true }
 }
 
@@ -326,7 +328,7 @@ export async function resetUserStreak(userId: string) {
     .update({ current_streak: 0 } as any)
     .eq('id', userId)
 
-  if (error) return { error: error.message }
+  if (error) return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   return { success: true }
 }
 
@@ -339,7 +341,7 @@ export async function adjustUserScore(userId: string, score: number) {
     .update({ score_override: score })
     .eq('id', userId)
 
-  if (error) return { error: error.message }
+  if (error) return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   return { success: true }
 }
 
@@ -426,7 +428,7 @@ export async function deletePost(postId: string) {
   await requireAdmin(supabase)
 
   const { error } = await supabase.from('posts').delete().eq('id', postId)
-  if (error) return { error: error.message }
+  if (error) return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   return { success: true }
 }
 
@@ -448,7 +450,7 @@ export async function deleteComment(commentId: string) {
   await requireAdmin(supabase)
 
   const { error } = await supabase.from('comments').delete().eq('id', commentId)
-  if (error) return { error: error.message }
+  if (error) return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   return { success: true }
 }
 
@@ -509,7 +511,7 @@ export async function createRegexPuzzle(data: {
       is_active: true,
     })
 
-  if (error) return { error: error.message }
+  if (error) return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
 
   revalidatePath('/regex-golf')
   return { success: true }
@@ -534,7 +536,7 @@ export async function updateRegexPuzzle(id: string, data: Partial<{
     .update(data)
     .eq('id', id)
 
-  if (error) return { error: error.message }
+  if (error) return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
 
   revalidatePath('/regex-golf')
   return { success: true }
@@ -545,7 +547,7 @@ export async function deleteRegexPuzzle(id: string) {
   await requireAdmin(supabase)
 
   const { error } = await supabase.from('regex_golf_puzzles').delete().eq('id', id)
-  if (error) return { error: error.message }
+  if (error) return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
 
   revalidatePath('/regex-golf')
   return { success: true }

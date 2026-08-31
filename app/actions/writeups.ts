@@ -1,5 +1,7 @@
 'use server'
 
+import { getSafeErrorMessage } from '@/lib/errorHandler'
+
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 
@@ -39,7 +41,7 @@ export async function submitWriteup(challengeId: string, title: string, content:
       content: content.trim(),
     })
 
-  if (error) return { error: error.message }
+  if (error) return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
 
   const { addXp } = await import('./gamification')
   await addXp(20, 'writeup')
@@ -102,7 +104,7 @@ export async function voteWriteup(writeupId: string, vote: 1 | -1) {
       .eq('user_id', user.id)
       .eq('writeup_id', writeupId)
 
-    if (error) return { error: error.message }
+    if (error) return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   } else {
     const { error } = await supabase
       .from('writeup_votes')
@@ -112,7 +114,7 @@ export async function voteWriteup(writeupId: string, vote: 1 | -1) {
         vote,
       }, { onConflict: 'user_id,writeup_id' })
 
-    if (error) return { error: error.message }
+    if (error) return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   }
 
   const { data: votes } = await supabase

@@ -1,5 +1,7 @@
 'use server'
 
+import { getSafeErrorMessage } from '@/lib/errorHandler'
+
 import { Resend } from 'resend'
 import { createClient } from '@/lib/supabase/server'
 import { requireAdmin } from '@/lib/admin'

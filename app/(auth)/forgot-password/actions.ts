@@ -1,5 +1,7 @@
 'use server'
 
+import { getSafeErrorMessage } from '@/lib/errorHandler'
+
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 
@@ -17,7 +19,7 @@ export async function resetPassword(formData: FormData) {
   })
 
   if (error) {
-    redirect('/forgot-password?error=' + encodeURIComponent(error.message))
+    redirect('/forgot-password?error=' + encodeURIComponent(getSafeErrorMessage(error, 'Something went wrong.')))
   }
 
   redirect('/forgot-password?sent=true&email=' + encodeURIComponent(email))

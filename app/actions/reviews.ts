@@ -1,5 +1,7 @@
 'use server'
 
+import { getSafeErrorMessage } from '@/lib/errorHandler'
+
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { addXp } from './gamification'
@@ -38,7 +40,7 @@ export async function submitReview(
       })
       .eq('id', existing.id)
 
-    if (error) return { error: error.message }
+    if (error) return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   } else {
     const { error } = await supabase
       .from('challenge_reviews')
@@ -50,7 +52,7 @@ export async function submitReview(
         review_text: reviewText?.trim() || null,
       })
 
-    if (error) return { error: error.message }
+    if (error) return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
 
     await addXp(5, 'challenge_review')
   }

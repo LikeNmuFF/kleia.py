@@ -1,5 +1,7 @@
 'use server'
 
+import { getSafeErrorMessage } from '@/lib/errorHandler'
+
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { isAdmin } from '@/lib/admin'
@@ -222,7 +224,7 @@ export async function setSeasonStatus(seasonId: string, status: SeasonStatus) {
     .from('ctf_seasons')
     .update({ status })
     .eq('id', seasonId)
-  if (error) return { error: error.message }
+  if (error) return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
 
   revalidatePath('/admin')
   return { success: true }
@@ -284,7 +286,7 @@ export async function addSeasonSpectator(seasonId: string, username: string) {
     .insert({ season_id: seasonId, user_id: profile.id, added_by: user.id })
   if (error) {
     if (error.message?.includes('duplicate key')) return { error: 'Already a spectator' }
-    return { error: error.message }
+    return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   }
   revalidatePath('/admin')
   return { success: true }
@@ -299,7 +301,7 @@ export async function removeSeasonSpectator(seasonId: string, userId: string) {
     .delete()
     .eq('season_id', seasonId)
     .eq('user_id', userId)
-  if (error) return { error: error.message }
+  if (error) return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   revalidatePath('/admin')
   return { success: true }
 }
@@ -313,7 +315,7 @@ export async function adjustSeasonScore(seasonId: string, userId: string, totalP
     .update({ total_points: totalPoints, challenges_solved: challengesSolved })
     .eq('season_id', seasonId)
     .eq('user_id', userId)
-  if (error) return { error: error.message }
+  if (error) return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   revalidatePath('/admin')
   return { success: true }
 }

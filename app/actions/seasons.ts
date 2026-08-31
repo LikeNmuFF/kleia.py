@@ -1,5 +1,7 @@
 'use server'
 
+import { getSafeErrorMessage } from '@/lib/errorHandler'
+
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { logEvent } from '@/lib/logEvent'
@@ -95,7 +97,7 @@ export async function joinSeason(seasonId: string, codename?: string) {
       return { error: 'Already joined this season' }
     }
     await logEvent({ endpoint: 'seasons.joinSeason', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
-    return { error: error.message }
+    return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   }
 
   await logEvent({ endpoint: 'seasons.joinSeason', status: 'success', durationMs: Date.now() - start, userId: user.id })
@@ -225,7 +227,7 @@ export async function updateSeasonCodename(seasonId: string, codename: string) {
     .eq('season_id', seasonId)
     .eq('user_id', user.id)
 
-  if (error) return { error: error.message }
+  if (error) return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
 
   revalidatePath('/ctf/seasons')
   return { success: true }
@@ -280,7 +282,7 @@ export async function updateSeason(seasonId: string, data: {
 
   if (error) {
     await logEvent({ endpoint: 'seasons.updateSeason', status: 'error', durationMs: Date.now() - start, errorMessage: error.message })
-    return { error: error.message }
+    return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   }
 
   await logEvent({ endpoint: 'seasons.updateSeason', status: 'success', durationMs: Date.now() - start })
@@ -303,7 +305,7 @@ export async function deleteSeason(seasonId: string) {
 
   if (error) {
     await logEvent({ endpoint: 'seasons.deleteSeason', status: 'error', durationMs: Date.now() - start, errorMessage: error.message })
-    return { error: error.message }
+    return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   }
 
   await logEvent({ endpoint: 'seasons.deleteSeason', status: 'success', durationMs: Date.now() - start })
@@ -321,7 +323,7 @@ export async function addChallengeToSeason(seasonId: string, challengeId: string
 
   if (error) {
     if (error.message?.includes('duplicate key')) return { error: 'Challenge already in this season' }
-    return { error: error.message }
+    return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   }
 
   revalidatePath('/ctf/seasons')
@@ -338,7 +340,7 @@ export async function removeChallengeFromSeason(seasonId: string, challengeId: s
     .eq('season_id', seasonId)
     .eq('challenge_id', challengeId)
 
-  if (error) return { error: error.message }
+  if (error) return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
 
   revalidatePath('/ctf/seasons')
   return { success: true }
@@ -385,7 +387,7 @@ export async function createSeason(data: {
 
   if (error) {
     await logEvent({ endpoint: 'seasons.createSeason', status: 'error', durationMs: Date.now() - start, errorMessage: error.message })
-    return { error: error.message }
+    return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   }
 
   await logEvent({ endpoint: 'seasons.createSeason', status: 'success', durationMs: Date.now() - start })

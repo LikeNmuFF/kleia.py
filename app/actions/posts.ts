@@ -1,5 +1,7 @@
 'use server'
 
+import { getSafeErrorMessage } from '@/lib/errorHandler'
+
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { isPostReaction, normalizeSubjects, type ReactionType } from '@/lib/feed/constants'
@@ -53,7 +55,7 @@ export async function createPost(content: string, linkPreview?: LinkPreviewData,
 
   if (error) {
     await logEvent({ endpoint: 'posts.createPost', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
-    return { error: error.message }
+    return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   }
 
   const normalizedSubjects = normalizeSubjects(subjects)
@@ -128,7 +130,7 @@ export async function toggleReaction(postId: string, reactionType: ReactionType 
 
     if (error) {
       await logEvent({ endpoint: 'posts.toggleReaction', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
-      return { error: error.message }
+      return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
     }
   } else {
     const { error } = await supabase
@@ -137,7 +139,7 @@ export async function toggleReaction(postId: string, reactionType: ReactionType 
 
     if (error) {
       await logEvent({ endpoint: 'posts.toggleReaction', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
-      return { error: error.message }
+      return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
     }
   }
 
@@ -190,7 +192,7 @@ export async function toggleSavedPost(postId: string) {
 
     if (error) {
       await logEvent({ endpoint: 'posts.toggleSavedPost', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
-      return { error: error.message }
+      return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
     }
   } else {
     const { error } = await supabase
@@ -199,7 +201,7 @@ export async function toggleSavedPost(postId: string) {
 
     if (error) {
       await logEvent({ endpoint: 'posts.toggleSavedPost', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
-      return { error: error.message }
+      return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
     }
   }
 
@@ -262,7 +264,7 @@ export async function addComment(postId: string, content: string) {
 
   if (error) {
     await logEvent({ endpoint: 'posts.addComment', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
-    return { error: error.message }
+    return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   }
 
   await logEvent({ endpoint: 'posts.addComment', status: 'success', durationMs: Date.now() - start, userId: user.id })
@@ -306,7 +308,7 @@ export async function togglePin(postId: string) {
 
   if (error) {
     await logEvent({ endpoint: 'posts.togglePin', status: 'error', durationMs: Date.now() - start, errorMessage: error.message })
-    return { error: error.message }
+    return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   }
 
   await logEvent({ endpoint: 'posts.togglePin', status: 'success', durationMs: Date.now() - start })
@@ -328,7 +330,7 @@ export async function deleteComment(commentId: string) {
 
   if (error) {
     await logEvent({ endpoint: 'posts.deleteComment', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
-    return { error: error.message }
+    return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   }
 
   await logEvent({ endpoint: 'posts.deleteComment', status: 'success', durationMs: Date.now() - start, userId: user.id })
@@ -367,7 +369,7 @@ export async function updatePost(postId: string, content: string) {
 
   if (error) {
     await logEvent({ endpoint: 'posts.updatePost', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
-    return { error: error.message }
+    return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   }
 
   await logEvent({ endpoint: 'posts.updatePost', status: 'success', durationMs: Date.now() - start, userId: user.id })
@@ -398,7 +400,7 @@ export async function deletePost(postId: string) {
 
   if (error) {
     await logEvent({ endpoint: 'posts.deletePost', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
-    return { error: error.message }
+    return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   }
 
   await logEvent({ endpoint: 'posts.deletePost', status: 'success', durationMs: Date.now() - start, userId: user.id })

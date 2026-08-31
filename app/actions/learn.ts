@@ -1,5 +1,7 @@
 'use server'
 
+import { getSafeErrorMessage } from '@/lib/errorHandler'
+
 import { createClient } from '@/lib/supabase/server'
 import { isFillAnswerCorrect, type LearnQuestion } from '@/lib/utils/learn'
 

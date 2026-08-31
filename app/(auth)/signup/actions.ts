@@ -1,5 +1,7 @@
 'use server'
 
+import { getSafeErrorMessage } from '@/lib/errorHandler'
+
 import { redirect } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/server'
@@ -36,7 +38,7 @@ export async function signup(formData: FormData) {
   })
 
   if (error) {
-    redirect('/signup?error=' + encodeURIComponent(error.message))
+    redirect('/signup?error=' + encodeURIComponent(getSafeErrorMessage(error, 'Something went wrong.')))
   }
 
   if (data?.user?.identities?.length === 0) {

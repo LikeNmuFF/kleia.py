@@ -1,5 +1,7 @@
 'use server'
 
+import { getSafeErrorMessage } from '@/lib/errorHandler'
+
 import { createClient } from '@/lib/supabase/server'
 
 export async function updateProfile(data: {
@@ -41,7 +43,7 @@ export async function updateProfile(data: {
     .eq('id', data.user_id)
 
   if (error) {
-    return { error: error.message }
+    return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   }
 
   return { success: true }
@@ -68,7 +70,7 @@ export async function updatePassword(currentPassword: string, newPassword: strin
   const { error } = await supabase.auth.updateUser({ password: newPassword })
 
   if (error) {
-    return { error: error.message }
+    return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   }
 
   return { success: true }

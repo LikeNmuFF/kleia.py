@@ -1,5 +1,7 @@
 'use server'
 
+import { getSafeErrorMessage } from '@/lib/errorHandler'
+
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
@@ -279,7 +281,7 @@ export async function createChallenge(data: {
 
   if (error) {
     await logEvent({ endpoint: 'ctf.createChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user?.id })
-    return { error: error.message }
+    return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   }
 
   await logEvent({ endpoint: 'ctf.createChallenge', status: 'success', durationMs: Date.now() - start, userId: user?.id })
@@ -421,7 +423,7 @@ export async function submitChallenge(formData: FormData) {
 
   if (error) {
     await logEvent({ endpoint: 'ctf.submitChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
-    redirect('/ctf/submit?error=' + encodeURIComponent(error.message))
+    redirect('/ctf/submit?error=' + encodeURIComponent(getSafeErrorMessage(error, 'Something went wrong.')))
   }
 
   await logEvent({ endpoint: 'ctf.submitChallenge', status: 'success', durationMs: Date.now() - start, userId: user.id })
@@ -443,7 +445,7 @@ export async function approveChallenge(id: string) {
 
   if (error) {
     await logEvent({ endpoint: 'ctf.approveChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: error.message })
-    return { error: error.message }
+    return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   }
 
   await logEvent({ endpoint: 'ctf.approveChallenge', status: 'success', durationMs: Date.now() - start })
@@ -465,7 +467,7 @@ export async function rejectChallenge(id: string) {
 
   if (error) {
     await logEvent({ endpoint: 'ctf.rejectChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: error.message })
-    return { error: error.message }
+    return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   }
 
   await logEvent({ endpoint: 'ctf.rejectChallenge', status: 'success', durationMs: Date.now() - start })
@@ -562,7 +564,7 @@ export async function updateChallenge(
   if (error) {
     const { data: { user } } = await supabase.auth.getUser()
     await logEvent({ endpoint: 'ctf.updateChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user?.id })
-    return { error: error.message }
+    return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   }
 
   await logEvent({ endpoint: 'ctf.updateChallenge', status: 'success', durationMs: Date.now() - start })
@@ -587,7 +589,7 @@ export async function deleteChallenge(id: string) {
   if (error) {
     const { data: { user } } = await supabase.auth.getUser()
     await logEvent({ endpoint: 'ctf.deleteChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user?.id })
-    return { error: error.message }
+    return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   }
 
   await logEvent({ endpoint: 'ctf.deleteChallenge', status: 'success', durationMs: Date.now() - start })

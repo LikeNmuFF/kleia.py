@@ -1,3 +1,4 @@
+import { getSafeErrorMessage } from '@/lib/errorHandler'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getServiceClient } from '@/lib/supabase/service'
@@ -19,12 +20,12 @@ export async function GET(){
     const { data, error } = await svc.from('cohorts').select('id,name,description,code,creator_id,created_at').in('id', ids)
     if(error) {
       console.error('cohorts GET error', error)
-      return NextResponse.json({error:error.message, details: error}, {status:500})
+      return NextResponse.json({ error: getSafeErrorMessage(error, 'Something went wrong. Please try again.'), details: error}, {status:500})
     }
     return NextResponse.json({ cohorts: data || [] })
   } catch (e:any) {
     console.error('cohorts GET exception', e)
-    return NextResponse.json({error: e.message || 'Internal error'}, {status:500})
+    return NextResponse.json({ error: getSafeErrorMessage(e, 'Something went wrong. Please try again.') || 'Internal error'}, {status:500})
   }
 }
 export async function POST(request: NextRequest){
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest){
   // Use service client to bypass RLS chicken-egg for initial faculty membership
   const svc = getServiceClient() as any
   const { data, error } = await svc.from('cohorts').insert({ name:body.name, description:body.description||null, creator_id:user.id }).select('id,code').single()
-  if(error) return NextResponse.json({error:error.message},{status:500})
+  if(error) return NextResponse.json({ error: getSafeErrorMessage(error, 'Something went wrong. Please try again.')},{status:500})
   const { error: memErr } = await svc.from('cohort_members').insert({ cohort_id:data.id, user_id:user.id, role:'faculty' })
   if(memErr) {
     console.error('cohorts POST member error', memErr)

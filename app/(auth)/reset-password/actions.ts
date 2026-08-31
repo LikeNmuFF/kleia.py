@@ -1,5 +1,7 @@
 'use server'
 
+import { getSafeErrorMessage } from '@/lib/errorHandler'
+
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
@@ -21,7 +23,7 @@ export async function updatePassword(formData: FormData) {
   const { error } = await supabase.auth.updateUser({ password })
 
   if (error) {
-    redirect('/reset-password?error=' + encodeURIComponent(error.message))
+    redirect('/reset-password?error=' + encodeURIComponent(getSafeErrorMessage(error, 'Something went wrong.')))
   }
 
   revalidatePath('/', 'layout')

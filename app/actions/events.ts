@@ -1,5 +1,7 @@
 'use server'
 
+import { getSafeErrorMessage } from '@/lib/errorHandler'
+
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { logEvent } from '@/lib/logEvent'
@@ -32,7 +34,7 @@ export async function createEvent(data: {
 
   if (error) {
     await logEvent({ endpoint: 'events.createEvent', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
-    return { error: error.message }
+    return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   }
 
   await logEvent({ endpoint: 'events.createEvent', status: 'success', durationMs: Date.now() - start, userId: user.id })
@@ -56,7 +58,7 @@ export async function rsvpEvent(eventId: string, status: string) {
 
     if (error) {
       await logEvent({ endpoint: 'events.rsvpEvent', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
-      return { error: error.message }
+      return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
     }
   } else if (status === 'going' || status === 'maybe') {
     const { error } = await supabase.from('event_attendees').upsert({
@@ -67,7 +69,7 @@ export async function rsvpEvent(eventId: string, status: string) {
 
     if (error) {
       await logEvent({ endpoint: 'events.rsvpEvent', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
-      return { error: error.message }
+      return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
     }
   } else {
     return { error: 'Invalid status' }
@@ -114,7 +116,7 @@ export async function updateEvent(
 
   if (error) {
     await logEvent({ endpoint: 'events.updateEvent', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
-    return { error: error.message }
+    return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   }
 
   await logEvent({ endpoint: 'events.updateEvent', status: 'success', durationMs: Date.now() - start, userId: user.id })
@@ -137,7 +139,7 @@ export async function deleteEvent(eventId: string) {
 
   if (error) {
     await logEvent({ endpoint: 'events.deleteEvent', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
-    return { error: error.message }
+    return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   }
 
   await logEvent({ endpoint: 'events.deleteEvent', status: 'success', durationMs: Date.now() - start, userId: user.id })

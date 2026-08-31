@@ -1,5 +1,7 @@
 'use server'
 
+import { getSafeErrorMessage } from '@/lib/errorHandler'
+
 import { createClient } from '@/lib/supabase/server'
 import {
   BADGES,
@@ -20,7 +22,7 @@ export async function addXp(amount: number, reason: string) {
     p_amount: amount,
   })
 
-  if (error) return { error: error.message }
+  if (error) return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
 
   await checkBadges()
   return { success: true, totalXp: newTotal ?? 0 }
@@ -274,7 +276,7 @@ export async function completeMission(missionType: string, skipXp = false) {
     .update({ completed: true, completed_at: new Date().toISOString() })
     .eq('id', mission.id)
 
-  if (error) return { error: error.message }
+  if (error) return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
 
   if (!skipXp) {
     await addXp(mission.xp_reward, `mission_${missionType}`)

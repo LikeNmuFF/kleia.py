@@ -1,3 +1,4 @@
+import { getSafeErrorMessage } from '@/lib/errorHandler'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getServiceClient } from '@/lib/supabase/service'
@@ -20,7 +21,7 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
   // fetch snapshots via service role (bypasses RLS security_invoker limitation for other users)
   const svc = getServiceClient() as any
   const { data: snapshots, error } = await svc.from('skill_snapshots').select('*').in('user_id', userIds)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }, { status: 500 })
 
   if (!snapshots?.length) return NextResponse.json({ averages: null, members: userIds.length })
 
