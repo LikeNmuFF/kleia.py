@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { CheckCircle2, Clock3, Search, UsersRound, XCircle } from 'lucide-react'
-import { getCcoRegistrations, updateCcoRegistrationStatus } from '@/app/actions/admin'
+import { Download, Search, Trash2, UsersRound } from 'lucide-react'
+import { deleteCcoRegistration, getCcoRegistrations } from '@/app/actions/admin'
 
 interface CcoRegistration {
   id: string
@@ -13,18 +13,6 @@ interface CcoRegistration {
   set_name: string
   status: 'pending' | 'approved' | 'rejected'
   created_at: string
-}
-
-const statusIcons = {
-  pending: Clock3,
-  approved: CheckCircle2,
-  rejected: XCircle,
-}
-
-const statusColors = {
-  pending: '#f59e0b',
-  approved: '#22c55e',
-  rejected: '#ef4444',
 }
 
 export default function CcoSignupsTab() {
@@ -49,14 +37,17 @@ export default function CcoSignupsTab() {
     refresh()
   }, [])
 
-  async function changeStatus(id: string, status: CcoRegistration['status']) {
+  async function deleteRegistration(id: string) {
+    if (!window.confirm('Delete this CCO sign-up permanently? This cannot be undone.')) return
+
     setError(null)
-    const result = await updateCcoRegistrationStatus(id, status)
+    const result = await deleteCcoRegistration(id)
     if ('error' in result && result.error) {
       setError(result.error)
       return
     }
-    setRegistrations((current) => current.map((row) => row.id === id ? { ...row, status } : row))
+
+    setRegistrations((current) => current.filter((row) => row.id !== id))
     await refresh()
   }
 
@@ -65,18 +56,157 @@ export default function CcoSignupsTab() {
     return haystack.includes(search.toLowerCase())
   })
 
+  function escapeHtml(value: string) {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;')
+  }
+
+  function formatSubmittedAt(value: string) {
+    return new Date(value).toLocaleString()
+  }
+
+  function exportRegistrationsPdf() {
+    const reportWindow = window.open('', '_blank')
+    if (!reportWindow) {
+      setError('Could not open the PDF export window. Please allow pop-ups and try again.')
+      return
+    }
+
+    const generatedAt = new Date().toLocaleString()
+    const rows = filtered.map((row, index) => `
+      <tr>
+        <td>${index + 1}</td>
+        <td>${escapeHtml(row.full_name)}</td>
+        <td>${escapeHtml(row.email)}</td>
+        <td>${escapeHtml(row.course || '-')}</td>
+        <td>${escapeHtml(row.year_level || '-')}</td>
+        <td>${escapeHtml(row.set_name)}</td>
+        <td>${escapeHtml(formatSubmittedAt(row.created_at))}</td>
+      </tr>
+    `).join('')
+
+    reportWindow.document.write(`
+      <!doctype html>
+      <html>
+        <head>
+          <title>CCO Sign-ups Export</title>
+          <style>
+            body {
+              color: #111827;
+              font-family: Arial, sans-serif;
+              margin: 32px;
+            }
+
+            h1 {
+              font-size: 24px;
+              margin: 0 0 4px;
+            }
+
+            .meta {
+              color: #4b5563;
+              font-size: 12px;
+              margin-bottom: 20px;
+            }
+
+            .summary {
+              display: grid;
+              gap: 8px;
+              grid-template-columns: repeat(3, 1fr);
+              margin-bottom: 20px;
+            }
+
+            .summary div {
+              border: 1px solid #d1d5db;
+              padding: 10px;
+            }
+
+            .summary span {
+              color: #6b7280;
+              display: block;
+              font-size: 11px;
+              text-transform: uppercase;
+            }
+
+            .summary strong {
+              display: block;
+              font-size: 20px;
+              margin-top: 4px;
+            }
+
+            table {
+              border-collapse: collapse;
+              font-size: 11px;
+              width: 100%;
+            }
+
+            th,
+            td {
+              border: 1px solid #d1d5db;
+              padding: 7px;
+              text-align: left;
+              vertical-align: top;
+            }
+
+            th {
+              background: #f3f4f6;
+              font-weight: 700;
+            }
+
+            @media print {
+              body {
+                margin: 18mm;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <h1>CCO Sign-ups</h1>
+          <div class="meta">Generated ${escapeHtml(generatedAt)}${search ? ` - Filter: ${escapeHtml(search)}` : ''}</div>
+          <section class="summary">
+            <div><span>Total Registered</span><strong>${counts.total}</strong></div>
+            <div><span>Showing</span><strong>${filtered.length}</strong></div>
+            <div><span>Auto-approved</span><strong>${counts.approved}</strong></div>
+          </section>
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Student</th>
+                <th>Email</th>
+                <th>Course</th>
+                <th>Year</th>
+                <th>Set</th>
+                <th>Submitted</th>
+              </tr>
+            </thead>
+            <tbody>${rows || '<tr><td colspan="7">No CCO sign-ups found.</td></tr>'}</tbody>
+          </table>
+          <script>
+            window.addEventListener('load', () => {
+              window.print()
+            })
+          </script>
+        </body>
+      </html>
+    `)
+    reportWindow.document.close()
+  }
+
   if (loading) {
     return <div className="space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-20 rounded-xl animate-pulse" style={{ backgroundColor: 'var(--card-bg)' }} />)}</div>
   }
 
   return (
     <div className="space-y-5">
-      <div className="grid gap-3 sm:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-3">
         {[
-          ['Total', counts.total],
-          ['Pending', counts.pending],
-          ['Approved', counts.approved],
-          ['Rejected', counts.rejected],
+          ['Total Registered', counts.total],
+          ['Auto-approved', counts.approved],
+          ['Showing', filtered.length],
         ].map(([label, value]) => (
           <div key={label} className="rounded-xl border p-4" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--card-bg)' }}>
             <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>{label}</p>
@@ -95,6 +225,15 @@ export default function CcoSignupsTab() {
             className="input-field pl-10"
           />
         </div>
+        <button
+          type="button"
+          onClick={exportRegistrationsPdf}
+          className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition hover:bg-white/5"
+          style={{ borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}
+        >
+          <Download className="h-4 w-4" />
+          Export PDF
+        </button>
         <button
           type="button"
           onClick={refresh}
@@ -127,13 +266,11 @@ export default function CcoSignupsTab() {
                 <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--text-secondary)' }}>Year</th>
                 <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--text-secondary)' }}>Set</th>
                 <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--text-secondary)' }}>Submitted</th>
-                <th className="px-4 py-3 text-left font-medium" style={{ color: 'var(--text-secondary)' }}>Status</th>
+                <th className="px-4 py-3 text-right font-medium" style={{ color: 'var(--text-secondary)' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((row) => {
-                const StatusIcon = statusIcons[row.status]
-                return (
+              {filtered.map((row) => (
                   <tr key={row.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
                     <td className="px-4 py-3">
                       <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{row.full_name}</p>
@@ -143,24 +280,19 @@ export default function CcoSignupsTab() {
                     <td className="px-4 py-3" style={{ color: 'var(--text-primary)' }}>{row.year_level || '-'}</td>
                     <td className="px-4 py-3" style={{ color: 'var(--text-primary)' }}>{row.set_name}</td>
                     <td className="px-4 py-3 whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{new Date(row.created_at).toLocaleString()}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <StatusIcon className="h-4 w-4" style={{ color: statusColors[row.status] }} />
-                        <select
-                          value={row.status}
-                          onChange={(event) => changeStatus(row.id, event.target.value as CcoRegistration['status'])}
-                          className="rounded-lg border px-2 py-1 capitalize outline-none"
-                          style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--input-bg)', color: 'var(--text-primary)' }}
-                        >
-                          <option value="pending">Pending</option>
-                          <option value="approved">Approved</option>
-                          <option value="rejected">Rejected</option>
-                        </select>
-                      </div>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={() => deleteRegistration(row.id)}
+                        className="rounded-lg p-2 text-red-400 transition hover:bg-red-500/10"
+                        title="Delete CCO sign-up"
+                        aria-label={`Delete ${row.full_name}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </td>
                   </tr>
-                )
-              })}
+              ))}
             </tbody>
           </table>
         </div>

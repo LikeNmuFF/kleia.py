@@ -10,4 +10,10 @@ describe('CCO club setup helper', () => {
     expect(registrationRoute).toContain('ensureCcoClub')
     expect(countRoute).toContain('ensureCcoClub')
   })
+
+  it('automatically approves new CCO registrations', () => {
+    const registrationRoute = readFileSync(join(process.cwd(), 'app', 'api', 'cco', 'registrations', 'route.ts'), 'utf8')
+
+    expect(registrationRoute).toContain("status: 'approved'")
+  })
 })

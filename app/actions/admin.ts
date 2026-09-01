@@ -488,21 +488,22 @@ export async function getCcoRegistrations() {
   }
 }
 
-export async function updateCcoRegistrationStatus(registrationId: string, status: string) {
-  if (!['pending', 'approved', 'rejected'].includes(status)) {
-    return { error: 'Invalid registration status.' }
-  }
-
+export async function deleteCcoRegistration(registrationId: string) {
   const supabase = await createClient()
   await requireAdmin(supabase)
 
   const adminClient = getServiceClient() as any
+  const { club } = await ensureCcoClub(adminClient)
+
+  if (!club) return { error: 'Could not load CCO sign-ups.' }
+
   const { error } = await adminClient
     .from('club_registrations')
-    .update({ status })
+    .delete()
     .eq('id', registrationId)
+    .eq('club_id', club.id)
 
-  if (error) return { error: getSafeErrorMessage(error, 'Could not update registration status.') }
+  if (error) return { error: getSafeErrorMessage(error, 'Could not delete CCO sign-up.') }
 
   revalidatePath('/admin')
   revalidatePath('/cco')

@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       student_id: null,
       phone: null,
       reason: null,
-      status: 'pending',
+      status: 'approved',
       source: 'qr',
     })
 
