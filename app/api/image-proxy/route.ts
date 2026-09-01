@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { resolveAndCheckHost, hasCredentials } from '@/lib/ssrf-guard'
 import { logSecurityEvent } from '@/lib/security-log'
 import { checkNamedRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { isBlockedProxyImageUrl } from '@/lib/images/image-proxy-url'
 
 const MAX_URL_LENGTH = 2048
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB
@@ -62,6 +63,15 @@ export async function GET(request: NextRequest) {
       details: { url: decodedUrl.slice(0, 200) },
     })
     return NextResponse.json({ error: 'URLs with credentials not allowed' }, { status: 400 })
+  }
+
+  if (isBlockedProxyImageUrl(decodedUrl)) {
+    return new NextResponse(null, {
+      status: 204,
+      headers: {
+        'Cache-Control': 'public, max-age=3600, s-maxage=86400',
+      },
+    })
   }
 
   if (!(await resolveAndCheckHost(parsed.hostname))) {

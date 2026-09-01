@@ -1,5 +1,7 @@
 'use client'
 
+import { getProxiedImageSrc } from '@/lib/images/image-proxy-url'
+
 export interface LinkPreviewData {
   url: string
   title: string | null
@@ -9,6 +11,7 @@ export interface LinkPreviewData {
 }
 
 export default function LinkPreviewCard({ preview }: { preview: LinkPreviewData }) {
+  const proxiedImageSrc = preview.image ? getProxiedImageSrc(preview.image) : null
   const hostname = (() => {
     try {
       return new URL(preview.url).hostname.replace('www.', '')
@@ -25,10 +28,10 @@ export default function LinkPreviewCard({ preview }: { preview: LinkPreviewData 
       className="block mt-3 rounded-xl overflow-hidden border transition-all hover:scale-[1.01] hover:shadow-lg"
       style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--card-bg)' }}
     >
-      {preview.image && (
+      {proxiedImageSrc && (
         <div className="relative w-full h-48 overflow-hidden bg-black/20">
           <img
-            src={`/api/image-proxy?url=${encodeURIComponent(preview.image)}`}
+            src={proxiedImageSrc}
             alt=""
             className="w-full h-full object-cover"
             onError={(e) => {
