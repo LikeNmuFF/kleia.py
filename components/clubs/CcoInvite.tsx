@@ -9,7 +9,7 @@ const highlights = [
   { icon: CalendarDays, title: 'Join Activities', text: 'Be part of workshops, events, challenges, and student-led sessions.' },
 ]
 
-const floatingTags = ['All Students', 'Set A-E', 'Projects', 'Workshops', 'Community']
+const floatingTags = ['All Students', 'CTF\'s', 'Projects', 'Workshops', 'Community']
 
 export default function CcoInvite() {
   const reduceMotion = useReducedMotion()
