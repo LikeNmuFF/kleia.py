@@ -50,6 +50,7 @@ export async function updateSession(request: NextRequest) {
     '/privacy',
     '/terms',
     '/api',
+    '/cco',
     '/ctf/seasons',
   ]
 

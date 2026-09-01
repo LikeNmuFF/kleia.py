@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Users, MessageSquare, Shield, Flag, LayoutDashboard, Regex, Trophy, Mail, ScrollText } from 'lucide-react'
+import { Users, MessageSquare, Shield, Flag, LayoutDashboard, Regex, Trophy, Mail, ScrollText, ClipboardList } from 'lucide-react'
 import OverviewTab from './OverviewTab'
 import UsersTab from './UsersTab'
 import ContentTab from './ContentTab'
@@ -12,6 +12,7 @@ import RegexGolfAdminTab from './RegexGolfAdminTab'
 import SeasonsAdminTab from './SeasonsAdminTab'
 import EmailTab from './EmailTab'
 import LogsTab from './LogsTab'
+import CcoSignupsTab from './CcoSignupsTab'
 
 const TABS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -21,6 +22,7 @@ const TABS = [
   { id: 'ctf', label: 'CTF', icon: Flag },
   { id: 'seasons', label: 'Seasons', icon: Trophy },
   { id: 'regex-golf', label: 'Regex Golf', icon: Regex },
+  { id: 'cco', label: 'CCO Sign-ups', icon: ClipboardList },
   { id: 'email', label: 'Email', icon: Mail },
   { id: 'logs', label: 'Logs', icon: ScrollText },
   { id: 'security', label: 'Security', icon: Shield },
@@ -70,6 +72,7 @@ export default function AdminDashboard({ role }: { role: string }) {
       {activeTab === 'ctf' && <CTFAdminTab />}
       {activeTab === 'seasons' && <SeasonsAdminTab />}
       {activeTab === 'regex-golf' && <RegexGolfAdminTab />}
+      {activeTab === 'cco' && <CcoSignupsTab />}
       {activeTab === 'email' && <EmailTab />}
       {activeTab === 'logs' && <LogsTab />}
       {activeTab === 'security' && <SecurityTabComponent />}

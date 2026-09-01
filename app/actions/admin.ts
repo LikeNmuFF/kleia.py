@@ -7,6 +7,7 @@ import { getServiceClient } from '@/lib/supabase/service'
 import { revalidatePath } from 'next/cache'
 import { logEvent } from '@/lib/logEvent'
 import { requireAdmin } from '@/lib/admin'
+import { ensureCcoClub } from '@/lib/clubs/cco'
 
 const FREE_TIER_BYTES = 500 * 1024 * 1024 // 500MB
 
@@ -451,6 +452,60 @@ export async function deleteComment(commentId: string) {
 
   const { error } = await supabase.from('comments').delete().eq('id', commentId)
   if (error) return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
+  return { success: true }
+}
+
+// ============================================================
+// CCO Sign-up Admin Actions
+// ============================================================
+
+export async function getCcoRegistrations() {
+  const supabase = await createClient()
+  await requireAdmin(supabase)
+
+  const adminClient = getServiceClient() as any
+  const { club } = await ensureCcoClub(adminClient)
+
+  if (!club) return { registrations: [], counts: { total: 0, pending: 0, approved: 0, rejected: 0 } }
+
+  const { data, error } = await adminClient
+    .from('club_registrations')
+    .select('id, full_name, email, course, year_level, set_name, status, created_at')
+    .eq('club_id', club.id)
+    .order('created_at', { ascending: false })
+
+  if (error) return { error: getSafeErrorMessage(error, 'Could not load CCO sign-ups.') }
+
+  const registrations = data ?? []
+  return {
+    registrations,
+    counts: {
+      total: registrations.length,
+      pending: registrations.filter((row: any) => row.status === 'pending').length,
+      approved: registrations.filter((row: any) => row.status === 'approved').length,
+      rejected: registrations.filter((row: any) => row.status === 'rejected').length,
+    },
+  }
+}
+
+export async function updateCcoRegistrationStatus(registrationId: string, status: string) {
+  if (!['pending', 'approved', 'rejected'].includes(status)) {
+    return { error: 'Invalid registration status.' }
+  }
+
+  const supabase = await createClient()
+  await requireAdmin(supabase)
+
+  const adminClient = getServiceClient() as any
+  const { error } = await adminClient
+    .from('club_registrations')
+    .update({ status })
+    .eq('id', registrationId)
+
+  if (error) return { error: getSafeErrorMessage(error, 'Could not update registration status.') }
+
+  revalidatePath('/admin')
+  revalidatePath('/cco')
   return { success: true }
 }
 
