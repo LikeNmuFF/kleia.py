@@ -14,3 +14,13 @@ describe('auth confirm page', () => {
     expect(source).not.toContain('verifyOtp')
   })
 })
+
+describe('Supabase confirmation email template', () => {
+  it('routes confirmation links through the click-to-verify page', () => {
+    const template = readFileSync(join(process.cwd(), 'supabase-confirmation-email.html'), 'utf8')
+
+    expect(template).toContain('/auth/confirm')
+    expect(template).toContain('{{ .TokenHash }}')
+    expect(template).not.toContain('{{ .ConfirmationURL }}')
+  })
+})
