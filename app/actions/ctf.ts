@@ -233,6 +233,7 @@ export async function createChallenge(data: {
   points: number
   flag: string
   hint?: string
+  hint_points_cost?: number
   file_url?: string
   link_url?: string
   author?: string
@@ -271,6 +272,7 @@ export async function createChallenge(data: {
       points: data.points,
       flag_hash: hashFlag(data.flag.trim()),
       hint: data.hint?.trim() || null,
+      hint_points_cost: Math.max(0, Math.floor(data.hint_points_cost ?? 10)),
       file_url: data.file_url?.trim() || null,
       link_url: data.link_url?.trim() || null,
       author: data.author?.trim() || null,
@@ -297,6 +299,7 @@ export async function createSeasonChallenge(seasonId: string, data: {
   points: number
   flag: string
   hint?: string
+  hint_points_cost?: number
   file_url?: string
   link_url?: string
   author?: string
@@ -342,6 +345,7 @@ export async function createSeasonChallenge(seasonId: string, data: {
       points: data.points,
       flag_hash: hashFlag(data.flag.trim()),
       hint: data.hint?.trim() || null,
+      hint_points_cost: Math.max(0, Math.floor(data.hint_points_cost ?? 10)),
       file_url: data.file_url?.trim() || null,
       link_url: data.link_url?.trim() || null,
       author: data.author?.trim() || null,
@@ -635,7 +639,7 @@ export async function getChallenge(id: string) {
 
   const { data: challenge } = await supabase
     .from('ctf_challenges')
-    .select('id, title, description, category, difficulty, points, hint, file_url, link_url, author, created_at, created_by')
+    .select('id, title, description, category, difficulty, points, hint, hint_points_cost, file_url, link_url, author, created_at, created_by')
     .eq('id', id)
     .eq('status', 'approved')
     .single()

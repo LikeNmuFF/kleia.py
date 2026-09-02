@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Play, Pause, Circle, Square, UserPlus, Trash2, Save } from 'lucide-react'
+import { Play, Pause, Circle, Square, UserPlus, Trash2, Save, Upload, Loader2 } from 'lucide-react'
 import type { SeasonStatus } from '@/app/actions/competition'
 import { formatDateTime } from '@/lib/utils/time'
 import {
@@ -67,6 +67,17 @@ export default function SeasonAdminClient({
   const [adjustSolved, setAdjustSolved] = useState(0)
   const [busy, setBusy] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
+  const [uploading, setUploading] = useState(false)
+
+  const uploadChallengeFile = async (file: File) => {
+    const body = new FormData()
+    body.append('file', file)
+    body.append('upload_preset', 'kleia-avatars')
+    body.append('folder', 'kleia/challenges')
+    const response = await fetch(`https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/raw/upload`, { method: 'POST', body })
+    if (!response.ok) throw new Error('Challenge file upload failed')
+    return (await response.json()).secure_url as string
+  }
 
   const notify = (text: string, type: 'success' | 'error' = 'success') => {
     setMessage({ text, type })
@@ -206,6 +217,19 @@ export default function SeasonAdminClient({
             onSubmit={async (e) => {
               e.preventDefault()
               const fd = new FormData(e.currentTarget)
+              let uploadedFileUrl = (fd.get('file_url') as string) || undefined
+              const file = fd.get('challenge_file')
+              if (file instanceof File && file.size > 0) {
+                try {
+                  setUploading(true)
+                  uploadedFileUrl = await uploadChallengeFile(file)
+                } catch (error) {
+                  notify(error instanceof Error ? error.message : 'Challenge file upload failed', 'error')
+                  setUploading(false)
+                  return
+                }
+                setUploading(false)
+              }
               const res = await run(
                 () => createSeasonChallenge(season.id, {
                   title: fd.get('title') as string,
@@ -215,7 +239,8 @@ export default function SeasonAdminClient({
                   points: parseInt(fd.get('points') as string),
                   flag: fd.get('flag') as string,
                   hint: (fd.get('hint') as string) || undefined,
-                  file_url: (fd.get('file_url') as string) || undefined,
+                  hint_points_cost: parseInt(fd.get('hint_points_cost') as string) || 10,
+                  file_url: uploadedFileUrl,
                   link_url: (fd.get('link_url') as string) || undefined,
                   author: (fd.get('author') as string) || undefined,
                 }),
@@ -240,11 +265,16 @@ export default function SeasonAdminClient({
             <input name="points" type="number" min="1" placeholder="Points *" required className="w-full px-3 py-2 rounded-lg text-sm border bg-transparent" style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
             <input name="flag" type="text" placeholder="Flag (plaintext) *" required className="w-full px-3 py-2 rounded-lg text-sm border bg-transparent" style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
             <input name="hint" placeholder="Hint (optional)" className="w-full px-3 py-2 rounded-lg text-sm border bg-transparent" style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
+            <input name="hint_points_cost" type="number" min="0" defaultValue="10" placeholder="Hint penalty (points)" className="w-full px-3 py-2 rounded-lg text-sm border bg-transparent" style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
             <input name="author" placeholder="Author (optional)" className="w-full px-3 py-2 rounded-lg text-sm border bg-transparent" style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
             <input name="link_url" placeholder="External link URL (optional)" className="w-full px-3 py-2 rounded-lg text-sm border bg-transparent md:col-span-2" style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
             <input name="file_url" placeholder="File URL (optional)" className="w-full px-3 py-2 rounded-lg text-sm border bg-transparent md:col-span-2" style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
+            <label className="md:col-span-2 flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+              <Upload className="w-4 h-4" /> Upload challenge file
+              <input name="challenge_file" type="file" className="text-xs" />
+            </label>
             <button type="submit" disabled={busy} className="md:col-span-2 px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40" style={{ background: 'var(--accent)', color: 'var(--accent-text)' }}>
-              Create
+              {uploading ? <><Loader2 className="inline w-4 h-4 mr-1 animate-spin" /> Uploading...</> : 'Create'}
             </button>
           </form>
         )}

@@ -165,6 +165,32 @@ export async function creditSeasonSolve(userId: string, challengeId: string) {
   }
 }
 
+export async function unlockSeasonHint(seasonId: string, challengeId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not logged in' }
+
+  const { data: challenge } = await supabase
+    .from('ctf_challenges')
+    .select('hint, hint_points_cost')
+    .eq('id', challengeId)
+    .eq('status', 'approved')
+    .single()
+  if (!challenge?.hint) return { error: 'No hint available' }
+
+  const penalty = Math.max(0, challenge.hint_points_cost ?? 10)
+  const { data: charged, error } = await supabase.rpc('unlock_season_hint', {
+    p_season_id: seasonId,
+    p_challenge_id: challengeId,
+    p_user_id: user.id,
+    p_penalty: penalty,
+  })
+  if (error) return { error: getSafeErrorMessage(error, 'Could not unlock hint') }
+
+  revalidatePath(`/ctf/seasons`)
+  return { hint: challenge.hint, penalty: charged ? penalty : 0 }
+}
+
 /** Latest correct solves in a season, joined with codename + challenge title (for the spectate ticker). */
 export async function getRecentSeasonSolves(seasonId: string) {
   const supabase = await createClient()

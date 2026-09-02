@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { X, Trophy, Target, CheckCircle2, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { submitFlag, getChallenge } from '@/app/actions/ctf'
+import { unlockSeasonHint } from '@/app/actions/competition'
 import Countdown from '@/components/competition/Countdown'
 import { useSeasonStatusRealtime } from '@/lib/hooks/useSeasonStatusRealtime'
 
@@ -61,7 +62,8 @@ export default function CompetitionClient({
   const [challengesSolved, setChallengesSolved] = useState(initialChallengesSolved)
   const [solveList, setSolveList] = useState<Challenge[]>(challenges)
   const [openChallenge, setOpenChallenge] = useState<Challenge | null>(null)
-  const [detail, setDetail] = useState<{ description: string; hint: string | null } | null>(null)
+  const [detail, setDetail] = useState<{ description: string; hint: string | null; hasHint: boolean; hintPointsCost: number } | null>(null)
+  const [unlockingHint, setUnlockingHint] = useState(false)
   const [flag, setFlag] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null)
@@ -99,7 +101,20 @@ export default function CompetitionClient({
     setResult(null)
     setDetail(null)
     const ch = await getChallenge(challenge.id)
-    if (ch) setDetail({ description: ch.description, hint: ch.hint ?? null })
+    if (ch) setDetail({ description: ch.description, hint: null, hasHint: Boolean(ch.hint), hintPointsCost: ch.hint_points_cost ?? 10 })
+  }
+
+  const handleUnlockHint = async () => {
+    if (!openChallenge || !detail || unlockingHint) return
+    setUnlockingHint(true)
+    const res = await unlockSeasonHint(season.id, openChallenge.id)
+    setUnlockingHint(false)
+    if (res.error) setResult({ ok: false, text: res.error })
+    else {
+      setDetail(prev => prev ? { ...prev, hint: res.hint } : prev)
+      const penalty = res.penalty ?? 0
+      if (penalty > 0) setTotalPoints(prev => Math.max(0, prev - penalty))
+    }
   }
 
   const handleSubmit = async () => {
@@ -298,6 +313,11 @@ export default function CompetitionClient({
                 )}
               </div>
 
+              {detail?.hasHint && !detail.hint && (
+                <button onClick={handleUnlockHint} disabled={unlockingHint} className="mb-5 w-full rounded-xl p-3 text-left text-sm disabled:opacity-50" style={{ backgroundColor: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.25)', color: '#eab308' }}>
+                  {unlockingHint ? 'Unlocking hint...' : `Unlock hint (-${detail.hintPointsCost} season points)`}
+                </button>
+              )}
               {detail?.hint && (
                 <div className="mb-5 rounded-xl p-3 text-sm" style={{ backgroundColor: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.25)', color: '#eab308' }}>
                   💡 {detail.hint}
