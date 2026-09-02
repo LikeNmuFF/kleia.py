@@ -1,4 +1,6 @@
 import { login, signInWithGoogle, signInWithGitHub } from './actions'
+import { AuthErrorMessage } from './auth-error-message'
+import { getLoginErrorMessage } from '@/lib/auth/errors'
 import Link from 'next/link'
 
 export default async function LoginPage({
@@ -21,11 +23,7 @@ export default async function LoginPage({
           </p>
       </div>
 
-      {error && (
-        <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-          {error}
-        </div>
-      )}
+      <AuthErrorMessage error={getLoginErrorMessage(error) ?? undefined} />
 
       <form action={login} className="space-y-5">
         <div>

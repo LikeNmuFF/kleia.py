@@ -19,6 +19,18 @@ export function getAuthErrorMessage(error: unknown): string {
   return 'Something went wrong. Please try again.'
 }
 
+export function getLoginErrorMessage(error?: string | null): string | null {
+  switch (error) {
+    case 'verification_link_expired':
+    case 'otp_expired':
+      return 'That verification link is invalid or has expired. Please sign up again to request a new link.'
+    case 'auth_failed':
+      return 'We could not finish signing you in. Please try again.'
+    default:
+      return error || null
+  }
+}
+
 export function isEmailSendRateLimitError(error: unknown): boolean {
   const authError = toAuthErrorLike(error)
   const message = authError.message?.toLowerCase() ?? ''

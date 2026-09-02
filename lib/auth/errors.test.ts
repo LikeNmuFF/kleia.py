@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getAuthErrorMessage, isEmailSendRateLimitError } from './errors'
+import { getAuthErrorMessage, getLoginErrorMessage, isEmailSendRateLimitError } from './errors'
 
 describe('isEmailSendRateLimitError', () => {
   it('recognizes Supabase email send rate limit errors by code', () => {
@@ -40,5 +40,15 @@ describe('getAuthErrorMessage', () => {
 
   it('uses a generic fallback for unknown auth errors in production-safe paths', () => {
     expect(getAuthErrorMessage({ message: 'unexpected provider internals' })).toBe('Something went wrong. Please try again.')
+  })
+})
+
+describe('getLoginErrorMessage', () => {
+  it('explains expired verification links clearly', () => {
+    expect(getLoginErrorMessage('verification_link_expired')).toBe('That verification link is invalid or has expired. Please sign up again to request a new link.')
+  })
+
+  it('keeps auth callback failures clear', () => {
+    expect(getLoginErrorMessage('auth_failed')).toBe('We could not finish signing you in. Please try again.')
   })
 })
