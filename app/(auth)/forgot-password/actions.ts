@@ -4,6 +4,7 @@ import { getSafeErrorMessage } from '@/lib/errorHandler'
 
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { buildAuthCallbackUrl } from '@/lib/auth/redirect-url'
 
 export async function resetPassword(formData: FormData) {
   const supabase = await createClient()
@@ -15,7 +16,7 @@ export async function resetPassword(formData: FormData) {
   }
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?next=/reset-password`,
+    redirectTo: buildAuthCallbackUrl('/reset-password'),
   })
 
   if (error) {

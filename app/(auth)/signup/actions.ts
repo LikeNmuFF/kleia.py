@@ -5,6 +5,7 @@ import { getSafeErrorMessage } from '@/lib/errorHandler'
 import { redirect } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/server'
+import { buildAuthCallbackUrl } from '@/lib/auth/redirect-url'
 
 export async function signup(formData: FormData) {
   const supabase = await createClient()
@@ -33,6 +34,7 @@ export async function signup(formData: FormData) {
     email,
     password,
     options: {
+      emailRedirectTo: buildAuthCallbackUrl(),
       data: { username },
     },
   })
