@@ -3,8 +3,9 @@
 import { redirect } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/server'
-import { getAuthErrorMessage } from '@/lib/auth/errors'
+import { getAuthErrorMessage, isEmailSendRateLimitError } from '@/lib/auth/errors'
 import { buildAuthCallbackUrl } from '@/lib/auth/redirect-url'
+import { getServiceClient } from '@/lib/supabase/service'
 
 export async function signup(formData: FormData) {
   const supabase = await createClient()
@@ -39,6 +40,31 @@ export async function signup(formData: FormData) {
   })
 
   if (error) {
+    if (isEmailSendRateLimitError(error)) {
+      const adminClient = getServiceClient()
+      const { error: createUserError } = await adminClient.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { username },
+      })
+
+      if (createUserError) {
+        redirect('/signup?error=' + encodeURIComponent(getAuthErrorMessage(createUserError)))
+      }
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (!signInError) {
+        redirect('/feed')
+      }
+
+      redirect('/login?error=' + encodeURIComponent('Account created. Please sign in.'))
+    }
+
     redirect('/signup?error=' + encodeURIComponent(getAuthErrorMessage(error)))
   }
 

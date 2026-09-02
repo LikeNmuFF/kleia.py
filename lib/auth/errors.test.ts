@@ -1,5 +1,29 @@
 import { describe, expect, it } from 'vitest'
-import { getAuthErrorMessage } from './errors'
+import { getAuthErrorMessage, isEmailSendRateLimitError } from './errors'
+
+describe('isEmailSendRateLimitError', () => {
+  it('recognizes Supabase email send rate limit errors by code', () => {
+    expect(isEmailSendRateLimitError({
+      code: 'over_email_send_rate_limit',
+      status: 429,
+      message: 'email rate limit exceeded',
+    })).toBe(true)
+  })
+
+  it('recognizes Supabase email send rate limit errors by status and message', () => {
+    expect(isEmailSendRateLimitError({
+      status: 429,
+      message: 'Email rate limit exceeded',
+    })).toBe(true)
+  })
+
+  it('does not treat unrelated auth failures as email send rate limits', () => {
+    expect(isEmailSendRateLimitError({
+      status: 400,
+      message: 'User already registered',
+    })).toBe(false)
+  })
+})
 
 describe('getAuthErrorMessage', () => {
   it('explains Supabase email send rate limits to signup users', () => {
