@@ -12,6 +12,11 @@ export function isChallengePublicAfterSeasons(statuses: SeasonStatus[]): boolean
   return statuses.every(status => status === 'ended')
 }
 
+/** Legacy globally-created challenges linked to a season remain playable live or after it ends. */
+export function areLinkedChallengeSubmissionsOpen(statuses: (SeasonStatus | null)[]): boolean {
+  return statuses.every(status => status !== 'upcoming' && status !== 'paused')
+}
+
 export interface SeasonRow {
   id: string
   name: string

@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { canRevealSeasonChallenges, isChallengePublicAfterSeasons } from './competition-status'
+import {
+  areLinkedChallengeSubmissionsOpen,
+  canRevealSeasonChallenges,
+  isChallengePublicAfterSeasons,
+} from './competition-status'
 
 describe('season challenge visibility', () => {
   it('reveals challenges only to a participant in a live season', () => {
@@ -30,6 +34,14 @@ describe('season challenge visibility', () => {
     expect(isChallengePublicAfterSeasons(['ended', 'upcoming'])).toBe(false)
     expect(isChallengePublicAfterSeasons(['live'])).toBe(false)
     expect(isChallengePublicAfterSeasons(['paused'])).toBe(false)
+  })
+
+  it('allows legacy linked challenges after seasons end but not while upcoming or paused', () => {
+    expect(areLinkedChallengeSubmissionsOpen(['ended'])).toBe(true)
+    expect(areLinkedChallengeSubmissionsOpen(['live'])).toBe(true)
+    expect(areLinkedChallengeSubmissionsOpen(['upcoming'])).toBe(false)
+    expect(areLinkedChallengeSubmissionsOpen(['paused'])).toBe(false)
+    expect(areLinkedChallengeSubmissionsOpen(['ended', 'paused'])).toBe(false)
   })
 
   it('guards direct challenge URLs using their associated season statuses', () => {

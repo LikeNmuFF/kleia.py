@@ -13,7 +13,7 @@ import { checkNamedRateLimit } from '@/lib/rate-limit'
 import { extractClientIp } from '@/lib/logEvent'
 import { checkAndUnlockNodes } from './skilltree'
 import { creditSeasonSolve } from './competition'
-import { getEffectiveSeasonStatus } from './competition-status'
+import { areLinkedChallengeSubmissionsOpen, getEffectiveSeasonStatus } from './competition-status'
 
 const VALID_CATEGORIES = ['web', 'crypto', 'forensics', 'misc']
 const VALID_DIFFICULTIES = ['easy', 'medium', 'hard']
@@ -125,7 +125,7 @@ export async function submitFlag(challengeId: string, submittedFlag: string) {
         const season = Array.isArray(link.seasons) ? link.seasons[0] : link.seasons
         return season ? getEffectiveSeasonStatus(season) : null
       })
-      if (statuses.some((s) => s === 'paused' || s === 'ended')) {
+      if (!areLinkedChallengeSubmissionsOpen(statuses)) {
         return { error: 'Submissions are disabled for this season right now' }
       }
     }
