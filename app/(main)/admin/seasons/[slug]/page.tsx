@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { requireAdmin } from '@/lib/admin'
 import { getSeasonBySlug } from '@/app/actions/seasons'
 import { getSeasonParticipants, getSeasonSpectators } from '@/app/actions/competition'
+import { getSeasonRegistrations } from '@/app/actions/registrations'
 import { getEffectiveSeasonStatus } from '@/app/actions/competition-status'
 import SeasonAdminClient from './SeasonAdminClient'
 
@@ -14,9 +15,10 @@ export default async function SeasonAdminPage({ params }: { params: Promise<{ sl
   const season = await getSeasonBySlug(slug)
   if (!season) notFound()
 
-  const [participants, spectators, seasonChallenges] = await Promise.all([
+  const [participants, spectators, registrations, seasonChallenges] = await Promise.all([
     getSeasonParticipants(season.id),
     getSeasonSpectators(season.id),
+    getSeasonRegistrations(season.id),
     supabase
       .from('ctf_season_challenges')
       .select('challenge_id, bonus_points, ctf_challenges:challenge_id (id, title, category, difficulty, points, season_id)')
@@ -42,6 +44,7 @@ export default async function SeasonAdminPage({ params }: { params: Promise<{ sl
       effectiveStatus={getEffectiveSeasonStatus(season)}
       participants={participants}
       spectators={spectators}
+      registrations={registrations}
       challenges={challenges}
     />
   )

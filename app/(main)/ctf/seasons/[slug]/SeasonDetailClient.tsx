@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { joinSeason, updateSeasonCodename } from '@/app/actions/seasons'
 import Countdown from '@/components/competition/Countdown'
+import SeasonRegistrationForm from '@/components/competition/SeasonRegistrationForm'
 import { formatDateTime } from '@/lib/utils/time'
 import { useSeasonStatusRealtime } from '@/lib/hooks/useSeasonStatusRealtime'
 import { Share2, Copy, Check, Trophy, Users, Calendar, Target, Shield, ExternalLink } from 'lucide-react'
@@ -294,6 +295,9 @@ export default function SeasonDetailClient({
       </div>
 
       {/* Registration / Join Section */}
+      {!isParticipant && canRegister() && !userId && (
+        <SeasonRegistrationForm seasonId={season.id} seasonName={season.name} />
+      )}
       {!isParticipant && canRegister() && userId && (
         <div
           className="mb-8 rounded-2xl overflow-hidden"

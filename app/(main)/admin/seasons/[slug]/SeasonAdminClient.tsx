@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Play, Pause, Circle, Square, UserPlus, Trash2, Save, Upload, Loader2 } from 'lucide-react'
+import { Play, Pause, Circle, Square, UserPlus, Trash2, Save, Upload, Loader2, Copy, Check } from 'lucide-react'
 import type { SeasonStatus } from '@/app/actions/competition'
 import { formatDateTime } from '@/lib/utils/time'
 import {
@@ -12,6 +12,7 @@ import {
   adjustSeasonScore,
 } from '@/app/actions/competition'
 import { createSeasonChallenge } from '@/app/actions/ctf'
+import { createAccountFromRegistration } from '@/app/actions/registrations'
 
 interface Season {
   id: string
@@ -46,17 +47,27 @@ interface Challenge {
   seasonOnly: boolean
 }
 
+interface Registration {
+  id: string
+  email: string
+  username: string
+  status: 'pending' | 'created' | 'rejected'
+  created_at: string
+}
+
 export default function SeasonAdminClient({
   season,
   effectiveStatus,
   participants,
   spectators,
+  registrations,
   challenges,
 }: {
   season: Season
   effectiveStatus: string
   participants: Participant[]
   spectators: Spectator[]
+  registrations: Registration[]
   challenges: Challenge[]
 }) {
   const router = useRouter()
@@ -68,6 +79,8 @@ export default function SeasonAdminClient({
   const [busy, setBusy] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [credential, setCredential] = useState<{ email: string; username: string; password: string } | null>(null)
+  const [credentialCopied, setCredentialCopied] = useState(false)
 
   const uploadChallengeFile = async (file: File) => {
     const body = new FormData()
@@ -113,6 +126,29 @@ export default function SeasonAdminClient({
     setAdjustTarget(userId)
     setAdjustPoints(p?.total_points ?? 0)
     setAdjustSolved(p?.challenges_solved ?? 0)
+  }
+
+  const provisionAccount = async (registrationId: string) => {
+    setBusy(true)
+    setMessage(null)
+    const result = await createAccountFromRegistration(registrationId)
+    setBusy(false)
+    if (result.error) {
+      notify(result.error, 'error')
+      return
+    }
+    if (result.success && result.email && result.username && result.password) {
+      setCredential({ email: result.email, username: result.username, password: result.password })
+      notify('Account created. Copy the password now; it will not be shown again.')
+      router.refresh()
+    }
+  }
+
+  const copyCredential = async () => {
+    if (!credential) return
+    await navigator.clipboard.writeText(`Email: ${credential.email}\nUsername: ${credential.username}\nPassword: ${credential.password}`)
+    setCredentialCopied(true)
+    setTimeout(() => setCredentialCopied(false), 2000)
   }
 
   return (
@@ -355,6 +391,47 @@ export default function SeasonAdminClient({
             </button>
           </div>
         </div>
+      </section>
+
+      {/* Participant access requests */}
+      <section className="rounded-2xl p-5" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Access requests ({registrations.length})</h2>
+          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Passwords are shown once</span>
+        </div>
+        {credential && (
+          <div className="mb-4 rounded-lg p-3" style={{ backgroundColor: 'rgba(34, 197, 94, 0.08)', border: '1px solid rgba(34, 197, 94, 0.3)' }}>
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>New account credentials</p>
+              <button onClick={copyCredential} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium" style={{ backgroundColor: 'var(--hover-bg)', color: 'var(--text-primary)' }}>
+                {credentialCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                {credentialCopied ? 'Copied' : 'Copy'}
+              </button>
+            </div>
+            <p className="text-xs font-mono break-all" style={{ color: 'var(--text-secondary)' }}>{credential.email} / {credential.username} / {credential.password}</p>
+          </div>
+        )}
+        {registrations.length === 0 ? (
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No access requests yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {registrations.map((registration) => (
+              <div key={registration.id} className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--input-bg)' }}>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{registration.username}</p>
+                  <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{registration.email}</p>
+                </div>
+                {registration.status === 'pending' ? (
+                  <button onClick={() => provisionAccount(registration.id)} disabled={busy} className="px-3 py-1.5 rounded-lg text-xs font-medium disabled:opacity-40" style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-text)' }}>
+                    Create account
+                  </button>
+                ) : (
+                  <span className="text-xs font-medium" style={{ color: '#22c55e' }}>Created</span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Participants */}
