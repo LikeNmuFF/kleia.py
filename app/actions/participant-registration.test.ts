@@ -34,4 +34,11 @@ describe('season participant registration', () => {
     expect(source).toContain('name="username"')
     expect(source).toContain('Registration received')
   })
+
+  it('allows unauthenticated visitors through the main layout for season pages', () => {
+    const source = readFileSync(join(process.cwd(), 'app', '(main)', 'layout.tsx'), 'utf8')
+
+    expect(source).toContain("pathname.startsWith('/ctf/seasons/')")
+    expect(source).toContain('isPublicSeasonPath')
+  })
 })

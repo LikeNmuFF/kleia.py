@@ -18,13 +18,18 @@ export default async function MainLayout({
 }: {
   children: React.ReactNode
 }) {
+  const headerList = await headers()
+  const pathname = headerList.get('x-pathname') || ''
+  const isPublicSeasonPath = pathname === '/ctf/seasons' || pathname.startsWith('/ctf/seasons/')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
+  if (!user && isPublicSeasonPath) {
+    return <main>{children}</main>
+  }
+
   if (!user) redirect('/login')
 
-  const headerList = await headers()
-  const pathname = headerList.get('x-pathname') || ''
   const access = await getCompetitionAccess()
 
   const locked = access.kind === 'participant' && access.effectiveStatus === 'live'
