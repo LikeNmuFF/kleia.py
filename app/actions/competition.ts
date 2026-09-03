@@ -5,7 +5,7 @@ import { getSafeErrorMessage } from '@/lib/errorHandler'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { isAdmin } from '@/lib/admin'
-import { getEffectiveSeasonStatus, type SeasonRow, type SeasonStatus } from './competition-status'
+import { getEffectiveSeasonStatus, getSeasonHintCost, type SeasonRow, type SeasonStatus } from './competition-status'
 
 export type { SeasonStatus, SeasonRow } from './competition-status'
 
@@ -172,23 +172,39 @@ export async function unlockSeasonHint(seasonId: string, challengeId: string) {
 
   const { data: challenge } = await supabase
     .from('ctf_challenges')
-    .select('hint, hint_points_cost')
+    .select('hint')
     .eq('id', challengeId)
     .eq('status', 'approved')
     .single()
   if (!challenge?.hint) return { error: 'No hint available' }
 
-  const penalty = Math.max(0, challenge.hint_points_cost ?? 10)
-  const { data: charged, error } = await supabase.rpc('unlock_season_hint', {
+  const { data: charged, error } = await supabase.rpc('unlock_progressive_season_hint', {
     p_season_id: seasonId,
     p_challenge_id: challengeId,
     p_user_id: user.id,
-    p_penalty: penalty,
   })
   if (error) return { error: getSafeErrorMessage(error, 'Could not unlock hint') }
 
   revalidatePath(`/ctf/seasons`)
-  return { hint: challenge.hint, penalty: charged ? penalty : 0 }
+  return { hint: challenge.hint, penalty: charged ?? 0 }
+}
+
+export async function getSeasonHintState(seasonId: string, challengeId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { unlocked: false, nextCost: 25 }
+
+  const { data: unlocks } = await supabase
+    .from('ctf_season_hint_unlocks')
+    .select('challenge_id')
+    .eq('season_id', seasonId)
+    .eq('user_id', user.id)
+
+  const rows = unlocks ?? []
+  return {
+    unlocked: rows.some(row => row.challenge_id === challengeId),
+    nextCost: getSeasonHintCost(rows.length),
+  }
 }
 
 /** Latest correct solves in a season, joined with codename + challenge title (for the spectate ticker). */

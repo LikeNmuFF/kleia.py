@@ -236,7 +236,7 @@ export default function SeasonDetailClient({
               </div>
               <div className="flex items-center gap-1.5" style={{ color: 'var(--text-muted)' }}>
                 <Target className="w-4 h-4" />
-                <span>{challenges.length} challenges</span>
+                <span>Challenges hidden until start</span>
               </div>
               <div className="flex items-center gap-1.5" style={{ color: 'var(--text-muted)' }}>
                 <Users className="w-4 h-4" />
@@ -454,10 +454,10 @@ export default function SeasonDetailClient({
             >
               <div className="text-4xl mb-4">🎯</div>
               <h3 className="text-lg font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
-                No Challenges Yet
+                Challenges Locked
               </h3>
               <p style={{ color: 'var(--text-secondary)' }}>
-                Challenges will be added to this season soon.
+                Challenge details become available to registered participants when the competition starts.
               </p>
             </div>
           ) : (

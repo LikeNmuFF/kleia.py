@@ -1,5 +1,13 @@
 export type SeasonStatus = 'upcoming' | 'live' | 'paused' | 'ended'
 
+export function getSeasonHintCost(priorUnlocks: number): number {
+  return (Math.max(0, Math.floor(priorUnlocks)) + 1) * 25
+}
+
+export function canRevealSeasonChallenges(status: SeasonStatus, isParticipant: boolean): boolean {
+  return status === 'live' && isParticipant
+}
+
 export interface SeasonRow {
   id: string
   name: string

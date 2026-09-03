@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { X, Trophy, Target, CheckCircle2, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { submitFlag, getChallenge } from '@/app/actions/ctf'
-import { unlockSeasonHint } from '@/app/actions/competition'
+import { getSeasonHintState, unlockSeasonHint } from '@/app/actions/competition'
 import Countdown from '@/components/competition/Countdown'
 import { useSeasonStatusRealtime } from '@/lib/hooks/useSeasonStatusRealtime'
 
@@ -62,7 +62,14 @@ export default function CompetitionClient({
   const [challengesSolved, setChallengesSolved] = useState(initialChallengesSolved)
   const [solveList, setSolveList] = useState<Challenge[]>(challenges)
   const [openChallenge, setOpenChallenge] = useState<Challenge | null>(null)
-  const [detail, setDetail] = useState<{ description: string; hint: string | null; hasHint: boolean; hintPointsCost: number } | null>(null)
+  const [detail, setDetail] = useState<{
+    description: string
+    hint: string | null
+    hasHint: boolean
+    hintPointsCost: number
+    file_url: string | null
+    link_url: string | null
+  } | null>(null)
   const [unlockingHint, setUnlockingHint] = useState(false)
   const [flag, setFlag] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -100,8 +107,18 @@ export default function CompetitionClient({
     setFlag('')
     setResult(null)
     setDetail(null)
-    const ch = await getChallenge(challenge.id)
-    if (ch) setDetail({ description: ch.description, hint: null, hasHint: Boolean(ch.hint), hintPointsCost: ch.hint_points_cost ?? 10 })
+    const [ch, hintState] = await Promise.all([
+      getChallenge(challenge.id),
+      getSeasonHintState(season.id, challenge.id),
+    ])
+    if (ch) setDetail({
+      description: ch.description,
+      hint: hintState.unlocked ? ch.hint : null,
+      hasHint: Boolean(ch.hint),
+      hintPointsCost: hintState.nextCost,
+      file_url: ch.file_url,
+      link_url: ch.link_url,
+    })
   }
 
   const handleUnlockHint = async () => {
@@ -313,8 +330,23 @@ export default function CompetitionClient({
                 )}
               </div>
 
+              {(detail?.file_url || detail?.link_url) && (
+                <div className="mb-5 flex flex-wrap gap-3">
+                  {detail.file_url && (
+                    <a href={detail.file_url} target="_blank" rel="noopener noreferrer" className="rounded-lg px-4 py-2 text-sm font-medium" style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' }}>
+                      Download File
+                    </a>
+                  )}
+                  {detail.link_url && (
+                    <a href={detail.link_url} target="_blank" rel="noopener noreferrer" className="rounded-lg px-4 py-2 text-sm font-medium" style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' }}>
+                      Open Challenge Link
+                    </a>
+                  )}
+                </div>
+              )}
+
               {detail?.hasHint && !detail.hint && (
-                <button onClick={handleUnlockHint} disabled={unlockingHint} className="mb-5 w-full rounded-xl p-3 text-left text-sm disabled:opacity-50" style={{ backgroundColor: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.25)', color: '#eab308' }}>
+                <button onClick={handleUnlockHint} disabled={unlockingHint || totalPoints < detail.hintPointsCost} className="mb-5 w-full rounded-xl p-3 text-left text-sm disabled:opacity-50" style={{ backgroundColor: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.25)', color: '#eab308' }}>
                   {unlockingHint ? 'Unlocking hint...' : `Unlock hint (-${detail.hintPointsCost} season points)`}
                 </button>
               )}

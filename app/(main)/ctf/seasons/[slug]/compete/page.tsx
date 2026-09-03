@@ -2,6 +2,7 @@ import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getSeasonBySlug, getSeasonChallenges } from '@/app/actions/seasons'
 import { getCompetitionAccess } from '@/app/actions/competition'
+import { canRevealSeasonChallenges } from '@/app/actions/competition-status'
 import CompetitionClient from './CompetitionClient'
 
 export default async function CompetePage({ params }: { params: Promise<{ slug: string }> }) {
@@ -20,7 +21,9 @@ export default async function CompetePage({ params }: { params: Promise<{ slug: 
   const { data: { user } } = await supabase.auth.getUser()
 
   const [challenges, participant] = await Promise.all([
-    getSeasonChallenges(season.id),
+    canRevealSeasonChallenges(access.effectiveStatus, access.kind === 'participant')
+      ? getSeasonChallenges(season.id)
+      : Promise.resolve([]),
     user
       ? supabase
           .from('ctf_season_participants')

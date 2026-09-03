@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
-import { getSeasonBySlug, getSeasonChallenges, getSeasonLeaderboard, isSeasonParticipant, getSeasonParticipantCount } from '@/app/actions/seasons'
+import { getSeasonBySlug, getSeasonLeaderboard, isSeasonParticipant, getSeasonParticipantCount } from '@/app/actions/seasons'
 import { getEffectiveSeasonStatus } from '@/app/actions/competition-status'
 import SeasonDetailClient from './SeasonDetailClient'
 
@@ -45,8 +45,7 @@ export default async function SeasonDetailPage({ params }: { params: Promise<{ s
 
   const status = getEffectiveSeasonStatus(season)
 
-  const [challenges, leaderboard, participantInfo, participantCount] = await Promise.all([
-    getSeasonChallenges(season.id),
+  const [leaderboard, participantInfo, participantCount] = await Promise.all([
     getSeasonLeaderboard(season.id),
     user ? isSeasonParticipant(season.id, user.id) : { joined: false, codename: null },
     getSeasonParticipantCount(season.id),
@@ -57,7 +56,7 @@ export default async function SeasonDetailPage({ params }: { params: Promise<{ s
   return (
     <SeasonDetailClient
       season={season}
-      challenges={challenges}
+      challenges={[]}
       leaderboard={leaderboard}
       isParticipant={participantInfo.joined}
       userCodename={participantInfo.codename}
