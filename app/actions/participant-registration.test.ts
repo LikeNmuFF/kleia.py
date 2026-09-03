@@ -26,6 +26,13 @@ describe('season participant registration', () => {
     expect(source).not.toContain('password: password')
   })
 
+  it('closes public registration when the scheduled season start is reached', () => {
+    const source = readFileSync(join(process.cwd(), 'app', 'actions', 'registrations.ts'), 'utf8')
+
+    expect(source).toContain('isSeasonRegistrationOpen')
+    expect(source).toContain("select('id, status, start_date, end_date, is_active')")
+  })
+
   it('renders the public season registration form', () => {
     const source = readFileSync(join(process.cwd(), 'components', 'competition', 'SeasonRegistrationForm.tsx'), 'utf8')
 

@@ -295,7 +295,7 @@ export default function SeasonDetailClient({
       </div>
 
       {/* Registration / Join Section */}
-      {!isParticipant && season.is_active && status !== 'ended' && !userId && (
+      {!isParticipant && canRegister() && !userId && (
         <SeasonRegistrationForm seasonId={season.id} seasonName={season.name} />
       )}
       {!isParticipant && canRegister() && userId && (

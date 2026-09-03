@@ -12,6 +12,7 @@ import ChatUnreadProvider from '@/components/chat/ChatUnreadProvider'
 import DesktopNav from '@/components/nav/DesktopNav'
 import MobileNav from '@/components/nav/MobileNav'
 import SupportButton from '@/components/SupportButton'
+import SeasonBoundaryRefresh from '@/components/competition/SeasonBoundaryRefresh'
 
 export default async function MainLayout({
   children,
@@ -65,6 +66,9 @@ export default async function MainLayout({
         className="min-h-screen pb-[calc(env(safe-area-inset-bottom)+64px)] lg:pb-0"
         style={{ backgroundColor: 'var(--bg-primary)' }}
       >
+        <SeasonBoundaryRefresh
+          season={access.kind === 'participant' ? access.season : undefined}
+        />
         {/* Top Navigation */}
         <nav
           className="sticky top-0 z-40 border-b backdrop-blur-xl"

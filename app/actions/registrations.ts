@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { getServiceClient } from '@/lib/supabase/service'
 import { isAdmin } from '@/lib/admin'
+import { isSeasonRegistrationOpen } from './competition-status'
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const USERNAME_PATTERN = /^[a-zA-Z0-9_-]+$/
@@ -37,12 +38,12 @@ export async function submitSeasonRegistration(seasonId: string, email: string, 
   const supabase = await createClient()
   const { data: season, error: seasonError } = await supabase
     .from('ctf_seasons')
-    .select('id, status, end_date')
+    .select('id, status, start_date, end_date, is_active')
     .eq('id', seasonId)
     .maybeSingle()
 
   if (seasonError || !season) return { error: 'Season not found.' }
-  if (season.status === 'ended' || new Date(season.end_date) < new Date()) return { error: 'Registration for this season is closed.' }
+  if (!isSeasonRegistrationOpen(season)) return { error: 'Registration for this season is closed.' }
 
   const { error } = await supabase.from('ctf_season_registrations').insert({
     season_id: seasonId,

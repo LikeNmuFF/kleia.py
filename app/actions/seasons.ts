@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { logEvent } from '@/lib/logEvent'
 import { isAdmin } from '@/lib/admin'
-import { getEffectiveSeasonStatus } from './competition-status'
+import { getEffectiveSeasonStatus, isSeasonRegistrationOpen } from './competition-status'
 import { parseManilaLocal } from '@/lib/utils/time'
 
 export async function getAllSeasons() {
@@ -76,11 +76,11 @@ export async function joinSeason(seasonId: string, codename?: string) {
 
   const { data: season } = await supabase
     .from('ctf_seasons')
-    .select('status, start_date, end_date')
+    .select('status, start_date, end_date, is_active')
     .eq('id', seasonId)
     .single()
 
-  if (season && getEffectiveSeasonStatus(season) !== 'upcoming') {
+  if (!season || !isSeasonRegistrationOpen(season)) {
     return { error: 'Registration is closed for this season' }
   }
 
