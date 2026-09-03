@@ -8,6 +8,10 @@ export function canRevealSeasonChallenges(status: SeasonStatus, isParticipant: b
   return status === 'live' && isParticipant
 }
 
+export function isChallengePublicAfterSeasons(statuses: SeasonStatus[]): boolean {
+  return statuses.every(status => status === 'ended')
+}
+
 export interface SeasonRow {
   id: string
   name: string

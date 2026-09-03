@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
-import { Calendar, Plus, Trash2, Edit3, Check, X, Link as LinkIcon, Unlink, Trophy, Settings, Upload } from 'lucide-react'
-import { createSeason, updateSeason, deleteSeason, addChallengeToSeason, removeChallengeFromSeason } from '@/app/actions/seasons'
+import { Calendar, Plus, Trash2, Edit3, Check, X, Trophy, Settings, Upload } from 'lucide-react'
+import { createSeason, updateSeason, deleteSeason } from '@/app/actions/seasons'
 import { getAdminSeasonsData } from '@/app/actions/admin'
 import { formatDateTime, toManilaLocalInput } from '@/lib/utils/time'
 
@@ -22,14 +22,6 @@ interface Season {
   og_image_url?: string | null
 }
 
-interface Challenge {
-  id: string
-  title: string
-  category: string
-  difficulty: string
-  points: number
-}
-
 interface SeasonChallenge {
   challenge_id: string
   bonus_points: number
@@ -37,12 +29,10 @@ interface SeasonChallenge {
 
 export default function SeasonsAdminTab() {
   const [seasons, setSeasons] = useState<Season[]>([])
-  const [challenges, setChallenges] = useState<Challenge[]>([])
   const [seasonChallenges, setSeasonChallenges] = useState<Record<string, SeasonChallenge[]>>({})
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [linkingSeasonId, setLinkingSeasonId] = useState<string | null>(null)
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null)
 
   // Form state
@@ -91,7 +81,6 @@ export default function SeasonsAdminTab() {
   async function loadData() {
     const data = await getAdminSeasonsData()
     setSeasons((data.seasons as Season[]) || [])
-    setChallenges((data.challenges as Challenge[]) || [])
     setSeasonChallenges((data.seasonChallenges as Record<string, SeasonChallenge[]>) || {})
     setLoading(false)
   }
@@ -190,28 +179,6 @@ export default function SeasonsAdminTab() {
   async function handleToggleActive(season: Season) {
     setMessage(null)
     const result = await updateSeason(season.id, { is_active: !season.is_active })
-    if (result.success) {
-      loadData()
-    } else {
-      setMessage({ text: (result as { error: string }).error, type: 'error' })
-    }
-  }
-
-  async function handleAddChallenge(challengeId: string) {
-    if (!linkingSeasonId) return
-    setMessage(null)
-    const result = await addChallengeToSeason(linkingSeasonId, challengeId)
-    if (result.success) {
-      loadData()
-    } else {
-      setMessage({ text: (result as { error: string }).error, type: 'error' })
-    }
-  }
-
-  async function handleRemoveChallenge(challengeId: string) {
-    if (!linkingSeasonId) return
-    setMessage(null)
-    const result = await removeChallengeFromSeason(linkingSeasonId, challengeId)
     if (result.success) {
       loadData()
     } else {
@@ -416,8 +383,6 @@ export default function SeasonsAdminTab() {
         {seasons.map(season => {
           const active = isTodayInRange(season.start_date, season.end_date) && season.is_active
           const scs = seasonChallenges[season.id] || []
-          const isLinking = linkingSeasonId === season.id
-          const linkedIds = new Set(scs.map(sc => sc.challenge_id))
 
           return (
             <div
@@ -463,14 +428,6 @@ export default function SeasonsAdminTab() {
                   >
                     <Check className="w-4 h-4" />
                   </button>
-                  <button
-                    onClick={() => { setLinkingSeasonId(isLinking ? null : season.id) }}
-                    className="p-1.5 rounded-lg transition-colors"
-                    style={{ color: isLinking ? 'var(--accent)' : 'var(--text-muted)' }}
-                    title="Link challenges"
-                  >
-                    <LinkIcon className="w-4 h-4" />
-                  </button>
                   <Link
                     href={`/admin/seasons/${season.slug}`}
                     className="p-1.5 rounded-lg transition-colors"
@@ -498,51 +455,6 @@ export default function SeasonsAdminTab() {
                 </div>
               </div>
 
-              {/* Challenge Linking */}
-              {isLinking && (
-                <div className="border-t p-4" style={{ borderColor: 'var(--border-color)' }}>
-                  <p className="text-xs font-medium mb-3" style={{ color: 'var(--text-secondary)' }}>
-                    Link challenges to {season.name}
-                  </p>
-                  <div className="max-h-60 overflow-y-auto space-y-1">
-                    {challenges.map(ch => {
-                      const linked = linkedIds.has(ch.id)
-                      return (
-                        <div
-                          key={ch.id}
-                          className="flex items-center justify-between py-1.5 px-2 rounded text-sm"
-                          style={{ backgroundColor: 'var(--input-bg)' }}
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="truncate" style={{ color: 'var(--text-primary)' }}>{ch.title}</span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'var(--hover-bg)', color: 'var(--text-muted)' }}>
-                              {ch.category}
-                            </span>
-                            <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>+{ch.points}</span>
-                          </div>
-                          {linked ? (
-                            <button
-                              onClick={() => handleRemoveChallenge(ch.id)}
-                              className="p-1 rounded transition-colors shrink-0"
-                              style={{ color: '#ef4444' }}
-                            >
-                              <Unlink className="w-3.5 h-3.5" />
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleAddChallenge(ch.id)}
-                              className="p-1 rounded transition-colors shrink-0"
-                              style={{ color: 'var(--accent)' }}
-                            >
-                              <Plus className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
             </div>
           )
         })}

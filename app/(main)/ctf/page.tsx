@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
-import { getEffectiveSeasonStatus } from '@/app/actions/competition-status'
+import { getEffectiveSeasonStatus, isChallengePublicAfterSeasons, type SeasonStatus } from '@/app/actions/competition-status'
 import AnnouncementBanner from '@/components/AnnouncementBanner'
 import AIFairPlayBanner from '@/components/ctf/AIFairPlayBanner'
 import CTFClient from './CTFClient'
@@ -27,7 +27,26 @@ async function getChallengeData(userId?: string) {
       .eq('status', 'approved'),
   ])
 
-  const challenges = [...(globalChallenges || [])]
+  const globalIds = (globalChallenges || []).map(challenge => challenge.id)
+  const { data: globalSeasonLinks } = globalIds.length
+    ? await supabase
+        .from('ctf_season_challenges')
+        .select('challenge_id, seasons:season_id (status, start_date, end_date)')
+        .in('challenge_id', globalIds)
+    : { data: [] }
+
+  const linkedStatuses = new Map<string, SeasonStatus[]>()
+  for (const link of globalSeasonLinks || []) {
+    const season = Array.isArray(link.seasons) ? link.seasons[0] : link.seasons
+    if (!season) continue
+    const statuses = linkedStatuses.get(link.challenge_id) ?? []
+    statuses.push(getEffectiveSeasonStatus(season as { status: string; start_date: string; end_date: string }))
+    linkedStatuses.set(link.challenge_id, statuses)
+  }
+
+  const challenges = (globalChallenges || []).filter(challenge =>
+    isChallengePublicAfterSeasons(linkedStatuses.get(challenge.id) ?? [])
+  )
   for (const c of exclusiveChallenges || []) {
     const season = Array.isArray(c.seasons) ? c.seasons[0] : c.seasons
     if (!season || getEffectiveSeasonStatus(season as { status: string; start_date: string; end_date: string }) === 'ended') {

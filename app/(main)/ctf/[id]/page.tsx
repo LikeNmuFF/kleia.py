@@ -6,6 +6,7 @@ import ChallengeReviews from '@/components/ctf/ChallengeReviews'
 import AIFairPlayBanner from '@/components/ctf/AIFairPlayBanner'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { getEffectiveSeasonStatus, isChallengePublicAfterSeasons, type SeasonStatus } from '@/app/actions/competition-status'
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   easy: '#22c55e',
@@ -27,12 +28,32 @@ export default async function ChallengePage({ params }: { params: Promise<{ id: 
 
   const { data: challenge } = await supabase
     .from('ctf_challenges')
-    .select('id, title, description, category, difficulty, points, hint, hint_xp_cost, file_url, link_url, author, created_at, learn_topic_slug, learn_lesson_slug')
+    .select('id, title, description, category, difficulty, points, hint, hint_xp_cost, file_url, link_url, author, created_at, learn_topic_slug, learn_lesson_slug, season_id')
     .eq('id', id)
     .eq('status', 'approved')
     .single()
 
   if (!challenge) notFound()
+
+  const statuses: SeasonStatus[] = []
+  if (challenge.season_id) {
+    const { data: owningSeason } = await supabase
+      .from('ctf_seasons')
+      .select('status, start_date, end_date')
+      .eq('id', challenge.season_id)
+      .maybeSingle()
+    if (owningSeason) statuses.push(getEffectiveSeasonStatus(owningSeason))
+  }
+
+  const { data: seasonLinks } = await supabase
+    .from('ctf_season_challenges')
+    .select('seasons:season_id (status, start_date, end_date)')
+    .eq('challenge_id', id)
+  for (const link of seasonLinks || []) {
+    const season = Array.isArray(link.seasons) ? link.seasons[0] : link.seasons
+    if (season) statuses.push(getEffectiveSeasonStatus(season))
+  }
+  if (!isChallengePublicAfterSeasons(statuses)) notFound()
 
   let learnLessonTitle: string | null = null
   if (challenge.learn_topic_slug && challenge.learn_lesson_slug) {

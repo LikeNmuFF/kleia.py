@@ -317,6 +317,15 @@ export async function addChallengeToSeason(seasonId: string, challengeId: string
   const supabase = await createClient()
   if (!(await isAdmin(supabase))) return { error: 'Unauthorized' }
 
+  const { data: challenge } = await supabase
+    .from('ctf_challenges')
+    .select('season_id')
+    .eq('id', challengeId)
+    .maybeSingle()
+  if (!challenge || challenge.season_id !== seasonId) {
+    return { error: 'Only challenges created specifically for this season can be added' }
+  }
+
   const { error } = await supabase
     .from('ctf_season_challenges')
     .insert({ season_id: seasonId, challenge_id: challengeId, bonus_points: bonusPoints })
