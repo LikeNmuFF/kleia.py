@@ -101,7 +101,7 @@ Be direct and practical. Skip boilerplate.`
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
+      model: 'openai/gpt-oss-safeguard-20b',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.3,
       max_tokens: 2048,
