@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Search, Shield, ShieldOff, Flame, Trash2, Star, ArrowUpDown } from 'lucide-react'
+import { Search, Shield, ShieldOff, Flame, Trash2, Star, ArrowUpDown, PenTool } from 'lucide-react'
 import { getAdminUsers, updateUserRole, resetUserStreak, deleteUser } from '@/app/actions/admin'
 
 interface User {
@@ -78,6 +78,7 @@ export default function UsersTab() {
     admin: '#ef4444',
     special: '#a855f7',
     faculty: '#0ea5e9',
+    contributor: '#22c55e',
     user: '#6b7280',
   }
 
@@ -108,6 +109,7 @@ export default function UsersTab() {
           <option value="admin">Admin</option>
           <option value="special">Special</option>
           <option value="faculty">Faculty</option>
+          <option value="contributor">Contributor</option>
           <option value="user">User</option>
         </select>
         <button
@@ -190,6 +192,15 @@ export default function UsersTab() {
                     title="Make faculty"
                   >
                     <Shield className="w-4 h-4" />
+                  </button>
+                )}
+                {user.role !== 'contributor' && (
+                  <button
+                    onClick={() => handleRoleChange(user.id, 'contributor')}
+                    className="p-1.5 rounded-lg hover:bg-white/5 text-emerald-400"
+                    title="Make challenge contributor"
+                  >
+                    <PenTool className="w-4 h-4" />
                   </button>
                 )}
                 {user.role !== 'user' && (

@@ -13,6 +13,7 @@ import {
 } from '@/app/actions/competition'
 import { createSeasonChallenge } from '@/app/actions/ctf'
 import { createAccountFromRegistration } from '@/app/actions/registrations'
+import { addSeasonContributor, removeSeasonContributor } from '@/app/actions/contributors'
 
 interface Season {
   id: string
@@ -32,6 +33,12 @@ interface Participant {
 }
 
 interface Spectator {
+  user_id: string
+  username: string
+  avatar_url: string | null
+}
+
+interface Contributor {
   user_id: string
   username: string
   avatar_url: string | null
@@ -60,6 +67,7 @@ export default function SeasonAdminClient({
   effectiveStatus,
   participants,
   spectators,
+  contributors,
   registrations,
   challenges,
 }: {
@@ -67,12 +75,14 @@ export default function SeasonAdminClient({
   effectiveStatus: string
   participants: Participant[]
   spectators: Spectator[]
+  contributors: Contributor[]
   registrations: Registration[]
   challenges: Challenge[]
 }) {
   const router = useRouter()
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null)
   const [spectatorUsername, setSpectatorUsername] = useState('')
+  const [contributorUsername, setContributorUsername] = useState('')
   const [adjustTarget, setAdjustTarget] = useState(participants[0]?.user_id || '')
   const [adjustPoints, setAdjustPoints] = useState(0)
   const [adjustSolved, setAdjustSolved] = useState(0)
@@ -228,6 +238,29 @@ export default function SeasonAdminClient({
               </div>
             ))}
           </div>
+        )}
+      </section>
+
+      {/* Challenge contributors */}
+      <section className="rounded-2xl p-5" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
+        <h2 className="text-sm font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>Challenge contributors</h2>
+        <p className="text-xs mb-4" style={{ color: 'var(--text-muted)' }}>Invite users with the Contributor role to create, edit, and publish their own challenges for this season.</p>
+        <div className="flex items-end gap-3 mb-4">
+          <div className="flex-1">
+            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Invite by username</label>
+            <input type="text" value={contributorUsername} onChange={(event) => setContributorUsername(event.target.value)} placeholder="username" className="w-full px-3 py-2 rounded-lg text-sm border bg-transparent" style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
+          </div>
+          <button onClick={() => run(() => addSeasonContributor(season.id, contributorUsername), 'Contributor invited')} disabled={busy || !contributorUsername.trim()} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40" style={{ background: 'var(--accent)', color: 'var(--accent-text)' }}>
+            <UserPlus className="w-4 h-4" /> Invite
+          </button>
+        </div>
+        {contributors.length === 0 ? <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No contributors invited.</p> : (
+          <div className="space-y-2">{contributors.map((contributor) => (
+            <div key={contributor.user_id} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--input-bg)' }}>
+              <span className="text-sm" style={{ color: 'var(--text-primary)' }}>@{contributor.username}</span>
+              <button onClick={() => run(() => removeSeasonContributor(season.id, contributor.user_id), 'Contributor removed')} disabled={busy} className="p-1 rounded" style={{ color: '#ef4444' }} aria-label={`Remove ${contributor.username}`}><Trash2 className="w-4 h-4" /></button>
+            </div>
+          ))}</div>
         )}
       </section>
 

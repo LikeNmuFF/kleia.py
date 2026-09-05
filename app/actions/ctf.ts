@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/server'
 import { logEvent } from '@/lib/logEvent'
 import { logSecurityEvent } from '@/lib/security-log'
 import { isAdmin } from '@/lib/admin'
+import { canCreateSeasonChallenge, canEditSeasonChallenge } from '@/lib/contributors'
 import { hashFlag } from '@/lib/utils/ctf'
 import { checkNamedRateLimit } from '@/lib/rate-limit'
 import { extractClientIp } from '@/lib/logEvent'
@@ -308,8 +309,14 @@ export async function createSeasonChallenge(seasonId: string, data: {
 }) {
   const start = Date.now()
   const supabase = await createClient()
-  if (!(await isAdmin(supabase))) {
-    await logEvent({ endpoint: 'ctf.createSeasonChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: 'Unauthorized', userId: (await supabase.auth.getUser()).data.user?.id })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not logged in' }
+  const [{ data: profile }, { data: invitation }] = await Promise.all([
+    supabase.from('profiles').select('role').eq('id', user.id).single(),
+    supabase.from('ctf_season_contributors').select('user_id').eq('season_id', seasonId).eq('user_id', user.id).maybeSingle(),
+  ])
+  if (!canCreateSeasonChallenge({ role: profile?.role ?? null, invited: Boolean(invitation) })) {
+    await logEvent({ endpoint: 'ctf.createSeasonChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: 'Unauthorized', userId: user.id })
     return { error: 'Unauthorized' }
   }
 
@@ -326,8 +333,6 @@ export async function createSeasonChallenge(seasonId: string, data: {
   if (!isValidDifficulty(data.difficulty)) return { error: 'Invalid difficulty' }
   if (!Number.isInteger(data.points) || data.points < 1) return { error: 'Points must be a positive integer' }
   if (!data.flag.trim()) return { error: 'Flag cannot be empty' }
-
-  const { data: { user } } = await supabase.auth.getUser()
 
   const learnLink = await resolveLearnLink(
     supabase,
@@ -373,6 +378,7 @@ export async function createSeasonChallenge(seasonId: string, data: {
 
   await logEvent({ endpoint: 'ctf.createSeasonChallenge', status: 'success', durationMs: Date.now() - start, userId: user?.id })
   revalidatePath(`/admin/seasons/${season.slug}`)
+  revalidatePath('/contributor')
   revalidatePath('/ctf')
   return { success: true }
 }
@@ -500,9 +506,17 @@ export async function updateChallenge(
 ) {
   const start = Date.now()
   const supabase = await createClient()
-  if (!(await isAdmin(supabase))) {
-    const { data: { user } } = await supabase.auth.getUser()
-    await logEvent({ endpoint: 'ctf.updateChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: 'Unauthorized', userId: user?.id })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not logged in' }
+  const [{ data: profile }, { data: challenge }] = await Promise.all([
+    supabase.from('profiles').select('role').eq('id', user.id).single(),
+    supabase.from('ctf_challenges').select('created_by, season_id').eq('id', id).single(),
+  ])
+  const { data: invitation } = challenge?.season_id
+    ? await supabase.from('ctf_season_contributors').select('user_id').eq('season_id', challenge.season_id).eq('user_id', user.id).maybeSingle()
+    : { data: null }
+  if (!canEditSeasonChallenge({ role: profile?.role ?? null, invited: Boolean(invitation), ownsChallenge: challenge?.created_by === user.id })) {
+    await logEvent({ endpoint: 'ctf.updateChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: 'Unauthorized', userId: user.id })
     return { error: 'Unauthorized' }
   }
 
@@ -545,6 +559,7 @@ export async function updateChallenge(
     updateData.author = data.author?.trim() || null
   }
   if (data.status !== undefined) {
+    if (profile?.role === 'contributor' && !['draft', 'approved'].includes(data.status)) return { error: 'Invalid status' }
     updateData.status = data.status
   }
   if (data.is_active !== undefined) {
@@ -573,6 +588,7 @@ export async function updateChallenge(
 
   await logEvent({ endpoint: 'ctf.updateChallenge', status: 'success', durationMs: Date.now() - start })
   revalidatePath('/ctf')
+  revalidatePath('/contributor')
   return { success: true }
 }
 

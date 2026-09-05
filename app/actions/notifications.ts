@@ -10,6 +10,7 @@ export type NotificationType =
   | 'badge_earned'
   | 'daily_mission'
   | 'spectator_invite'
+  | 'contributor_invite'
 
 export interface Notification {
   id: string

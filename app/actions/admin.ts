@@ -304,7 +304,7 @@ export async function getAdminUsers() {
 }
 
 export async function updateUserRole(userId: string, role: string) {
-  const allowed = ['user', 'admin', 'special', 'faculty']
+  const allowed = ['user', 'admin', 'special', 'faculty', 'contributor']
   if (!allowed.includes(role)) return { error: `Invalid role: ${role}` }
   const supabase = await createClient()
   await requireAdmin(supabase)

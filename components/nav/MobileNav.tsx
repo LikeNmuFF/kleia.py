@@ -9,6 +9,7 @@ import NavLink from './NavLink'
 import { useChatUnread } from '@/components/chat/ChatUnreadProvider'
 import {
   ADMIN_NAV,
+  CONTRIBUTOR_NAV,
   isMobileMoreActive,
   isNavItemActive,
   MOBILE_SHEET_SECTIONS,
@@ -56,7 +57,7 @@ function TabLink({
   )
 }
 
-export default function MobileNav({ competitionHref, isAdmin }: { competitionHref?: string | null; isAdmin?: boolean }) {
+export default function MobileNav({ competitionHref, isAdmin, isContributor }: { competitionHref?: string | null; isAdmin?: boolean; isContributor?: boolean }) {
   const pathname = usePathname()
   const [sheetOpen, setSheetOpen] = useState(false)
   const chat = useChatUnread()
@@ -69,10 +70,11 @@ export default function MobileNav({ competitionHref, isAdmin }: { competitionHre
         ...PRIMARY_NAV.filter((i) => i.href === '/learn' || i.href === '/members'),
       ]
     : MOBILE_TABS
+  const roleItems = [...(isAdmin ? [ADMIN_NAV] : []), ...(isContributor ? [CONTRIBUTOR_NAV] : [])]
   const sheetSections = competitionHref
     ? []
-    : isAdmin
-      ? [...MOBILE_SHEET_SECTIONS, { title: 'Staff', items: [ADMIN_NAV] }]
+    : roleItems.length
+      ? [...MOBILE_SHEET_SECTIONS, { title: 'Workspaces', items: roleItems }]
       : MOBILE_SHEET_SECTIONS
 
   useEffect(() => {

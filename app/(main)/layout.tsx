@@ -61,6 +61,7 @@ export default async function MainLayout({
     : { data: null }
 
   const isAdmin = profile?.role === 'admin'
+  const isContributor = profile?.role === 'contributor'
   const unreadNotifications = await getUnreadNotificationCount()
 
   return (
@@ -92,7 +93,7 @@ export default async function MainLayout({
             </Link>
 
             {/* Desktop Navigation Links */}
-            <DesktopNav competitionHref={competitionHref} isAdmin={isAdmin} />
+            <DesktopNav competitionHref={competitionHref} isAdmin={isAdmin} isContributor={isContributor} />
 
             {/* User Menu */}
             <div className="flex items-center justify-end gap-2 lg:gap-2.5 shrink-0">
@@ -139,7 +140,7 @@ export default async function MainLayout({
       </div>
 
       {/* Mobile bottom navigation */}
-      <MobileNav competitionHref={competitionHref} isAdmin={isAdmin} />
+      <MobileNav competitionHref={competitionHref} isAdmin={isAdmin} isContributor={isContributor} />
     </ChatUnreadProvider>
   )
 }

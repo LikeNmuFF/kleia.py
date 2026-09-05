@@ -85,6 +85,13 @@ export const ADMIN_NAV: NavItem = {
   matchPrefix: true,
 }
 
+export const CONTRIBUTOR_NAV: NavItem = {
+  label: 'Contributor',
+  href: '/contributor',
+  icon: Braces,
+  matchPrefix: true,
+}
+
 /** Tabs pinned to the mobile bottom bar */
 export const MOBILE_TABS: NavItem[] = [
   PRIMARY_NAV[0],
@@ -128,6 +135,7 @@ export function isMobileMoreActive(pathname: string): boolean {
   return (
     isChallengeRouteActive(pathname) ||
     isNavItemActive(pathname, ADMIN_NAV) ||
+    isNavItemActive(pathname, CONTRIBUTOR_NAV) ||
     ['/members', '/leaderboard'].some((p) =>
       pathname === p || pathname.startsWith(`${p}/`)
     )
