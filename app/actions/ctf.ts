@@ -8,7 +8,12 @@ import { createClient } from '@/lib/supabase/server'
 import { logEvent } from '@/lib/logEvent'
 import { logSecurityEvent } from '@/lib/security-log'
 import { isAdmin } from '@/lib/admin'
-import { canCreateSeasonChallenge, canEditSeasonChallenge } from '@/lib/contributors'
+import {
+  canCreateGlobalChallenge,
+  canCreateSeasonChallenge,
+  canEditGlobalChallenge,
+  canEditSeasonChallenge,
+} from '@/lib/contributors'
 import { hashFlag } from '@/lib/utils/ctf'
 import { checkNamedRateLimit } from '@/lib/rate-limit'
 import { extractClientIp } from '@/lib/logEvent'
@@ -243,8 +248,11 @@ export async function createChallenge(data: {
 }) {
   const start = Date.now()
   const supabase = await createClient()
-  if (!(await isAdmin(supabase))) {
-    await logEvent({ endpoint: 'ctf.createChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: 'Unauthorized', userId: (await supabase.auth.getUser()).data.user?.id })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not logged in' }
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (!canCreateGlobalChallenge({ role: profile?.role ?? null })) {
+    await logEvent({ endpoint: 'ctf.createChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: 'Unauthorized', userId: user.id })
     return { error: 'Unauthorized' }
   }
 
@@ -254,8 +262,6 @@ export async function createChallenge(data: {
   if (!isValidDifficulty(data.difficulty)) return { error: 'Invalid difficulty' }
   if (!Number.isInteger(data.points) || data.points < 1) return { error: 'Points must be a positive integer' }
   if (!data.flag.trim()) return { error: 'Flag cannot be empty' }
-
-  const { data: { user } } = await supabase.auth.getUser()
 
   const learnLink = await resolveLearnLink(
     supabase,
@@ -278,7 +284,9 @@ export async function createChallenge(data: {
       link_url: data.link_url?.trim() || null,
       author: data.author?.trim() || null,
       status: 'approved',
-      created_by: user!.id,
+      is_active: true,
+      season_id: null,
+      created_by: user.id,
       ...learnLink,
     })
 
@@ -515,7 +523,11 @@ export async function updateChallenge(
   const { data: invitation } = challenge?.season_id
     ? await supabase.from('ctf_season_contributors').select('user_id').eq('season_id', challenge.season_id).eq('user_id', user.id).maybeSingle()
     : { data: null }
-  if (!canEditSeasonChallenge({ role: profile?.role ?? null, invited: Boolean(invitation), ownsChallenge: challenge?.created_by === user.id })) {
+  const ownsChallenge = challenge?.created_by === user.id
+  const canEdit = challenge?.season_id
+    ? canEditSeasonChallenge({ role: profile?.role ?? null, invited: Boolean(invitation), ownsChallenge })
+    : canEditGlobalChallenge({ role: profile?.role ?? null, ownsChallenge })
+  if (!canEdit) {
     await logEvent({ endpoint: 'ctf.updateChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: 'Unauthorized', userId: user.id })
     return { error: 'Unauthorized' }
   }

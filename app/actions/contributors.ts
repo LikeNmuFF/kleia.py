@@ -96,7 +96,6 @@ export async function getContributorWorkspace() {
     .from('ctf_challenges')
     .select('id, title, description, category, difficulty, points, hint, file_url, link_url, author, status, is_active, season_id, created_at')
     .eq('created_by', user.id)
-    .not('season_id', 'is', null)
     .order('created_at', { ascending: false })
   return { seasons, challenges: challenges ?? [], userId: user.id }
 }

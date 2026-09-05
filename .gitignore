@@ -39,6 +39,7 @@ supabase/migrations/*
 !supabase/migrations/20260905010000_season_solve_feed.sql
 !supabase/migrations/20260905020000_notifications.sql
 !supabase/migrations/20260906010000_season_contributors.sql
+!supabase/migrations/20260906020000_global_contributor_challenges.sql
 !supabase/tests/
 supabase/tests/*
 !supabase/tests/skill_snapshots_rls.sql
