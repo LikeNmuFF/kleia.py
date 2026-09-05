@@ -8,6 +8,7 @@ import { isPostReaction, normalizeSubjects, type ReactionType } from '@/lib/feed
 import { emptyReactionCounts, type ReactionCounts } from '@/lib/feed/types'
 import { logEvent } from '@/lib/logEvent'
 import type { YouTubeData } from '@/lib/youtube/types'
+import { notifyUser } from './notifications'
 
 interface LinkPreviewData {
   url: string
@@ -112,6 +113,8 @@ export async function toggleReaction(postId: string, reactionType: ReactionType 
   if (!user) return { error: 'Not logged in' }
   if (!isPostReaction(reactionType)) return { error: 'Unsupported reaction' }
 
+  const { data: postOwner } = await supabase.from('posts').select('author_id').eq('id', postId).maybeSingle()
+
   const { data: existing } = await supabase
     .from('post_reactions')
     .select('post_id')
@@ -159,6 +162,17 @@ export async function toggleReaction(postId: string, reactionType: ReactionType 
   }
 
   await logEvent({ endpoint: 'posts.toggleReaction', status: 'success', durationMs: Date.now() - start, userId: user.id })
+  if (!existing && reactionType === 'like' && postOwner?.author_id) {
+    await notifyUser({
+      recipientId: postOwner.author_id,
+      actorId: user.id,
+      type: 'post_like',
+      title: 'New like',
+      message: 'Someone liked your post.',
+      href: `/feed#post-${postId}`,
+      metadata: { post_id: postId },
+    })
+  }
   revalidatePath('/feed')
   revalidatePath('/feed/saved')
   return { selected: !existing, counts }
@@ -256,6 +270,8 @@ export async function addComment(postId: string, content: string) {
     return { error: 'Comment cannot be empty' }
   }
 
+  const { data: postOwner } = await supabase.from('posts').select('author_id').eq('id', postId).maybeSingle()
+
   const { error } = await supabase.from('comments').insert({
     post_id: postId,
     author_id: user.id,
@@ -268,6 +284,17 @@ export async function addComment(postId: string, content: string) {
   }
 
   await logEvent({ endpoint: 'posts.addComment', status: 'success', durationMs: Date.now() - start, userId: user.id })
+  if (postOwner?.author_id) {
+    await notifyUser({
+      recipientId: postOwner.author_id,
+      actorId: user.id,
+      type: 'post_comment',
+      title: 'New comment',
+      message: 'Someone commented on your post.',
+      href: `/feed#post-${postId}`,
+      metadata: { post_id: postId },
+    })
+  }
   revalidatePath('/feed')
   return { success: true }
 }

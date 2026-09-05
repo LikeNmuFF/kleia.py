@@ -2,6 +2,7 @@ import { getSafeErrorMessage } from '@/lib/errorHandler'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { notifyUser } from '@/app/actions/notifications'
 export const dynamic='force-dynamic'
 export async function GET() {
   const supabase = await createClient()
@@ -32,6 +33,7 @@ export async function POST(request: NextRequest) {
     const { data: req } = await svc.from('tutor_requests').select('id').eq('requester_id', body.requester_id).eq('skill_key', body.skill_key).eq('status','open').maybeSingle()
     if(req) await svc.from('tutor_requests').update({ status:'matched' }).eq('id', req.id)
   } catch {}
+  await notifyUser({ recipientId: body.requester_id, actorId: user.id, type: 'peer_request', title: 'A peer offered help', message: 'Someone offered to help with your learning request.', href: '/peer-matching', metadata: { match_id: data.id, skill_key: body.skill_key }, dedupeKey: `peer-request:${data.id}` })
   return NextResponse.json({ id: data.id, chatHint: 'Chat opened — check /chat' })
 }
 export async function PATCH(request: NextRequest) {
@@ -46,6 +48,7 @@ export async function PATCH(request: NextRequest) {
   if(match.requester_id !== user.id) return NextResponse.json({error:'Only requester can decide'},{status:403})
   const { error } = await supabase.from('peer_matches').update({ status }).eq('id', id)
   if(error) return NextResponse.json({ error: getSafeErrorMessage(error, 'Something went wrong.')},{status:500})
+  await notifyUser({ recipientId: match.helper_id, actorId: user.id, type: 'peer_match', title: `Peer request ${status}`, message: `Your peer request was ${status}.`, href: '/peer-matching', metadata: { match_id: id, status }, dedupeKey: `peer-status:${id}:${status}` })
   // award badges best-effort
   try { const { checkBadges } = await import('@/app/actions/gamification'); await checkBadges() } catch {}
   return NextResponse.json({ success:true })

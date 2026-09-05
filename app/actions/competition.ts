@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { isAdmin } from '@/lib/admin'
 import { getEffectiveSeasonStatus, getSeasonHintCost, type SeasonRow, type SeasonStatus } from './competition-status'
+import { notifyUser } from './notifications'
 
 export type { SeasonStatus, SeasonRow } from './competition-status'
 
@@ -310,6 +311,19 @@ export async function addSeasonSpectator(seasonId: string, username: string) {
   if (error) {
     if (error.message?.includes('duplicate key')) return { error: 'Already a spectator' }
     return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
+  }
+  const { data: season } = await supabase.from('ctf_seasons').select('slug, name').eq('id', seasonId).maybeSingle()
+  if (season?.slug) {
+    await notifyUser({
+      recipientId: profile.id,
+      actorId: user.id,
+      type: 'spectator_invite',
+      title: 'You were invited to spectate',
+      message: `You can now watch ${season.name || 'this season'} live.`,
+      href: `/ctf/seasons/${season.slug}/spectate`,
+      metadata: { season_id: seasonId },
+      dedupeKey: `spectator:${seasonId}`,
+    })
   }
   revalidatePath('/admin')
   return { success: true }

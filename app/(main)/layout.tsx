@@ -13,6 +13,8 @@ import DesktopNav from '@/components/nav/DesktopNav'
 import MobileNav from '@/components/nav/MobileNav'
 import SupportButton from '@/components/SupportButton'
 import SeasonBoundaryRefresh from '@/components/competition/SeasonBoundaryRefresh'
+import NotificationBell from '@/components/notifications/NotificationBell'
+import { getUnreadNotificationCount } from '@/app/actions/notifications'
 
 export default async function MainLayout({
   children,
@@ -59,6 +61,7 @@ export default async function MainLayout({
     : { data: null }
 
   const isAdmin = profile?.role === 'admin'
+  const unreadNotifications = await getUnreadNotificationCount()
 
   return (
     <ChatUnreadProvider userId={user?.id || null}>
@@ -93,6 +96,7 @@ export default async function MainLayout({
 
             {/* User Menu */}
             <div className="flex items-center justify-end gap-2 lg:gap-2.5 shrink-0">
+              <NotificationBell userId={user.id} initialCount={unreadNotifications} />
               <SupportButton variant="nav" />
               <ThemeToggle />
               <Link

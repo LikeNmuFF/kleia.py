@@ -9,6 +9,7 @@ import {
   getTodayString,
   type BadgeDef,
 } from '@/lib/utils/gamification'
+import { notifyUser } from './notifications'
 
 export async function addXp(amount: number, reason: string) {
   const supabase = await createClient()
@@ -217,6 +218,20 @@ export async function checkBadges() {
     if (snapshot && Array.isArray((snapshot as { strengths: unknown }).strengths) && (snapshot as { strengths: unknown[] }).strengths.length >= 2 && Array.isArray((snapshot as { weaknesses: unknown }).weaknesses) && (snapshot as { weaknesses: unknown[] }).weaknesses.length <= 1) await grant('skill_bridge')
   } catch {}
 
+  for (const badgeId of newBadges) {
+    const badge = BADGES.find((item) => item.id === badgeId)
+    await notifyUser({
+      recipientId: user.id,
+      actorId: null,
+      type: 'badge_earned',
+      title: 'Achievement unlocked',
+      message: badge ? `${badge.icon} ${badge.name}` : 'You earned a new achievement.',
+      href: '/leaderboard/achievements',
+      metadata: { badge_id: badgeId },
+      dedupeKey: `badge:${badgeId}`,
+    })
+  }
+
   return { earned: newBadges }
 }
 
@@ -281,6 +296,16 @@ export async function completeMission(missionType: string, skipXp = false) {
   if (!skipXp) {
     await addXp(mission.xp_reward, `mission_${missionType}`)
   }
+  await notifyUser({
+    recipientId: user.id,
+    actorId: null,
+    type: 'daily_mission',
+    title: 'Daily mission complete',
+    message: `You earned ${mission.xp_reward} XP today.`,
+    href: '/feed',
+    metadata: { mission_type: missionType, date: today },
+    dedupeKey: `mission:${today}:${missionType}`,
+  })
   return { success: true, xpEarned: mission.xp_reward }
 }
 
