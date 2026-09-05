@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { getWebinarDetails } from '@/app/actions/webinars'
 import AttendancePanel from '@/components/webinars/AttendancePanel'
 import WebinarActions from '@/components/webinars/WebinarActions'
+import { getProxiedImageSrc } from '@/lib/images/image-proxy-url'
 
 const providerLabels: Record<string, string> = {
   internal: 'Kleia',
@@ -27,6 +28,7 @@ export default async function WebinarDetailPage({ params }: { params: Promise<{ 
   const webinar = result.webinar
   const start = new Date(webinar.starts_at)
   const end = webinar.ends_at ? new Date(webinar.ends_at) : null
+  const thumbnailSrc = webinar.thumbnail_url ? getProxiedImageSrc(webinar.thumbnail_url) : null
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
@@ -35,16 +37,20 @@ export default async function WebinarDetailPage({ params }: { params: Promise<{ 
       </Link>
 
       <div className="mt-5 border rounded-lg overflow-hidden" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--card-bg)' }}>
-        {webinar.thumbnail_url && (
+        {thumbnailSrc ? (
           <div className="w-full h-56 md:h-72 overflow-hidden" style={{ backgroundColor: 'var(--hover-bg)' }}>
             <img
-              src={`/api/image-proxy?url=${encodeURIComponent(webinar.thumbnail_url)}`}
+              src={thumbnailSrc}
               alt={webinar.title}
               className="w-full h-full object-cover"
               loading="lazy"
             />
           </div>
-        )}
+        ) : webinar.thumbnail_url ? (
+          <div className="w-full h-56 md:h-72 flex items-center justify-center text-sm" style={{ backgroundColor: 'var(--hover-bg)', color: 'var(--text-muted)' }}>
+            Thumbnail unavailable
+          </div>
+        ) : null}
 
         <div className="p-5 md:p-6">
           <div className="flex flex-wrap items-center gap-2 mb-4">

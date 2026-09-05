@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { getSafeErrorMessage } from '@/lib/errorHandler'
 import { logEvent } from '@/lib/logEvent'
+import { isBlockedProxyImageUrl } from '@/lib/images/image-proxy-url'
 import type {
   WebinarProviderType,
   WebinarSkillCategory,
@@ -184,6 +185,9 @@ export async function createWebinar(data: {
 
   const thumbnailUrl = normalizeUrl(data.thumbnail_url)
   if (data.thumbnail_url?.trim() && !thumbnailUrl) return { error: 'Use a valid http or https thumbnail link' }
+  if (thumbnailUrl && isBlockedProxyImageUrl(thumbnailUrl)) {
+    return { error: 'Use a direct HTTPS image URL or upload an image file' }
+  }
 
   const { data: webinar, error } = await supabase
     .from('webinars')

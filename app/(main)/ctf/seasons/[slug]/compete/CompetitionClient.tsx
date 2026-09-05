@@ -6,6 +6,7 @@ import { X, Trophy, Target, CheckCircle2, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { submitFlag, getChallenge } from '@/app/actions/ctf'
 import { getSeasonHintState, unlockSeasonHint } from '@/app/actions/competition'
+import { getRecentSeasonSolves } from '@/app/actions/competition'
 import Countdown from '@/components/competition/Countdown'
 import { useSeasonStatusRealtime } from '@/lib/hooks/useSeasonStatusRealtime'
 
@@ -26,6 +27,15 @@ interface Challenge {
   points: number
   bonus_points: number
   solved: boolean
+}
+
+interface RecentSolve {
+  user_id: string
+  codename: string | null
+  challenge_id: string
+  title: string
+  points: number
+  created_at: string
 }
 
 const DIFFICULTY_STYLES: Record<string, { color: string; bg: string; label: string }> = {
@@ -49,6 +59,7 @@ export default function CompetitionClient({
   initialChallengesSolved,
   userId,
   codename,
+  initialRecentSolves,
 }: {
   season: Season
   effectiveStatus: 'upcoming' | 'live' | 'paused' | 'ended'
@@ -57,6 +68,7 @@ export default function CompetitionClient({
   initialChallengesSolved: number
   userId: string
   codename: string | null
+  initialRecentSolves: RecentSolve[]
 }) {
   const [totalPoints, setTotalPoints] = useState(initialTotalPoints)
   const [challengesSolved, setChallengesSolved] = useState(initialChallengesSolved)
@@ -74,8 +86,20 @@ export default function CompetitionClient({
   const [flag, setFlag] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null)
+  const [recentSolves, setRecentSolves] = useState(initialRecentSolves)
 
   useSeasonStatusRealtime(season.id)
+
+  useEffect(() => {
+    if (effectiveStatus !== 'live') return
+    let active = true
+    const refresh = async () => {
+      const next = await getRecentSeasonSolves(season.id)
+      if (active) setRecentSolves(next)
+    }
+    const timer = window.setInterval(refresh, 8000)
+    return () => { active = false; window.clearInterval(timer) }
+  }, [season.id, effectiveStatus])
 
   useEffect(() => {
     if (effectiveStatus !== 'live') return
@@ -293,6 +317,28 @@ export default function CompetitionClient({
             })}
           </div>
         )}
+
+        <section className="mt-8 rounded-2xl p-5" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Live solves</h2>
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Visible to all players</span>
+          </div>
+          {recentSolves.length === 0 ? (
+            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>No solves yet. Be the first!</p>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {recentSolves.map((solve, index) => (
+                <div key={`${solve.user_id}-${solve.challenge_id}-${index}`} className="rounded-xl px-3 py-2.5" style={{ backgroundColor: 'var(--input-bg)' }}>
+                  <div className="flex items-center justify-between gap-2 text-sm">
+                    <span className="font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{solve.codename || 'Player'}</span>
+                    <span className="font-mono font-bold shrink-0" style={{ color: '#22c55e' }}>+{solve.points}</span>
+                  </div>
+                  <p className="text-xs truncate mt-1" style={{ color: 'var(--text-muted)' }}>solved {solve.title}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       </main>
 
       {/* Solve overlay */}

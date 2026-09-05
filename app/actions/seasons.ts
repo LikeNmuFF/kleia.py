@@ -202,12 +202,21 @@ export async function getSeasonBySlug(slug: string) {
 export async function isSeasonParticipant(seasonId: string, userId: string) {
   const supabase = await createClient()
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('ctf_season_participants')
     .select('user_id, codename')
     .eq('season_id', seasonId)
     .eq('user_id', userId)
     .maybeSingle()
+
+  if (error) {
+    console.error('isSeasonParticipant: membership lookup failed', {
+      seasonId,
+      userId,
+      error: error.message,
+    })
+    throw new Error('Could not verify season registration')
+  }
 
   return data ? { joined: true, codename: data.codename } : { joined: false, codename: null }
 }

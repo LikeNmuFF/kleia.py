@@ -350,6 +350,41 @@ export default function SeasonDetailClient({
         </div>
       )}
 
+      {!isParticipant && status === 'live' && !userId && (
+        <div
+          className="mb-8 rounded-2xl p-6 text-center"
+          style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}
+        >
+          <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+            Already registered?
+          </h3>
+          <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>
+            Sign in with the same account you used to register and we&apos;ll restore your competition access.
+          </p>
+          <Link
+            href={`/login?next=${encodeURIComponent(`/ctf/seasons/${season.slug}/compete`)}`}
+            className="inline-flex px-5 py-2.5 rounded-xl text-sm font-semibold"
+            style={{ background: 'linear-gradient(135deg, #8b5cf6, #06b6d4)', color: 'white' }}
+          >
+            Sign in to compete
+          </Link>
+        </div>
+      )}
+
+      {!isParticipant && status === 'live' && userId && (
+        <div
+          className="mb-8 rounded-2xl p-5"
+          style={{ backgroundColor: 'rgba(234, 179, 8, 0.08)', border: '1px solid rgba(234, 179, 8, 0.3)' }}
+        >
+          <h3 className="font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>
+            This account is not registered
+          </h3>
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            Registration closed when the season started. Sign out and use the account you originally registered, or contact an administrator if this looks wrong.
+          </p>
+        </div>
+      )}
+
       {/* Already Registered */}
       {isParticipant && (
         <div

@@ -9,7 +9,7 @@ export default async function SpectatePage({ params }: { params: Promise<{ slug:
   const season = await getSeasonBySlug(slug)
   if (!season) notFound()
 
-  const access = await getCompetitionAccess(season.id)
+  const access = await getCompetitionAccess(season.id, { preferSpectator: true })
   if (access.kind !== 'spectator' && access.kind !== 'admin') {
     redirect(`/ctf/seasons/${season.slug}`)
   }

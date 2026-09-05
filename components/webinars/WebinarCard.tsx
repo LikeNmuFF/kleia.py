@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import type { Webinar } from '@/lib/webinars/types'
+import { getProxiedImageSrc } from '@/lib/images/image-proxy-url'
 
 const providerLabels: Record<string, string> = {
   internal: 'Kleia',
@@ -18,19 +19,24 @@ const modeLabels: Record<string, string> = {
 export default function WebinarCard({ webinar }: { webinar: Webinar }) {
   const start = new Date(webinar.starts_at)
   const registered = webinar.my_registration?.status === 'registered' || webinar.my_registration?.status === 'completed'
+  const thumbnailSrc = webinar.thumbnail_url ? getProxiedImageSrc(webinar.thumbnail_url) : null
 
   return (
     <Link href={`/webinars/${webinar.id}`} className="block border rounded-lg overflow-hidden transition hover:-translate-y-0.5 hover:border-violet-500/50" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--card-bg)' }}>
-      {webinar.thumbnail_url && (
+      {thumbnailSrc ? (
         <div className="w-full h-40 overflow-hidden" style={{ backgroundColor: 'var(--hover-bg)' }}>
           <img
-            src={`/api/image-proxy?url=${encodeURIComponent(webinar.thumbnail_url)}`}
+            src={thumbnailSrc}
             alt={webinar.title}
             className="w-full h-full object-cover"
             loading="lazy"
           />
         </div>
-      )}
+      ) : webinar.thumbnail_url ? (
+        <div className="w-full h-40 flex items-center justify-center text-sm" style={{ backgroundColor: 'var(--hover-bg)', color: 'var(--text-muted)' }}>
+          Thumbnail unavailable
+        </div>
+      ) : null}
 
       <div className="p-4">
         <div className="flex flex-wrap items-center gap-2 mb-3">

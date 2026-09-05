@@ -35,6 +35,7 @@ supabase/migrations/*
 !supabase/migrations/20260831080000_webinar_thumbnails_drop_certs.sql
 !supabase/migrations/20260831092000_fix_feedback_grants.sql
 !supabase/migrations/20260831093000_fix_leaderboard_overrides.sql
+!supabase/migrations/20260905010000_season_solve_feed.sql
 !supabase/tests/
 supabase/tests/*
 !supabase/tests/skill_snapshots_rls.sql

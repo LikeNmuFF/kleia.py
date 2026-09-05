@@ -41,7 +41,7 @@ export default function HintUnlockButton({
         <summary className="text-sm cursor-pointer font-medium" style={{ color: 'var(--text-muted)' }}>
           💡 Hint (free)
         </summary>
-        <p className="mt-2 text-sm p-3 rounded-lg" style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-secondary)' }}>
+        <p className="mt-2 text-sm p-3 rounded-lg line-clamp-3" style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-secondary)', overflow: 'hidden' }}>
           {hintText}
         </p>
       </details>
@@ -54,7 +54,7 @@ export default function HintUnlockButton({
         <div className="text-sm font-medium mb-2" style={{ color: 'var(--text-muted)' }}>
           💡 Hint unlocked
         </div>
-        <p className="text-sm p-3 rounded-lg" style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-secondary)' }}>
+        <p className="text-sm p-3 rounded-lg line-clamp-3" style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-secondary)', overflow: 'hidden' }}>
           {hintText}
         </p>
         {message && (

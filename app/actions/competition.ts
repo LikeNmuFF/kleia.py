@@ -22,7 +22,10 @@ export type CompetitionAccess =
  * Pass seasonId to evaluate a specific season; otherwise the effective-live
  * season (falling back to the nearest upcoming) is used.
  */
-export async function getCompetitionAccess(seasonId?: string): Promise<CompetitionAccess> {
+export async function getCompetitionAccess(
+  seasonId?: string,
+  options?: { preferSpectator?: boolean },
+): Promise<CompetitionAccess> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { kind: 'none' }
@@ -58,7 +61,7 @@ export async function getCompetitionAccess(seasonId?: string): Promise<Competiti
   if (!season) return { kind: 'none' }
   const effectiveStatus = getEffectiveSeasonStatus(season)
 
-  const [{ data: participant }, { data: spectator }] = await Promise.all([
+  const [participantResult, spectatorResult] = await Promise.all([
     supabase
       .from('ctf_season_participants')
       .select('codename')
@@ -73,6 +76,22 @@ export async function getCompetitionAccess(seasonId?: string): Promise<Competiti
       .maybeSingle(),
   ])
 
+  if (participantResult.error || spectatorResult.error) {
+    console.error('getCompetitionAccess: membership lookup failed', {
+      seasonId: season.id,
+      userId: user.id,
+      participantError: participantResult.error?.message,
+      spectatorError: spectatorResult.error?.message,
+    })
+    throw new Error('Could not verify season access')
+  }
+
+  const participant = participantResult.data
+  const spectator = spectatorResult.data
+
+  if (options?.preferSpectator && spectator) {
+    return { kind: 'spectator', userId: user.id, season, effectiveStatus }
+  }
   if (participant) {
     return {
       kind: 'participant',
@@ -210,50 +229,12 @@ export async function getSeasonHintState(seasonId: string, challengeId: string) 
 /** Latest correct solves in a season, joined with codename + challenge title (for the spectate ticker). */
 export async function getRecentSeasonSolves(seasonId: string) {
   const supabase = await createClient()
-
-  const { data: seasonChallenges } = await supabase
-    .from('ctf_season_challenges')
-    .select('challenge_id, bonus_points')
-    .eq('season_id', seasonId)
-  if (!seasonChallenges?.length) return []
-
-  const bonusMap: Record<string, number> = {}
-  for (const sc of seasonChallenges) bonusMap[sc.challenge_id] = sc.bonus_points ?? 0
-  const challengeIds = seasonChallenges.map(sc => sc.challenge_id)
-
-  const { data: submissions } = await supabase
-    .from('ctf_submissions')
-    .select('user_id, challenge_id, created_at')
-    .eq('is_correct', true)
-    .in('challenge_id', challengeIds)
-    .order('created_at', { ascending: false })
-    .limit(20)
-  if (!submissions?.length) return []
-
-  const userIds = Array.from(new Set(submissions.map(s => s.user_id)))
-  const { data: participants } = await supabase
-    .from('ctf_season_participants')
-    .select('user_id, codename')
-    .eq('season_id', seasonId)
-    .in('user_id', userIds)
-  const codenameMap: Record<string, string | null> = {}
-  for (const p of participants || []) codenameMap[p.user_id] = p.codename
-
-  const { data: challenges } = await supabase
-    .from('ctf_challenges')
-    .select('id, title, points')
-    .in('id', challengeIds)
-  const titleMap: Record<string, { title: string; points: number }> = {}
-  for (const c of challenges || []) titleMap[c.id] = { title: c.title, points: c.points }
-
-  return submissions.map(s => ({
-    user_id: s.user_id,
-    codename: codenameMap[s.user_id] ?? null,
-    challenge_id: s.challenge_id,
-    title: titleMap[s.challenge_id]?.title ?? 'Unknown',
-    points: (titleMap[s.challenge_id]?.points ?? 0) + (bonusMap[s.challenge_id] ?? 0),
-    created_at: s.created_at,
-  }))
+  const { data, error } = await supabase.rpc('get_recent_season_solves', { p_season_id: seasonId })
+  if (error) {
+    console.error('getRecentSeasonSolves: feed lookup failed', { seasonId, error: error.message })
+    return []
+  }
+  return data ?? []
 }
 
 // ---- Admin actions ----

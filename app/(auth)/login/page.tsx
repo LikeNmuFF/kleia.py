@@ -6,9 +6,9 @@ import Link from 'next/link'
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>
+  searchParams: Promise<{ error?: string; next?: string }>
 }) {
-  const { error } = await searchParams
+  const { error, next } = await searchParams
   return (
     <div className="backdrop-blur-sm rounded-2xl p-8" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
       <div className="text-center mb-8">
@@ -26,6 +26,7 @@ export default async function LoginPage({
       <AuthErrorMessage error={getLoginErrorMessage(error) ?? undefined} />
 
       <form action={login} className="space-y-5">
+        {next && <input type="hidden" name="next" value={next} />}
         <div>
           <label htmlFor="email" className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
             Email
@@ -80,6 +81,7 @@ export default async function LoginPage({
 
         <div className="mt-4 grid grid-cols-2 gap-3">
           <form action={signInWithGoogle}>
+            {next && <input type="hidden" name="next" value={next} />}
             <button
               type="submit"
               className="w-full flex items-center justify-center gap-2 border rounded-xl py-3 font-medium transition-all duration-200"
@@ -96,6 +98,7 @@ export default async function LoginPage({
           </form>
 
           <form action={signInWithGitHub}>
+            {next && <input type="hidden" name="next" value={next} />}
             <button
               type="submit"
               className="w-full flex items-center justify-center gap-2 border rounded-xl py-3 font-medium transition-all duration-200"

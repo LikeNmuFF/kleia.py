@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getSeasonBySlug, getSeasonChallenges } from '@/app/actions/seasons'
-import { getCompetitionAccess } from '@/app/actions/competition'
+import { getCompetitionAccess, getRecentSeasonSolves } from '@/app/actions/competition'
 import { canRevealSeasonChallenges } from '@/app/actions/competition-status'
 import CompetitionClient from './CompetitionClient'
 
@@ -20,7 +20,7 @@ export default async function CompetePage({ params }: { params: Promise<{ slug: 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const [challenges, participant] = await Promise.all([
+  const [challenges, participant, recentSolves] = await Promise.all([
     canRevealSeasonChallenges(access.effectiveStatus, access.kind === 'participant')
       ? getSeasonChallenges(season.id)
       : Promise.resolve([]),
@@ -32,6 +32,7 @@ export default async function CompetePage({ params }: { params: Promise<{ slug: 
           .eq('user_id', user.id)
           .maybeSingle()
       : Promise.resolve({ data: null }),
+    getRecentSeasonSolves(season.id),
   ])
 
   return (
@@ -43,6 +44,7 @@ export default async function CompetePage({ params }: { params: Promise<{ slug: 
       initialChallengesSolved={(participant.data as { challenges_solved?: number } | null)?.challenges_solved ?? 0}
       userId={user?.id || ''}
       codename={access.kind === 'participant' ? access.codename : null}
+      initialRecentSolves={recentSolves}
     />
   )
 }
