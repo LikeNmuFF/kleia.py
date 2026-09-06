@@ -688,7 +688,48 @@ export async function deleteChallenge(id: string) {
     return { error: 'Unauthorized' }
   }
 
-  const { error } = await supabase
+  const service = getServiceClient() as any
+  const { data: writeups, error: writeupsReadError } = await service
+    .from('writeups')
+    .select('id')
+    .eq('challenge_id', id)
+
+  if (writeupsReadError) {
+    const { data: { user } } = await supabase.auth.getUser()
+    await logEvent({ endpoint: 'ctf.deleteChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: writeupsReadError.message, userId: user?.id })
+    return { error: getSafeErrorMessage(writeupsReadError, 'Something went wrong. Please try again.') }
+  }
+
+  const writeupIds = writeups?.map((writeup: { id: string }) => writeup.id) ?? []
+  if (writeupIds.length > 0) {
+    const { error: voteDeleteError } = await service
+      .from('writeup_votes')
+      .delete()
+      .in('writeup_id', writeupIds)
+
+    if (voteDeleteError) {
+      const { data: { user } } = await supabase.auth.getUser()
+      await logEvent({ endpoint: 'ctf.deleteChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: voteDeleteError.message, userId: user?.id })
+      return { error: getSafeErrorMessage(voteDeleteError, 'Something went wrong. Please try again.') }
+    }
+  }
+
+  const dependentDeletes = [
+    service.from('writeups').delete().eq('challenge_id', id),
+    service.from('ctf_season_challenges').delete().eq('challenge_id', id),
+    service.from('ctf_submissions').delete().eq('challenge_id', id),
+  ]
+
+  for (const deletePromise of dependentDeletes) {
+    const { error: dependencyDeleteError } = await deletePromise
+    if (dependencyDeleteError) {
+      const { data: { user } } = await supabase.auth.getUser()
+      await logEvent({ endpoint: 'ctf.deleteChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: dependencyDeleteError.message, userId: user?.id })
+      return { error: getSafeErrorMessage(dependencyDeleteError, 'Something went wrong. Please try again.') }
+    }
+  }
+
+  const { error } = await service
     .from('ctf_challenges')
     .delete()
     .eq('id', id)
