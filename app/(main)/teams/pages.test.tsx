@@ -18,6 +18,7 @@ describe("practice team pages", () => {
     const page = read("app", "(main)", "teams", "[slug]", "page.tsx");
     const calendar = read("components", "practice-teams", "PracticeTeamCalendar.tsx");
 
+    expect(page).toContain('slug === "new"');
     expect(page).toContain("getPracticeTeamBySlug");
     expect(page).toContain("PracticeTeamCalendar");
     expect(page).toContain("member_count");
