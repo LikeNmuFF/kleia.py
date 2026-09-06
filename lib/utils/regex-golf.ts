@@ -18,7 +18,9 @@ const DANGEROUS_PATTERNS: RegExp[] = [
   // Quantified group containing alternation: (a|b)+, (a|b)* — high backtrack risk
   /\([^)]*\|[^)]*\)[+*]/,
   // Quantified group containing quantified inner group: (a+)+, (a*)* etc.
-  /\([^)]*[+*][^)]*\)[+*]/,
+  /\([^)]*[+*?][^)]*\)[+*]/,
+  // Optional quantifiers repeated by an outer quantifier: (a?)+
+  /\([^)]*\?[^)]*\)[+*]/,
   // Nested quantifiers on any atom: a++, a*+, a+* etc.
   /[a-zA-Z0-9.)\]]\+[+*]|[a-zA-Z0-9.)\]]\*[+*]|[a-zA-Z0-9.)\]][+*]\+|[a-zA-Z0-9.)\]][+*]\*/,
   // Lazy quantifiers (still cause backtracking on failure)

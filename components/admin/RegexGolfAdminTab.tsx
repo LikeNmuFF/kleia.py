@@ -3,8 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Plus, Pencil, Trash2, X, Check, Eye, EyeOff, TestTube } from 'lucide-react'
 import { getAdminRegexPuzzles, createRegexPuzzle, updateRegexPuzzle, deleteRegexPuzzle } from '@/app/actions/admin'
-
-const DANGEROUS_PATTERNS = /\(\?.*?\)|\(\?\=|\(\?!|\(\?\<|\(\?<=|\(\?<!|\\A|\\Z|\{[0-9]{3,}\}|\\\w\+\+|\\\w\*\*/
+import { validateRegex } from '@/lib/utils/regex-golf'
 
 interface Puzzle {
   id: string
@@ -94,26 +93,9 @@ export default function RegexGolfAdminTab() {
     setTestResult(null)
     if (!form.solution_regex) return
 
-    if (DANGEROUS_PATTERNS.test(form.solution_regex)) {
-      setTestResult({ valid: false, matchesAll: false, rejectsAll: false, error: 'Pattern contains disallowed constructs' })
-      return
-    }
-
-    let regex: RegExp
-    try {
-      regex = new RegExp(form.solution_regex)
-    } catch (e) {
-      setTestResult({ valid: false, matchesAll: false, rejectsAll: false, error: `Invalid syntax: ${e}` })
-      return
-    }
-
     const matchStrings = form.match_strings.split('\n').map(s => s.trim()).filter(Boolean)
     const rejectStrings = form.reject_strings.split('\n').map(s => s.trim()).filter(Boolean)
-
-    const matchesAll = matchStrings.every(s => regex.test(s))
-    const rejectsAll = rejectStrings.every(s => !regex.test(s))
-
-    setTestResult({ valid: true, matchesAll, rejectsAll })
+    setTestResult(validateRegex(form.solution_regex, matchStrings, rejectStrings))
   }
 
   async function handleSave() {
