@@ -5,6 +5,7 @@ import { getSafeErrorMessage } from '@/lib/errorHandler'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getServiceClient } from '@/lib/supabase/service'
 import { logEvent } from '@/lib/logEvent'
 import { logSecurityEvent } from '@/lib/security-log'
 import { isAdmin } from '@/lib/admin'
@@ -14,6 +15,7 @@ import {
   canEditGlobalChallenge,
   canEditSeasonChallenge,
 } from '@/lib/contributors'
+import { uploadScopeMatchesChallenge } from '@/lib/ctf/uploads/scope'
 import { hashFlag } from '@/lib/utils/ctf'
 import { checkNamedRateLimit } from '@/lib/rate-limit'
 import { extractClientIp } from '@/lib/logEvent'
@@ -64,6 +66,39 @@ async function resolveLearnLink(
   if (!lesson) return { learn_topic_slug: null, learn_lesson_slug: null }
 
   return { learn_topic_slug: t, learn_lesson_slug: l }
+}
+
+async function resolveApprovedUploadForChallenge(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  uploadId: string | undefined,
+  challengeSeasonId: string | null
+): Promise<{ fileUrl: string | null; uploadId: string | null; error?: string }> {
+  if (!uploadId) return { fileUrl: null, uploadId: null }
+  const { data: upload } = await supabase
+    .from('ctf_challenge_uploads')
+    .select('id, owner_id, challenge_id, scope_season_id, scan_status')
+    .eq('id', uploadId)
+    .maybeSingle()
+  if (!upload || upload.owner_id !== userId) return { fileUrl: null, uploadId: null, error: 'File scan rejected' }
+  if (upload.scan_status !== 'approved') return { fileUrl: null, uploadId: null, error: 'File scan rejected' }
+  if (upload.challenge_id) return { fileUrl: null, uploadId: null, error: 'File scan rejected' }
+  if (!uploadScopeMatchesChallenge({ uploadSeasonId: upload.scope_season_id, challengeSeasonId })) return { fileUrl: null, uploadId: null, error: 'File scan rejected' }
+  return { fileUrl: `/api/ctf/files/${upload.id}`, uploadId: upload.id }
+}
+
+async function linkApprovedUploadToChallenge(uploadId: string | null, ownerId: string, challengeId: string) {
+  if (!uploadId) return { success: true }
+  const service = getServiceClient()
+  const { error } = await service
+    .from('ctf_challenge_uploads')
+    .update({ challenge_id: challengeId })
+    .eq('id', uploadId)
+    .eq('owner_id', ownerId)
+    .eq('scan_status', 'approved')
+    .is('challenge_id', null)
+  if (error) return { error }
+  return { success: true }
 }
 
 export async function submitFlag(challengeId: string, submittedFlag: string) {
@@ -241,6 +276,7 @@ export async function createChallenge(data: {
   hint?: string
   hint_points_cost?: number
   file_url?: string
+  upload_id?: string
   link_url?: string
   author?: string
   learn_topic_slug?: string
@@ -269,7 +305,11 @@ export async function createChallenge(data: {
     data.learn_lesson_slug
   )
 
-  const { error } = await supabase
+  const attachment = await resolveApprovedUploadForChallenge(supabase, user.id, data.upload_id, null)
+  if (attachment.error) return { error: attachment.error }
+  const legacyFileUrl = data.file_url?.trim() ? data.file_url.trim() : null
+
+  const { data: inserted, error } = await supabase
     .from('ctf_challenges')
     .insert({
       title: data.title.trim(),
@@ -280,7 +320,7 @@ export async function createChallenge(data: {
       flag_hash: hashFlag(data.flag.trim()),
       hint: data.hint?.trim() || null,
       hint_points_cost: Math.max(0, Math.floor(data.hint_points_cost ?? 10)),
-      file_url: data.file_url?.trim() || null,
+      file_url: attachment.fileUrl ?? legacyFileUrl,
       link_url: data.link_url?.trim() || null,
       author: data.author?.trim() || null,
       status: 'approved',
@@ -289,10 +329,19 @@ export async function createChallenge(data: {
       created_by: user.id,
       ...learnLink,
     })
+    .select('id')
+    .single()
 
   if (error) {
     await logEvent({ endpoint: 'ctf.createChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user?.id })
     return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
+  }
+
+  const linkUpload = await linkApprovedUploadToChallenge(attachment.uploadId, user.id, inserted.id)
+  if (linkUpload.error) {
+    await getServiceClient().from('ctf_challenges').update({ file_url: null }).eq('id', inserted.id)
+    await logEvent({ endpoint: 'ctf.createChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: linkUpload.error.message, userId: user?.id })
+    return { error: 'File scan rejected' }
   }
 
   await logEvent({ endpoint: 'ctf.createChallenge', status: 'success', durationMs: Date.now() - start, userId: user?.id })
@@ -310,6 +359,7 @@ export async function createSeasonChallenge(seasonId: string, data: {
   hint?: string
   hint_points_cost?: number
   file_url?: string
+  upload_id?: string
   link_url?: string
   author?: string
   learn_topic_slug?: string
@@ -348,6 +398,10 @@ export async function createSeasonChallenge(seasonId: string, data: {
     data.learn_lesson_slug
   )
 
+  const attachment = await resolveApprovedUploadForChallenge(supabase, user.id, data.upload_id, seasonId)
+  if (attachment.error) return { error: attachment.error }
+  const legacyFileUrl = data.file_url?.trim() ? data.file_url.trim() : null
+
   const { data: inserted, error: insertError } = await supabase
     .from('ctf_challenges')
     .insert({
@@ -359,7 +413,7 @@ export async function createSeasonChallenge(seasonId: string, data: {
       flag_hash: hashFlag(data.flag.trim()),
       hint: data.hint?.trim() || null,
       hint_points_cost: Math.max(0, Math.floor(data.hint_points_cost ?? 10)),
-      file_url: data.file_url?.trim() || null,
+      file_url: attachment.fileUrl ?? legacyFileUrl,
       link_url: data.link_url?.trim() || null,
       author: data.author?.trim() || null,
       status: 'approved',
@@ -382,6 +436,13 @@ export async function createSeasonChallenge(seasonId: string, data: {
   if (linkError) {
     await logEvent({ endpoint: 'ctf.createSeasonChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: linkError.message, userId: user?.id })
     return { error: getSafeErrorMessage(linkError, 'Something went wrong. Please try again.') }
+  }
+
+  const linkUpload = await linkApprovedUploadToChallenge(attachment.uploadId, user.id, inserted!.id)
+  if (linkUpload.error) {
+    await getServiceClient().from('ctf_challenges').update({ file_url: null }).eq('id', inserted!.id)
+    await logEvent({ endpoint: 'ctf.createSeasonChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: linkUpload.error.message, userId: user?.id })
+    return { error: 'File scan rejected' }
   }
 
   await logEvent({ endpoint: 'ctf.createSeasonChallenge', status: 'success', durationMs: Date.now() - start, userId: user?.id })
@@ -504,6 +565,7 @@ export async function updateChallenge(
     flag?: string
     hint?: string
     file_url?: string
+    upload_id?: string
     link_url?: string
     author?: string
     status?: string
@@ -562,7 +624,12 @@ export async function updateChallenge(
     updateData.hint = data.hint?.trim() || null
   }
   if (data.file_url !== undefined) {
-    updateData.file_url = data.file_url?.trim() || null
+    updateData.file_url = data.file_url?.trim() ? data.file_url.trim() : null
+  }
+  if (data.upload_id !== undefined) {
+    const attachment = await resolveApprovedUploadForChallenge(supabase, user.id, data.upload_id, challenge?.season_id ?? null)
+    if (attachment.error) return { error: attachment.error }
+    updateData.file_url = attachment.fileUrl
   }
   if (data.link_url !== undefined) {
     updateData.link_url = data.link_url?.trim() || null
@@ -596,6 +663,14 @@ export async function updateChallenge(
     const { data: { user } } = await supabase.auth.getUser()
     await logEvent({ endpoint: 'ctf.updateChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user?.id })
     return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
+  }
+
+  if (data.upload_id !== undefined) {
+    const linkUpload = await linkApprovedUploadToChallenge(data.upload_id, user.id, id)
+    if (linkUpload.error) {
+      await logEvent({ endpoint: 'ctf.updateChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: linkUpload.error.message, userId: user?.id })
+      return { error: 'File scan rejected' }
+    }
   }
 
   await logEvent({ endpoint: 'ctf.updateChallenge', status: 'success', durationMs: Date.now() - start })

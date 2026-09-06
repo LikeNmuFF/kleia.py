@@ -57,4 +57,14 @@ describe('season challenge visibility', () => {
     expect(source).not.toContain('Link challenges')
     expect(source).not.toContain('addChallengeToSeason')
   })
+
+  it('challenge actions attach uploads by opaque upload id only', () => {
+    const source = readFileSync(join(process.cwd(), 'app', 'actions', 'ctf.ts'), 'utf8')
+
+    expect(source).toContain('upload_id?: string')
+    expect(source).toContain('ctf_challenge_uploads')
+    expect(source).toContain('scan_status')
+    expect(source).toContain("`/api/ctf/files/${")
+    expect(source).not.toContain('file_url: data.file_url?.trim() || null')
+  })
 })
