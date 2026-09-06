@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 
 import PracticeTeamCalendar from "@/components/practice-teams/PracticeTeamCalendar";
 import PracticeTeamForm from "@/components/practice-teams/PracticeTeamForm";
+import TeamXPBadge from "@/components/gamification/TeamXPBadge";
 import BadgeShowcase from "@/components/gamification/BadgeShowcase";
 import { getPracticeTeamBySlug, getPracticeTeamRecentSolves } from "@/lib/practice-teams/queries";
 import { createClient } from "@/lib/supabase/server";
@@ -58,6 +59,9 @@ export default async function PracticeTeamPage({ params }: { params: Promise<{ s
               <Stat label="members" value={team.member_count} />
               <Stat label="solves" value={team.total_solves} />
               <Stat label="current streak" value={team.streaks.current} />
+            </div>
+            <div className="mt-4">
+              <TeamXPBadge xp={team.xp} level={team.level} />
             </div>
           </div>
         </div>

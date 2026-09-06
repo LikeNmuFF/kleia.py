@@ -14,6 +14,8 @@ export type PracticeTeamSummary = {
   created_at: string;
   member_count: number;
   total_solves: number;
+  xp: number;
+  level: number;
   streaks: {
     current: number;
     longest: number;
@@ -49,7 +51,7 @@ export type PracticeTeamRecentSolve = {
 
 export type PracticeTeamLeaderboardEntry = PracticeTeamSummary;
 
-const TEAM_SELECT = "id, name, slug, description, avatar_url, owner_id, created_at";
+const TEAM_SELECT = "id, name, slug, description, avatar_url, owner_id, created_at, xp, level";
 const KEY_METADATA_SELECT = "id, team_id, key_prefix, created_by, created_at, last_used_at, revoked_at";
 
 export async function getPublicPracticeTeams(supabase: SupabaseLike): Promise<PracticeTeamSummary[]> {

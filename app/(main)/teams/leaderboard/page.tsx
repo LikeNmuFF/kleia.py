@@ -39,8 +39,8 @@ export default async function PracticeTeamLeaderboardPage() {
             id: team.id,
             name: team.name,
             avatar_url: team.avatar_url,
-            xp: 0,
-            level: 1,
+            xp: team.xp,
+            level: team.level,
             solves: team.total_solves,
           }))}
         />
