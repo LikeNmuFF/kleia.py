@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 import { generatePracticeTeamApiKey, revokePracticeTeamApiKey } from "@/app/actions/practice-teams";
 import type { PracticeTeamApiKeyMetadata } from "@/lib/practice-teams/queries";
@@ -27,6 +28,13 @@ export default function PracticeTeamSettings({ slug, memberCount, apiKeys }: Pro
         <h2 className="text-lg font-semibold text-white">Streak API keys</h2>
         <p className="mt-1 text-sm text-zinc-400">
           Generate keys after your team has at least 5 accepted members. Store the raw key server-side; it is shown once.
+        </p>
+        <p className="mt-1 text-sm text-zinc-400">
+          Learn how to use your key in the{" "}
+          <Link href="/teams/api-docs" className="text-emerald-400 underline underline-offset-2 hover:text-emerald-300">
+            API documentation
+          </Link>
+          .
         </p>
       </div>
       <form action={generateKeyAction}>
