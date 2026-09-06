@@ -30,14 +30,15 @@ type UploadWithChallenge = {
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const service = getServiceClient()
-  const { data: upload } = await service
+  const service = getServiceClient() as any
+  const { data } = await service
     .from('ctf_challenge_uploads')
     .select('id, stored_name, extension, cloudinary_public_id, challenge_id, ctf_challenges:challenge_id (id, status, is_active, season_id)')
     .eq('id', id)
     .eq('scan_status', 'approved')
     .not('challenge_id', 'is', null)
-    .maybeSingle<UploadWithChallenge>()
+    .maybeSingle()
+  const upload = data as UploadWithChallenge | null
 
   if (!upload) return error(404)
 

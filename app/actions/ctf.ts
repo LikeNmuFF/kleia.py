@@ -89,7 +89,7 @@ async function resolveApprovedUploadForChallenge(
 
 async function linkApprovedUploadToChallenge(uploadId: string | null, ownerId: string, challengeId: string) {
   if (!uploadId) return { success: true }
-  const service = getServiceClient()
+  const service = getServiceClient() as any
   const { error } = await service
     .from('ctf_challenge_uploads')
     .update({ challenge_id: challengeId })
@@ -339,7 +339,7 @@ export async function createChallenge(data: {
 
   const linkUpload = await linkApprovedUploadToChallenge(attachment.uploadId, user.id, inserted.id)
   if (linkUpload.error) {
-    await getServiceClient().from('ctf_challenges').update({ file_url: null }).eq('id', inserted.id)
+    await (getServiceClient() as any).from('ctf_challenges').update({ file_url: null }).eq('id', inserted.id)
     await logEvent({ endpoint: 'ctf.createChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: linkUpload.error.message, userId: user?.id })
     return { error: 'File scan rejected' }
   }
@@ -440,7 +440,7 @@ export async function createSeasonChallenge(seasonId: string, data: {
 
   const linkUpload = await linkApprovedUploadToChallenge(attachment.uploadId, user.id, inserted!.id)
   if (linkUpload.error) {
-    await getServiceClient().from('ctf_challenges').update({ file_url: null }).eq('id', inserted!.id)
+    await (getServiceClient() as any).from('ctf_challenges').update({ file_url: null }).eq('id', inserted!.id)
     await logEvent({ endpoint: 'ctf.createSeasonChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: linkUpload.error.message, userId: user?.id })
     return { error: 'File scan rejected' }
   }

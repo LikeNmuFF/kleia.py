@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     return jsonError('File scanning is temporarily unavailable', 503)
   }
 
-  const service = getServiceClient()
+  const service = getServiceClient() as any
   const { data: row, error: insertError } = await service
     .from('ctf_challenge_uploads')
     .insert({

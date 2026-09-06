@@ -14,6 +14,8 @@ import {
   type ValidatedUpload,
 } from './types'
 
+type ImageUploadExtension = 'png' | 'jpg' | 'jpeg' | 'gif' | 'webp'
+
 const IMAGE_EXTENSIONS = new Set<AllowedUploadExtension>(['png', 'jpg', 'jpeg', 'gif', 'webp'])
 const TEXT_EXTENSIONS = new Set<AllowedUploadExtension>(['txt', 'md', 'json', 'csv'])
 const BINARY_DOCUMENT_EXTENSIONS = new Set<AllowedUploadExtension>(['pdf'])
@@ -70,6 +72,10 @@ function detectBinaryExtension(buffer: Buffer): AllowedUploadExtension | null {
   return null
 }
 
+function isImageExtension(extension: AllowedUploadExtension): extension is ImageUploadExtension {
+  return IMAGE_EXTENSIONS.has(extension)
+}
+
 function ensureText(buffer: Buffer, extension: AllowedUploadExtension) {
   if (buffer.includes(0)) throw validationError()
   const text = new TextDecoder('utf-8', { fatal: true }).decode(buffer)
@@ -77,15 +83,15 @@ function ensureText(buffer: Buffer, extension: AllowedUploadExtension) {
   if (extension === 'csv' && text.trim() && !text.includes(',') && !text.includes('\n')) throw validationError()
 }
 
-async function ensureImage(buffer: Buffer, extension: AllowedUploadExtension): Promise<Buffer> {
+async function ensureImage(buffer: Buffer, extension: ImageUploadExtension): Promise<Buffer> {
   const image = sharp(buffer, { animated: false, limitInputPixels: MAX_IMAGE_PIXELS })
   const metadata = await image.metadata()
   if (!metadata.width || !metadata.height) throw validationError()
   if (metadata.width * metadata.height > MAX_IMAGE_PIXELS) throw validationError()
   if ((metadata.pages ?? 1) > 1) throw validationError()
 
-  const format = extension === 'jpg' ? 'jpeg' : extension
-  return image.rotate().toFormat(format as keyof sharp.FormatEnum).toBuffer()
+  const format: 'png' | 'jpeg' | 'gif' | 'webp' = extension === 'jpg' || extension === 'jpeg' ? 'jpeg' : extension
+  return image.rotate().toFormat(format).toBuffer()
 }
 
 function inspectZip(buffer: Buffer): Promise<void> {
@@ -162,7 +168,7 @@ export async function validateChallengeUpload(fileName: string, input: Buffer): 
   const detected = detectBinaryExtension(input)
   let outputBuffer = input
 
-  if (IMAGE_EXTENSIONS.has(normalized.extension)) {
+  if (isImageExtension(normalized.extension)) {
     if (!detected || (normalized.extension === 'jpeg' ? detected !== 'jpg' : detected !== normalized.extension)) throw validationError()
     outputBuffer = await ensureImage(input, normalized.extension)
   } else if (normalized.extension === 'zip') {

@@ -136,3 +136,7 @@ Before enabling the UI in production:
 5. Upload a clean test file and the standard EICAR antivirus test file. The clean file must become approved; the EICAR file must become rejected and remain unavailable through the download route.
 
 Production remains fail-closed until the clean and rejection paths both pass.
+
+## Implementation Verification
+
+The application must set `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`, and `NEXT_PUBLIC_SITE_URL` before upload testing. Production release is blocked until the Cloudinary Perception Point add-on is active and a clean fixture is approved while the EICAR fixture is rejected.

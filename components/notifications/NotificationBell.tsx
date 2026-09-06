@@ -43,7 +43,7 @@ export default function NotificationBell({ userId, initialCount = 0 }: { userId:
         {count > 0 && <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{count > 99 ? '99+' : count}</span>}
       </button>
       {open && (
-        <div className="absolute right-0 top-11 z-50 w-80 rounded-xl border shadow-xl overflow-hidden" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--border-color)' }}>
+        <div className="absolute right-0 top-11 z-[60] isolate w-80 rounded-xl border shadow-2xl overflow-hidden" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)' }}>
           <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--border-color)' }}>
             <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>Notifications</span>
             <button type="button" className="text-xs" style={{ color: 'var(--accent)' }} onClick={async () => { await markAllNotificationsRead(); setCount(0); setItems((value) => value.map((item) => ({ ...item, read_at: new Date().toISOString() }))) }}>Mark all read</button>

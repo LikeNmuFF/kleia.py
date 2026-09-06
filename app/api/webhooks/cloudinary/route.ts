@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
   }
 
-  const service = getServiceClient()
+  const service = getServiceClient() as any
   const { data: upload } = await service
     .from('ctf_challenge_uploads')
     .select('id, cloudinary_asset_id, cloudinary_public_id, scan_status')
