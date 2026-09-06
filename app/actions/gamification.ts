@@ -1,330 +1,192 @@
-'use server'
+"use server";
 
-import { getSafeErrorMessage } from '@/lib/errorHandler'
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
-import { createClient } from '@/lib/supabase/server'
-import {
-  BADGES,
-  getDailyMissionsForDate,
-  getTodayString,
-  type BadgeDef,
-} from '@/lib/utils/gamification'
-import { notifyUser } from './notifications'
+import { getSafeErrorMessage } from "@/lib/errorHandler";
+import { shouldGrantBadge } from "@/lib/gamification/badges";
+import { getActiveSeason } from "@/lib/gamification/seasons";
+import { validateSeasonInput } from "@/lib/gamification/validation";
+import { calculateLevel, calculateXpForSolve, calculateStreakBonus } from "@/lib/gamification/xp";
+import { getServiceClient } from "@/lib/supabase/service";
+import { createClient } from "@/lib/supabase/server";
 
-export async function addXp(amount: number, reason: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Not logged in' }
+type ActionResult = { success: true } | { error: string };
 
-  // Use atomic RPC to prevent race conditions (read-then-write).
-  // SECURITY DEFINER function handles the increment in a single UPDATE.
-  const { data: newTotal, error } = await supabase.rpc('increment_xp', {
-    p_user_id: user.id,
-    p_amount: amount,
-  })
+export async function awardXp(
+  userId: string,
+  difficulty: string,
+  streakDays: number,
+  teamIds: string[],
+): Promise<ActionResult> {
+  const service = getServiceClient() as any;
 
-  if (error) return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
+  const solveXp = calculateXpForSolve(difficulty);
+  const streakBonus = calculateStreakBonus(streakDays);
+  const totalXp = solveXp + streakBonus;
 
-  await checkBadges()
-  return { success: true, totalXp: newTotal ?? 0 }
-}
+  const { data: profile } = await service
+    .from("profiles")
+    .select("xp")
+    .eq("id", userId)
+    .maybeSingle();
 
-export async function getBadges(userId?: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  const targetId = userId || user?.id
-  if (!targetId) return []
+  if (!profile) return { error: "User not found" };
 
-  const { data } = await supabase
-    .from('user_badges')
-    .select('badge_id, earned_at')
-    .eq('user_id', targetId)
+  const newXP = profile.xp + totalXp;
+  const newLevel = calculateLevel(newXP);
 
-  return (data || []).map((row) => {
-    const def = BADGES.find((b) => b.id === row.badge_id)
-    return {
-      ...def,
-      earned_at: row.earned_at,
+  const { error: updateError } = await service
+    .from("profiles")
+    .update({ xp: newXP, level: newLevel })
+    .eq("id", userId);
+
+  if (updateError) return { error: getSafeErrorMessage(updateError, "Could not update XP") };
+
+  for (const teamId of teamIds) {
+    const { data: team } = await service
+      .from("practice_teams")
+      .select("xp")
+      .eq("id", teamId)
+      .maybeSingle();
+
+    if (team) {
+      const newTeamXP = team.xp + totalXp;
+      const newTeamLevel = calculateLevel(newTeamXP);
+      await service
+        .from("practice_teams")
+        .update({ xp: newTeamXP, level: newTeamLevel })
+        .eq("id", teamId);
     }
-  }).filter(Boolean)
+  }
+
+  await checkAndGrantBadges(userId, teamIds);
+
+  revalidatePath("/teams");
+  revalidatePath("/teams/leaderboard");
+  return { success: true };
 }
 
-export async function checkBadges() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { earned: [] }
+export async function checkAndGrantBadges(
+  userId: string,
+  teamIds: string[],
+): Promise<void> {
+  const service = getServiceClient() as any;
+
+  const { data: profile } = await service
+    .from("profiles")
+    .select("xp, level")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (!profile) return;
+
+  const { count: totalSolves } = await service
+    .from("practice_team_solves")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId);
+
+  const { data: existingBadges } = await service
+    .from("earned_badges")
+    .select("badge_id")
+    .eq("user_id", userId);
+
+  const existingBadgeIds = new Set(existingBadges?.map((b: any) => b.badge_id) ?? []);
+
+  const { data: allBadges } = await service
+    .from("badges")
+    .select("*")
+    .eq("type", "user");
+
+  const activeSeason = await getActiveSeason(service);
+
+  for (const badge of allBadges ?? []) {
+    if (existingBadgeIds.has(badge.id)) continue;
+
+    if (shouldGrantBadge(badge, { totalSolves: totalSolves ?? 0, level: profile.level })) {
+      await service.from("earned_badges").insert({
+        user_id: userId,
+        badge_id: badge.id,
+        season_id: activeSeason?.id ?? null,
+      });
+    }
+  }
+}
+
+export async function createSeasonAction(formData: FormData): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
 
   const { data: profile } = await supabase
-    .from('profiles')
-    .select('current_streak, longest_streak, total_xp')
-    .eq('id', user.id)
-    .single()
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
 
-  if (!profile) return { earned: [] }
+  if (profile?.role !== "admin") return { error: "Unauthorized" };
 
-  const { data: existingBadges } = await supabase
-    .from('user_badges')
-    .select('badge_id')
-    .eq('user_id', user.id)
+  const validation = validateSeasonInput({
+    name: formData.get("name"),
+    starts_at: formData.get("starts_at"),
+    ends_at: formData.get("ends_at"),
+  });
 
-  const owned = new Set((existingBadges || []).map((b) => b.badge_id))
-  const newBadges: string[] = []
-
-  const [
-    ctfResult, learnResult, postResult, reviewResult,
-    hintResult, writeupResult, skillResult, regexResult, cipherResult,
-    seasonResult,
-  ] = await Promise.all([
-    supabase.from('ctf_submissions').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('is_correct', true),
-    supabase.from('learn_progress').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-    supabase.from('posts').select('*', { count: 'exact', head: true }).eq('author_id', user.id),
-    supabase.from('challenge_reviews').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-    supabase.from('user_hint_unlocks').select('*', { count: 'exact', head: true }).eq('user_id', user.id).gt('xp_cost', 0),
-    supabase.from('writeups').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-    supabase.from('user_skill_progress').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('unlocked', true),
-    supabase.from('regex_golf_solves').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-    supabase.from('daily_cipher_solves').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-    supabase.from('ctf_season_participants').select('season_id, user_id, total_points').eq('user_id', user.id),
-  ])
-
-  const ctfCount = ctfResult.count
-  const learnCount = learnResult.count
-  const postCount = postResult.count
-  const reviewCount = reviewResult.count
-  const hintUnlockCount = hintResult.count
-  const writeupCount = writeupResult.count
-  const skillNodeCount = skillResult.count
-  const regexCount = regexResult.count
-  const dailyCipherCount = cipherResult.count
-
-  const seasonParticipations = seasonResult.data || []
-  const seasonCount = seasonParticipations.length
-
-  let seasonWin = false
-  if (seasonParticipations.length > 0) {
-    const seasonIds = [...new Set(seasonParticipations.map(s => s.season_id))]
-    const { data: allParticipants } = await supabase
-      .from('ctf_season_participants')
-      .select('season_id, user_id, total_points')
-      .in('season_id', seasonIds)
-      .order('total_points', { ascending: false })
-
-    const bySeason = (allParticipants || []).reduce((acc: Record<string, any[]>, p) => {
-      (acc[p.season_id] = acc[p.season_id] || []).push(p)
-      return acc
-    }, {})
-
-    for (const sid of seasonIds) {
-      const parts = bySeason[sid] || []
-      const rank = parts.findIndex(p => p.user_id === user.id) + 1
-      if (rank <= 3) { seasonWin = true; break }
-    }
+  if (!validation.ok) {
+    return { error: Object.values(validation.errors)[0] ?? "Invalid season data" };
   }
 
-  const checks: [string, boolean][] = [
-    ['streak_7', (profile.current_streak || 0) >= 7 || (profile.longest_streak || 0) >= 7],
-    ['streak_30', (profile.longest_streak || 0) >= 30],
-    ['streak_100', (profile.longest_streak || 0) >= 100],
-    ['ctf_1', (ctfCount || 0) >= 1],
-    ['ctf_10', (ctfCount || 0) >= 10],
-    ['ctf_25', (ctfCount || 0) >= 25],
-    ['skilltree_5', (skillNodeCount || 0) >= 5],
-    ['learn_1', (learnCount || 0) >= 1],
-    ['learn_10', (learnCount || 0) >= 10],
-    ['post_1', (postCount || 0) >= 1],
-    ['post_10', (postCount || 0) >= 10],
-    ['review_1', (reviewCount || 0) >= 1],
-    ['hints_5', (hintUnlockCount || 0) >= 5],
-    ['writeup_1', (writeupCount || 0) >= 1],
-    ['writeup_5', (writeupCount || 0) >= 5],
-    ['regex_3', (regexCount || 0) >= 3],
-    ['regex_10', (regexCount || 0) >= 10],
-    ['daily_cipher', (dailyCipherCount || 0) >= 5],
-    ['review_10', (reviewCount || 0) >= 10],
-    ['season_1', seasonCount >= 1],
-    ['season_win', seasonWin],
-  ]
+  const service = getServiceClient() as any;
 
-  for (const [badgeId, condition] of checks) {
-    if (condition && !owned.has(badgeId)) {
-      await supabase.from('user_badges').insert({
-        user_id: user.id,
-        badge_id: badgeId,
-      })
-      newBadges.push(badgeId)
-    }
+  const { data: activeSeason } = await service
+    .from("seasons")
+    .select("id")
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (activeSeason) {
+    return { error: "A season is already active. End it first." };
   }
 
-  const level = Math.floor((profile.total_xp || 0) >= 350 ? 5 : (profile.total_xp || 0) >= 1600 ? 10 : 0)
-  if (level >= 5 && !owned.has('level_5')) {
-    await supabase.from('user_badges').insert({ user_id: user.id, badge_id: 'level_5' })
-    newBadges.push('level_5')
-  }
-  if ((profile.total_xp || 0) >= 1600 && !owned.has('level_10')) {
-    await supabase.from('user_badges').insert({ user_id: user.id, badge_id: 'level_10' })
-    newBadges.push('level_10')
-  }
+  const { error } = await service.from("seasons").insert({
+    name: validation.value.name,
+    starts_at: validation.value.starts_at,
+    ends_at: validation.value.ends_at,
+    is_active: true,
+  });
 
-  // --- Community Bridge badges (Task 5) ---
-  const uid = user.id
-  async function grant(id: string) {
-    if (!owned.has(id)) {
-      await supabase.from('user_badges').insert({ user_id: uid, badge_id: id })
-      newBadges.push(id)
-      owned.add(id)
-    }
-  }
+  if (error) return { error: getSafeErrorMessage(error, "Could not create season") };
 
-  // Tutor helpful: help 3 peers via accepted peer_matches where helper_id = userId
-  try {
-    const { count: tutorCount } = await supabase.from('peer_matches').select('id', { count: 'exact', head: true }).eq('helper_id', uid).eq('status', 'accepted')
-    if (tutorCount !== null && tutorCount >= 3) await grant('tutor_helpful')
-  } catch {}
-
-  // Study group: cohort_members exists
-  let cohortMemberCount: number | null = null
-  try {
-    const { count } = await supabase.from('cohort_members').select('cohort_id', { count: 'exact', head: true }).eq('user_id', uid)
-    cohortMemberCount = count
-    if (count !== null && count >= 1) await grant('study_group_joined')
-  } catch {}
-
-  // Cohort star: completed assignment — check at least 1 assignment exists in user's cohorts
-  if (cohortMemberCount !== null && cohortMemberCount >= 1) {
-    try {
-      const { data: myCohorts } = await supabase.from('cohort_members').select('cohort_id').eq('user_id', uid)
-      if (myCohorts?.length) {
-        const { count: assignCount } = await supabase.from('cohort_assignments').select('id', { count: 'exact', head: true }).in('cohort_id', myCohorts.map((c: { cohort_id: string }) => c.cohort_id))
-        if (assignCount !== null && assignCount >= 1) await grant('cohort_complete')
-      }
-    } catch {}
-  }
-
-  // Peer endorsed: peer_matches where requester and status accepted
-  try {
-    const { count: endorsedCount } = await supabase.from('peer_matches').select('id', { count: 'exact', head: true }).eq('requester_id', uid).eq('status', 'accepted')
-    if (endorsedCount !== null && endorsedCount >= 1) await grant('peer_endorsed')
-  } catch {}
-
-  // Faculty guide: cohorts where creator_id = userId
-  try {
-    const { count: facultyCohortCount } = await supabase.from('cohorts').select('id', { count: 'exact', head: true }).eq('creator_id', uid)
-    if (facultyCohortCount !== null && facultyCohortCount >= 1) await grant('cohort_faculty')
-  } catch {}
-
-  // Skill bridge: if snapshot strengths length >=2 and weaknesses length <=1
-  try {
-    const { data: snapshot } = await supabase.from('skill_snapshots').select('strengths, weaknesses').eq('user_id', uid).maybeSingle()
-    if (snapshot && Array.isArray((snapshot as { strengths: unknown }).strengths) && (snapshot as { strengths: unknown[] }).strengths.length >= 2 && Array.isArray((snapshot as { weaknesses: unknown }).weaknesses) && (snapshot as { weaknesses: unknown[] }).weaknesses.length <= 1) await grant('skill_bridge')
-  } catch {}
-
-  for (const badgeId of newBadges) {
-    const badge = BADGES.find((item) => item.id === badgeId)
-    await notifyUser({
-      recipientId: user.id,
-      actorId: null,
-      type: 'badge_earned',
-      title: 'Achievement unlocked',
-      message: badge ? `${badge.icon} ${badge.name}` : 'You earned a new achievement.',
-      href: '/leaderboard/achievements',
-      metadata: { badge_id: badgeId },
-      dedupeKey: `badge:${badgeId}`,
-    })
-  }
-
-  return { earned: newBadges }
+  revalidatePath("/teams");
+  return { success: true };
 }
 
-export async function getDailyMissions() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return []
+export async function endSeasonAction(): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
 
-  const today = getTodayString()
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
 
-  const { data: existing } = await supabase
-    .from('daily_missions')
-    .select('*')
-    .eq('user_id', user.id)
-    .eq('date', today)
+  if (profile?.role !== "admin") return { error: "Unauthorized" };
 
-  if (existing && existing.length > 0) return existing
+  const service = getServiceClient() as any;
 
-  const missionDefs = getDailyMissionsForDate(today)
-  const rows = missionDefs.map((m) => ({
-    user_id: user.id,
-    date: today,
-    mission_type: m.type,
-    description: m.description,
-    xp_reward: m.xpReward,
-    completed: false,
-  }))
+  const { error } = await service
+    .from("seasons")
+    .update({ is_active: false })
+    .eq("is_active", true);
 
-  const { data: inserted } = await supabase
-    .from('daily_missions')
-    .upsert(rows, { onConflict: 'user_id,date,mission_type' })
-    .select()
+  if (error) return { error: getSafeErrorMessage(error, "Could not end season") };
 
-  return inserted || rows
-}
-
-export async function completeMission(missionType: string, skipXp = false) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Not logged in' }
-
-  const today = getTodayString()
-
-  const { data: mission } = await supabase
-    .from('daily_missions')
-    .select('*')
-    .eq('user_id', user.id)
-    .eq('date', today)
-    .eq('mission_type', missionType)
-    .eq('completed', false)
-    .maybeSingle()
-
-  if (!mission) return { success: false }
-
-  const { error } = await supabase
-    .from('daily_missions')
-    .update({ completed: true, completed_at: new Date().toISOString() })
-    .eq('id', mission.id)
-
-  if (error) return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
-
-  if (!skipXp) {
-    await addXp(mission.xp_reward, `mission_${missionType}`)
-  }
-  await notifyUser({
-    recipientId: user.id,
-    actorId: null,
-    type: 'daily_mission',
-    title: 'Daily mission complete',
-    message: `You earned ${mission.xp_reward} XP today.`,
-    href: '/feed',
-    metadata: { mission_type: missionType, date: today },
-    dedupeKey: `mission:${today}:${missionType}`,
-  })
-  return { success: true, xpEarned: mission.xp_reward }
-}
-
-export async function awardFirstLogin() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return
-
-  const { data: existing } = await supabase
-    .from('user_badges')
-    .select('badge_id')
-    .eq('user_id', user.id)
-    .eq('badge_id', 'first_login')
-    .maybeSingle()
-
-  if (!existing) {
-    await supabase.from('user_badges').insert({
-      user_id: user.id,
-      badge_id: 'first_login',
-    })
-  }
+  revalidatePath("/teams");
+  return { success: true };
 }
