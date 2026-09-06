@@ -29,6 +29,8 @@ describe("practice team pages", () => {
   it("includes create controls for profile fields and avatar", () => {
     const form = read("components", "practice-teams", "PracticeTeamForm.tsx");
 
+    expect(form).toContain("setError");
+    expect(form).toContain("router.push(`/teams/${result.slug}`)");
     expect(form).toContain('name="name"');
     expect(form).toContain('name="slug"');
     expect(form).toContain('name="description"');

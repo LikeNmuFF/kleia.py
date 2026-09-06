@@ -1,5 +1,8 @@
 "use client";
 
+import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
+
 import { createPracticeTeam, updatePracticeTeam } from "@/app/actions/practice-teams";
 
 type Props = {
@@ -11,16 +14,43 @@ type Props = {
 };
 
 export default function PracticeTeamForm({ team }: Props) {
-  const action = async (formData: FormData) => {
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
+    const formData = new FormData(event.currentTarget);
+
     if (team) {
-      await updatePracticeTeam(team.slug, formData);
-    } else {
-      await createPracticeTeam(formData);
+      const result = await updatePracticeTeam(team.slug, formData);
+      setIsSubmitting(false);
+      if ("error" in result) {
+        setError(result.error);
+        return;
+      }
+      router.refresh();
+      return;
     }
-  };
+
+    const result = await createPracticeTeam(formData);
+    setIsSubmitting(false);
+    if ("error" in result) {
+      setError(result.error);
+    } else {
+      router.push(`/teams/${result.slug}`);
+    }
+  }
 
   return (
-    <form action={action} className="space-y-5 rounded-lg border border-white/10 bg-zinc-950 p-5">
+    <form onSubmit={handleSubmit} className="space-y-5 rounded-lg border border-white/10 bg-zinc-950 p-5">
+      {error ? (
+        <p role="alert" className="rounded-md border border-red-500/40 bg-red-950/40 px-3 py-2 text-sm text-red-100">
+          {error}
+        </p>
+      ) : null}
       <label className="block">
         <span className="text-sm font-medium text-zinc-200">Name</span>
         <input
@@ -59,8 +89,11 @@ export default function PracticeTeamForm({ team }: Props) {
           className="mt-2 w-full rounded-md border border-white/10 bg-black px-3 py-2 text-sm text-zinc-300"
         />
       </label>
-      <button className="rounded-md bg-emerald-500 px-4 py-2 text-sm font-semibold text-black hover:bg-emerald-400">
-        {team ? "Save team" : "Create team"}
+      <button
+        disabled={isSubmitting}
+        className="rounded-md bg-emerald-500 px-4 py-2 text-sm font-semibold text-black hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:text-zinc-400"
+      >
+        {isSubmitting ? "Saving..." : team ? "Save team" : "Create team"}
       </button>
     </form>
   );
