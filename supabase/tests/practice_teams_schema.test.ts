@@ -13,7 +13,7 @@ function readMigrations() {
 }
 
 describe('practice teams schema', () => {
-  it('creates the four tables with the required keys, constraints, and indexes', () => {
+  it('creates the team tables with the required keys, constraints, and indexes', () => {
     const sql = readMigrations()
 
     for (const table of [
@@ -21,6 +21,7 @@ describe('practice teams schema', () => {
       'practice_team_members',
       'practice_team_activity',
       'practice_team_api_keys',
+      'practice_team_solves',
     ]) {
       expect(sql).toContain(`create table if not exists public.${table}`)
       expect(sql).toContain(`alter table public.${table} enable row level security`)
@@ -34,12 +35,16 @@ describe('practice teams schema', () => {
     expect(sql).toContain('primary key (team_id, user_id)')
     expect(sql).toContain('unique (team_id, activity_date, source)')
     expect(sql).toContain('key_hash text not null unique')
+    expect(sql).toContain('challenge_id uuid not null references public.ctf_challenges(id) on delete cascade')
+    expect(sql).toContain('submission_id uuid references public.ctf_submissions(id) on delete set null')
     expect(sql).toContain('create index if not exists practice_teams_owner_id_idx')
     expect(sql).toContain('create index if not exists practice_teams_is_public_idx')
     expect(sql).toContain('create index if not exists practice_team_members_user_id_idx')
     expect(sql).toContain('create index if not exists practice_team_members_team_id_status_idx')
     expect(sql).toContain('create index if not exists practice_team_activity_team_id_activity_date_idx')
     expect(sql).toContain('create index if not exists practice_team_api_keys_team_id_idx')
+    expect(sql).toContain('create unique index if not exists practice_team_solves_unique_idx')
+    expect(sql).toContain('create index if not exists practice_team_solves_team_id_solved_at_idx')
   })
 
   it('covers public team reads, owner creation, owner/admin management, member self-reads, and safe api-key metadata access', () => {
@@ -57,6 +62,7 @@ describe('practice teams schema', () => {
     expect(sql).toContain('create policy "owners and admins can insert team members"')
     expect(sql).toContain('create policy "owners and admins can delete team members"')
     expect(sql).toContain('create policy "owners and admins can read api key metadata"')
+    expect(sql).toContain('create policy "anyone can read public practice team solves"')
     expect(sql).toContain('grant update (name, slug, description, avatar_url) on public.practice_teams to authenticated')
     expect(sql).not.toContain('grant update on public.practice_teams to authenticated')
     expect(sql).not.toContain('grant update (name, slug, description, avatar_url, owner_id)')

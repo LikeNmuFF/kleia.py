@@ -8,6 +8,7 @@ import { shouldGrantBadge } from "@/lib/gamification/badges";
 import { getActiveSeason } from "@/lib/gamification/seasons";
 import { validateSeasonInput } from "@/lib/gamification/validation";
 import { calculateLevel, calculateXpForSolve, calculateStreakBonus } from "@/lib/gamification/xp";
+import { getDailyMissionsForDate, getTodayString } from "@/lib/utils/gamification";
 import { getServiceClient } from "@/lib/supabase/service";
 import { createClient } from "@/lib/supabase/server";
 
@@ -189,4 +190,175 @@ export async function endSeasonAction(): Promise<ActionResult> {
 
   revalidatePath("/teams");
   return { success: true };
+}
+
+export async function addXp(
+  amount: number,
+  reason: string,
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("total_xp")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!profile) return { error: "User not found" };
+
+  const newXp = Math.max(0, (profile.total_xp ?? 0) + amount);
+  const newLevel = calculateLevel(newXp);
+
+  const { error: updateError } = await supabase
+    .from("profiles")
+    .update({ total_xp: newXp, level: newLevel })
+    .eq("id", user.id);
+
+  if (updateError) return { error: getSafeErrorMessage(updateError, "Could not update XP") };
+
+  revalidatePath("/profile");
+  return { success: true };
+}
+
+export async function completeMission(
+  missionType: string,
+  _completed?: boolean,
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const today = getTodayString();
+
+  const { data: existing } = await supabase
+    .from("daily_missions")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("mission_type", missionType)
+    .eq("date", today)
+    .maybeSingle();
+
+  if (existing) return { success: true };
+
+  const missions = getDailyMissionsForDate(today);
+  const mission = missions.find((m) => m.type === missionType);
+  if (!mission) return { error: "Unknown mission type" };
+
+  const { error } = await supabase
+    .from("daily_missions")
+    .insert({
+      user_id: user.id,
+      mission_type: missionType,
+      date: today,
+      xp_earned: mission.xpReward,
+    });
+
+  if (error) return { error: getSafeErrorMessage(error, "Could not complete mission") };
+
+  return { success: true };
+}
+
+export async function checkBadges(): Promise<void> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("xp, level")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!profile) return;
+
+  const { count: totalSolves } = await supabase
+    .from("practice_team_solves")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", user.id);
+
+  const { data: existingBadges } = await supabase
+    .from("earned_badges")
+    .select("badge_id")
+    .eq("user_id", user.id);
+
+  const existingBadgeIds = new Set(existingBadges?.map((b: any) => b.badge_id) ?? []);
+
+  const { data: allBadges } = await supabase
+    .from("badges")
+    .select("*")
+    .eq("type", "user");
+
+  const activeSeason = await getActiveSeason(supabase);
+
+  for (const badge of allBadges ?? []) {
+    if (existingBadgeIds.has(badge.id)) continue;
+
+    if (shouldGrantBadge(badge, { totalSolves: totalSolves ?? 0, level: profile.level })) {
+      await supabase.from("earned_badges").insert({
+        user_id: user.id,
+        badge_id: badge.id,
+        season_id: activeSeason?.id ?? null,
+      });
+    }
+  }
+}
+
+export async function awardFirstLogin(): Promise<void> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const { data: existing } = await supabase
+    .from("earned_badges")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("badge_id", "first_login")
+    .maybeSingle();
+
+  if (existing) return;
+
+  const { data: badge } = await supabase
+    .from("badges")
+    .select("id")
+    .eq("id", "first_login")
+    .maybeSingle();
+
+  if (!badge) return;
+
+  const activeSeason = await getActiveSeason(supabase);
+
+  await supabase.from("earned_badges").insert({
+    user_id: user.id,
+    badge_id: "first_login",
+    season_id: activeSeason?.id ?? null,
+  });
+}
+
+export async function getDailyMissions(): Promise<
+  { id: string; mission_type: string; description: string; xp_reward: number; completed: boolean }[]
+> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const today = getTodayString();
+  const missions = getDailyMissionsForDate(today);
+
+  const { data: completedMissions } = await supabase
+    .from("daily_missions")
+    .select("mission_type")
+    .eq("user_id", user.id)
+    .eq("date", today);
+
+  const completedTypes = new Set(completedMissions?.map((m: any) => m.mission_type) ?? []);
+
+  return missions.map((m) => ({
+    id: `${today}-${m.type}`,
+    mission_type: m.type,
+    description: m.description,
+    xp_reward: m.xpReward,
+    completed: completedTypes.has(m.type),
+  }));
 }

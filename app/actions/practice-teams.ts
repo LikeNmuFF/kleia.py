@@ -15,6 +15,28 @@ import { createClient } from "@/lib/supabase/server";
 type ActionResult = { success: true } | { error: string };
 type TeamManager = { supabase: Awaited<ReturnType<typeof createClient>>; team: { id: string; slug: string; owner_id: string } };
 
+export async function searchUsersByUsername(query: string): Promise<{ users: { id: string; username: string; avatar_url: string | null }[] } | { error: string }> {
+  if (!query || query.length < 2) {
+    return { users: [] };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not logged in" };
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, username, avatar_url")
+    .ilike("username", `%${query}%`)
+    .limit(10);
+
+  if (error) return { error: "Could not search users" };
+
+  return { users: data ?? [] };
+}
+
 export async function createPracticeTeam(formData: FormData): Promise<{ slug: string } | { error: string }> {
   const supabase = await createClient();
   const {
@@ -105,15 +127,15 @@ export async function updatePracticeTeam(slug: string, formData: FormData): Prom
 }
 
 export async function addPracticeTeamMember(slug: string, userId: string): Promise<ActionResult> {
-  const manager = await requireTeamManager(slug);
-  if ("error" in manager) return manager;
+  const member = await requireTeamMember(slug);
+  if ("error" in member) return member;
 
-  const { error } = await manager.supabase.from("practice_team_members").insert({
-    team_id: manager.team.id,
+  const { error } = await member.supabase.from("practice_team_members").insert({
+    team_id: member.team.id,
     user_id: userId,
     role: "member",
     status: "accepted",
-    invited_by: manager.team.owner_id,
+    invited_by: member.user.id,
     joined_at: new Date().toISOString(),
   });
 
@@ -205,6 +227,59 @@ export async function revokePracticeTeamApiKey(slug: string, keyId: string): Pro
   return { success: true };
 }
 
+export async function creditPracticeTeamSolve(
+  userId: string,
+  challengeId: string,
+  submissionId: string | null = null,
+): Promise<{ success: true; credited: number } | { error: string }> {
+  const service = getServiceClient() as any;
+  const { data: memberships, error: membershipError } = await service
+    .from("practice_team_members")
+    .select("team_id, practice_teams:team_id (slug)")
+    .eq("user_id", userId)
+    .eq("status", "accepted");
+
+  if (membershipError) {
+    return { error: getSafeErrorMessage(membershipError, "Could not credit team solve") };
+  }
+
+  const rows =
+    memberships?.map((membership: any) => ({
+      team_id: membership.team_id,
+      user_id: userId,
+      challenge_id: challengeId,
+      submission_id: submissionId,
+      solved_at: new Date().toISOString(),
+    })) ?? [];
+
+  if (rows.length === 0) {
+    return { success: true, credited: 0 };
+  }
+
+  const { data: creditedRows, error: solveError } = await service
+    .from("practice_team_solves")
+    .upsert(rows, {
+      onConflict: "team_id,user_id,challenge_id",
+      ignoreDuplicates: true,
+    })
+    .select("team_id");
+
+  if (solveError) {
+    return { error: getSafeErrorMessage(solveError, "Could not credit team solve") };
+  }
+
+  revalidatePath("/teams");
+  revalidatePath("/teams/leaderboard");
+  for (const membership of memberships ?? []) {
+    const team = Array.isArray(membership.practice_teams) ? membership.practice_teams[0] : membership.practice_teams;
+    if (team?.slug) {
+      revalidatePath(`/teams/${team.slug}`);
+    }
+  }
+
+  return { success: true, credited: creditedRows?.length ?? 0 };
+}
+
 async function requireTeamManager(slug: string): Promise<TeamManager | { error: string }> {
   const supabase = await createClient();
   const {
@@ -220,6 +295,33 @@ async function requireTeamManager(slug: string): Promise<TeamManager | { error: 
   }
 
   return { supabase, team };
+}
+
+type TeamMemberContext = { supabase: Awaited<ReturnType<typeof createClient>>; team: { id: string; slug: string; owner_id: string }; user: { id: string } };
+
+async function requireTeamMember(slug: string): Promise<TeamMemberContext | { error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not logged in" };
+
+  const { data: team } = await supabase.from("practice_teams").select("id, slug, owner_id").eq("slug", slug).maybeSingle();
+  if (!team) return { error: "Team not found" };
+
+  const { data: membership } = await supabase
+    .from("practice_team_members")
+    .select("status")
+    .eq("team_id", team.id)
+    .eq("user_id", user.id)
+    .eq("status", "accepted")
+    .maybeSingle();
+
+  if (!membership && team.owner_id !== user.id && !(await isAdmin(supabase))) {
+    return { error: "Unauthorized" };
+  }
+
+  return { supabase, team, user };
 }
 
 function revalidateTeamPaths(oldSlug: string, newSlug = oldSlug) {

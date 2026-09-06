@@ -22,6 +22,7 @@ import { extractClientIp } from '@/lib/logEvent'
 import { checkAndUnlockNodes } from './skilltree'
 import { creditSeasonSolve } from './competition'
 import { areLinkedChallengeSubmissionsOpen, getEffectiveSeasonStatus } from './competition-status'
+import { creditPracticeTeamSolve } from './practice-teams'
 
 const VALID_CATEGORIES = ['web', 'crypto', 'forensics', 'misc']
 const VALID_DIFFICULTIES = ['easy', 'medium', 'hard']
@@ -256,6 +257,7 @@ export async function submitFlag(challengeId: string, submittedFlag: string) {
       completeMission('ctf_solve', true),
       checkAndUnlockNodes(user.id),
       creditSeasonSolve(user.id, challengeId),
+      creditPracticeTeamSolve(user.id, challengeId),
     ])
   }
 

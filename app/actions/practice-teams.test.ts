@@ -29,4 +29,16 @@ describe("practice team actions", () => {
     expect(code).toContain("acceptedMemberCount < 5");
     expect(code).toContain("at least 5 accepted members");
   });
+
+  it("credits accepted member teams when a CTF solve is correct", () => {
+    const ctf = readFileSync(join(process.cwd(), "app", "actions", "ctf.ts"), "utf8");
+    const practiceTeams = source();
+
+    expect(ctf).toContain("creditPracticeTeamSolve");
+    expect(ctf).toContain("creditPracticeTeamSolve(user.id, challengeId");
+    expect(practiceTeams).toContain("export async function creditPracticeTeamSolve");
+    expect(practiceTeams).toContain('.from("practice_team_solves")');
+    expect(practiceTeams).toContain('.from("practice_team_members")');
+    expect(practiceTeams).toContain('.eq("status", "accepted")');
+  });
 });

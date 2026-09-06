@@ -16,7 +16,7 @@ export default async function ProfilePage() {
 
   const { data: badgeRows } = await supabase
     .from('user_badges')
-    .select('badge_id')
+    .select('badge_id, badges(name, description, icon_url), created_at')
     .eq('user_id', user?.id || '')
 
   const { data: skillSnapshot } = await supabase
@@ -24,7 +24,12 @@ export default async function ProfilePage() {
     .select('*')
     .maybeSingle()
 
-  const earnedBadgeIds = (badgeRows || []).map((b) => b.badge_id)
+  const earnedBadges = (badgeRows || []).map((b: any) => ({
+    name: b.badges?.name ?? b.badge_id,
+    description: b.badges?.description ?? '',
+    icon_url: b.badges?.icon_url ?? null,
+    earned_at: b.created_at,
+  }))
 
   return (
     <div className="max-w-5xl mx-auto py-8 px-4">
@@ -47,7 +52,7 @@ export default async function ProfilePage() {
       )}
 
       <div className="mt-8 card">
-        <BadgeShowcase earnedBadgeIds={earnedBadgeIds} />
+        <BadgeShowcase badges={earnedBadges} />
       </div>
     </div>
   )
