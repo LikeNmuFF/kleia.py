@@ -13,6 +13,9 @@ export type PracticeTeamSummary = {
   owner_id: string;
   created_at: string;
   member_count: number;
+  total_solves: number;
+  xp: number;
+  level: number;
   streaks: {
     current: number;
     longest: number;
@@ -33,7 +36,22 @@ export type PracticeTeamApiKeyMetadata = {
   revoked_at: string | null;
 };
 
-const TEAM_SELECT = "id, name, slug, description, avatar_url, owner_id, created_at";
+export type PracticeTeamRecentSolve = {
+  id: string;
+  user_id: string;
+  challenge_id: string;
+  solved_at: string;
+  username: string | null;
+  avatar_url: string | null;
+  title: string;
+  category: string | null;
+  difficulty: string | null;
+  points: number | null;
+};
+
+export type PracticeTeamLeaderboardEntry = PracticeTeamSummary;
+
+const TEAM_SELECT = "id, name, slug, description, avatar_url, owner_id, created_at, xp, level";
 const KEY_METADATA_SELECT = "id, team_id, key_prefix, created_by, created_at, last_used_at, revoked_at";
 
 export async function getPublicPracticeTeams(supabase: SupabaseLike): Promise<PracticeTeamSummary[]> {
@@ -47,15 +65,17 @@ export async function getPublicPracticeTeams(supabase: SupabaseLike): Promise<Pr
 
   return Promise.all(
     teams.map(async (team: any) => {
-      const [memberCount, activity] = await Promise.all([
+      const [memberCount, activity, totalSolves] = await Promise.all([
         getAcceptedMemberCount(supabase, team.id),
         getPracticeTeamActivity(supabase, team.id),
+        getPracticeTeamSolveCount(supabase, team.id),
       ]);
       const streaks = calculateTeamStreaks(activity);
 
       return {
         ...team,
         member_count: memberCount,
+        total_solves: totalSolves,
         streaks: {
           current: streaks.current,
           longest: streaks.longest,
@@ -76,15 +96,17 @@ export async function getPracticeTeamBySlug(supabase: SupabaseLike, slug: string
     return null;
   }
 
-  const [memberCount, activity] = await Promise.all([
+  const [memberCount, activity, totalSolves] = await Promise.all([
     getAcceptedMemberCount(supabase, data.id),
     getPracticeTeamActivity(supabase, data.id),
+    getPracticeTeamSolveCount(supabase, data.id),
   ]);
   const streaks = calculateTeamStreaks(activity);
 
   return {
     ...data,
     member_count: memberCount,
+    total_solves: totalSolves,
     streaks: {
       current: streaks.current,
       longest: streaks.longest,
@@ -104,16 +126,34 @@ export async function getAcceptedMemberCount(supabase: SupabaseLike, teamId: str
 }
 
 export async function getPracticeTeamActivity(supabase: SupabaseLike, teamId: string): Promise<DailyActivity[]> {
-  const { data } = await supabase
+  const [{ data: manualActivity }, { data: solves }] = await Promise.all([
+    supabase
     .from("practice_team_activity")
     .select("activity_date, count")
     .eq("team_id", teamId)
-    .order("activity_date", { ascending: true });
+      .order("activity_date", { ascending: true }),
+    supabase
+      .from("practice_team_solves")
+      .select("solved_at")
+      .eq("team_id", teamId),
+  ]);
 
-  return (data ?? []).map((row: any) => ({
-    date: row.activity_date,
-    count: row.count,
-  }));
+  const countsByDate = new Map<string, number>();
+
+  for (const row of manualActivity ?? []) {
+    countsByDate.set(row.activity_date, (countsByDate.get(row.activity_date) ?? 0) + row.count);
+  }
+
+  for (const row of solves ?? []) {
+    const date = String(row.solved_at).slice(0, 10);
+    if (date) {
+      countsByDate.set(date, (countsByDate.get(date) ?? 0) + 1);
+    }
+  }
+
+  return Array.from(countsByDate.entries())
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([date, count]) => ({ date, count }));
 }
 
 export async function getPracticeTeamApiKeyMetadata(
@@ -127,4 +167,57 @@ export async function getPracticeTeamApiKeyMetadata(
     .order("created_at", { ascending: false });
 
   return data ?? [];
+}
+
+export async function getPracticeTeamRecentSolves(
+  supabase: SupabaseLike,
+  teamId: string,
+  limit = 10,
+): Promise<PracticeTeamRecentSolve[]> {
+  const { data } = await supabase
+    .from("practice_team_solves")
+    .select(
+      "id, user_id, challenge_id, solved_at, profiles:user_id (username, avatar_url), ctf_challenges:challenge_id (title, category, difficulty, points)",
+    )
+    .eq("team_id", teamId)
+    .order("solved_at", { ascending: false })
+    .limit(limit);
+
+  return (data ?? []).map((row: any) => {
+    const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
+    const challenge = Array.isArray(row.ctf_challenges) ? row.ctf_challenges[0] : row.ctf_challenges;
+
+    return {
+      id: row.id,
+      user_id: row.user_id,
+      challenge_id: row.challenge_id,
+      solved_at: row.solved_at,
+      username: profile?.username ?? null,
+      avatar_url: profile?.avatar_url ?? null,
+      title: challenge?.title ?? "Deleted challenge",
+      category: challenge?.category ?? null,
+      difficulty: challenge?.difficulty ?? null,
+      points: challenge?.points ?? null,
+    };
+  });
+}
+
+export async function getPracticeTeamLeaderboard(supabase: SupabaseLike): Promise<PracticeTeamLeaderboardEntry[]> {
+  const teams = await getPublicPracticeTeams(supabase);
+
+  return teams.sort((left, right) => {
+    if (right.total_solves !== left.total_solves) return right.total_solves - left.total_solves;
+    if (right.streaks.current !== left.streaks.current) return right.streaks.current - left.streaks.current;
+    if (right.streaks.longest !== left.streaks.longest) return right.streaks.longest - left.streaks.longest;
+    return left.name.localeCompare(right.name);
+  });
+}
+
+async function getPracticeTeamSolveCount(supabase: SupabaseLike, teamId: string): Promise<number> {
+  const { count } = await supabase
+    .from("practice_team_solves")
+    .select("id", { count: "exact", head: true })
+    .eq("team_id", teamId);
+
+  return count ?? 0;
 }

@@ -23,9 +23,14 @@ export default async function TeamsPage() {
             Track team practice streaks and publish your progress to external pages.
           </p>
         </div>
-        <Link href="/teams/new" className="rounded-md bg-emerald-500 px-4 py-2 text-sm font-semibold text-black">
-          New team
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/teams/leaderboard" className="rounded-md border border-white/10 px-4 py-2 text-sm text-zinc-200">
+            Leaderboard
+          </Link>
+          <Link href="/teams/new" className="rounded-md bg-emerald-500 px-4 py-2 text-sm font-semibold text-black">
+            New team
+          </Link>
+        </div>
       </div>
       <PracticeTeamGrid teams={teams} />
     </main>

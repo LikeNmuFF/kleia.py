@@ -14,6 +14,14 @@ describe("practice team pages", () => {
     expect(grid).toContain("longest");
   });
 
+  it("renders a team leaderboard page", () => {
+    const page = read("app", "(main)", "teams", "leaderboard", "page.tsx");
+
+    expect(page).toContain("getPracticeTeamLeaderboard");
+    expect(page).toContain("Team leaderboard");
+    expect(page).toContain("total_solves");
+  });
+
   it("renders member count and the shared calendar on profile pages", () => {
     const page = read("app", "(main)", "teams", "[slug]", "page.tsx");
     const calendar = read("components", "practice-teams", "PracticeTeamCalendar.tsx");
@@ -21,6 +29,8 @@ describe("practice team pages", () => {
     expect(page).toContain('slug === "new"');
     expect(page).toContain("getPracticeTeamBySlug");
     expect(page).toContain("PracticeTeamCalendar");
+    expect(page).toContain("getPracticeTeamRecentSolves");
+    expect(page).toContain("Recent team solves");
     expect(page).toContain("member_count");
     expect(calendar).toContain("calendar.map");
     expect(calendar).toContain("aria-label");
