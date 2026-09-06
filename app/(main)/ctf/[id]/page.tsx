@@ -106,6 +106,7 @@ export default async function ChallengePage({ params }: { params: Promise<{ id: 
     .maybeSingle()
 
   const solves = solveStats?.solves ?? 0
+  const hasInternalFile = challenge.file_url?.startsWith('/api/ctf/files/') ?? false
 
   return (
     <div className="max-w-3xl mx-auto py-8 px-4">
@@ -206,8 +207,8 @@ export default async function ChallengePage({ params }: { params: Promise<{ id: 
             {challenge.file_url && (
               <a
                 href={challenge.file_url}
-                target="_blank"
-                rel="noopener noreferrer"
+                target={hasInternalFile ? undefined : '_blank'}
+                rel={hasInternalFile ? undefined : 'noopener noreferrer'}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:scale-[1.02]"
                 style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' }}
               >
