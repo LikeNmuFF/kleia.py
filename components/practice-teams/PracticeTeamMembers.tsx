@@ -33,7 +33,7 @@ export default function PracticeTeamMembers({ slug, members }: { slug: string; m
                 </p>
               </div>
               {member.role !== "owner" ? (
-                <form action={removePracticeTeamMember.bind(null, slug, member.user_id)}>
+                <form action={removeMemberAction.bind(null, slug, member.user_id)}>
                   <button className="rounded-md border border-red-500/40 px-3 py-1.5 text-sm text-red-200">Remove</button>
                 </form>
               ) : null}
@@ -49,4 +49,8 @@ async function addMemberAction(slug: string, formData: FormData) {
   const userId = String(formData.get("user_id") ?? "").trim();
   if (!userId) return;
   await addPracticeTeamMember(slug, userId);
+}
+
+async function removeMemberAction(slug: string, userId: string) {
+  await removePracticeTeamMember(slug, userId);
 }

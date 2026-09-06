@@ -18,7 +18,7 @@ export default function PracticeTeamSettings({ slug, memberCount, apiKeys }: Pro
           Generate keys after your team has at least 5 accepted members. Store the raw key server-side; it is shown once.
         </p>
       </div>
-      <form action={generatePracticeTeamApiKey.bind(null, slug)}>
+      <form action={generateKeyAction.bind(null, slug)}>
         <button
           disabled={memberCount < 5}
           className="rounded-md bg-emerald-500 px-4 py-2 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:text-zinc-400"
@@ -34,7 +34,7 @@ export default function PracticeTeamSettings({ slug, memberCount, apiKeys }: Pro
               <p className="text-xs text-zinc-500">{key.revoked_at ? "Revoked" : "Active"}</p>
             </div>
             {!key.revoked_at ? (
-              <form action={revokePracticeTeamApiKey.bind(null, slug, key.id)}>
+              <form action={revokeKeyAction.bind(null, slug, key.id)}>
                 <button className="rounded-md border border-red-500/40 px-3 py-1.5 text-sm text-red-200">Revoke</button>
               </form>
             ) : null}
@@ -43,4 +43,12 @@ export default function PracticeTeamSettings({ slug, memberCount, apiKeys }: Pro
       </div>
     </section>
   );
+}
+
+async function generateKeyAction(slug: string) {
+  await generatePracticeTeamApiKey(slug);
+}
+
+async function revokeKeyAction(slug: string, keyId: string) {
+  await revokePracticeTeamApiKey(slug, keyId);
 }

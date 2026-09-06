@@ -11,7 +11,13 @@ type Props = {
 };
 
 export default function PracticeTeamForm({ team }: Props) {
-  const action = team ? updatePracticeTeam.bind(null, team.slug) : createPracticeTeam;
+  const action = async (formData: FormData) => {
+    if (team) {
+      await updatePracticeTeam(team.slug, formData);
+    } else {
+      await createPracticeTeam(formData);
+    }
+  };
 
   return (
     <form action={action} className="space-y-5 rounded-lg border border-white/10 bg-zinc-950 p-5">
