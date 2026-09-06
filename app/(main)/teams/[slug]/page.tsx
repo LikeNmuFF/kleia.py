@@ -7,6 +7,7 @@ import TeamXPBadge from "@/components/gamification/TeamXPBadge";
 import BadgeShowcase from "@/components/gamification/BadgeShowcase";
 import { getPracticeTeamBySlug, getPracticeTeamRecentSolves } from "@/lib/practice-teams/queries";
 import { createClient } from "@/lib/supabase/server";
+import { isAdmin } from "@/lib/admin";
 
 export default async function PracticeTeamPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -40,6 +41,11 @@ export default async function PracticeTeamPage({ params }: { params: Promise<{ s
 
   const recentSolves = await getPracticeTeamRecentSolves(supabase, team.id, 8);
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const isOwnerOrAdmin = user && (team.owner_id === user.id || await isAdmin(supabase));
+
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
       <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
@@ -69,9 +75,11 @@ export default async function PracticeTeamPage({ params }: { params: Promise<{ s
           <Link href="/teams/leaderboard" className="rounded-md border border-white/10 px-4 py-2 text-sm text-zinc-200">
             Leaderboard
           </Link>
-          <Link href={`/teams/${team.slug}/settings`} className="rounded-md border border-white/10 px-4 py-2 text-sm text-zinc-200">
-            Settings
-          </Link>
+          {isOwnerOrAdmin ? (
+            <Link href={`/teams/${team.slug}/settings`} className="rounded-md border border-white/10 px-4 py-2 text-sm text-zinc-200">
+              Settings
+            </Link>
+          ) : null}
         </div>
       </div>
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
