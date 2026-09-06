@@ -10,6 +10,23 @@ export const metadata: Metadata = {
   description: 'Solve capture-the-flag challenges across web, crypto, forensics, binary exploitation, and misc categories. Compete on the leaderboard.',
 }
 
+interface SeasonFilterOption {
+  id: string
+  name: string
+  slug: string
+}
+
+async function getSeasonFilterData() {
+  const supabase = await createClient()
+
+  const { data } = await supabase
+    .from('ctf_seasons')
+    .select('id, name, slug')
+    .order('start_date', { ascending: false })
+
+  return (data || []).filter(season => Boolean(season.slug)) as SeasonFilterOption[]
+}
+
 async function getChallengeData(userId?: string) {
   const supabase = await createClient()
 
@@ -22,7 +39,7 @@ async function getChallengeData(userId?: string) {
       .order('created_at', { ascending: false }),
     supabase
       .from('ctf_challenges')
-      .select('id, title, category, difficulty, points, hint, author, created_at, seasons:season_id (status, start_date, end_date)')
+      .select('id, title, category, difficulty, points, hint, author, created_at, seasons:season_id (slug, status, start_date, end_date)')
       .not('season_id', 'is', null)
       .eq('status', 'approved'),
   ])
@@ -31,27 +48,40 @@ async function getChallengeData(userId?: string) {
   const { data: globalSeasonLinks } = globalIds.length
     ? await supabase
         .from('ctf_season_challenges')
-        .select('challenge_id, seasons:season_id (status, start_date, end_date)')
+        .select('challenge_id, seasons:season_id (slug, status, start_date, end_date)')
         .in('challenge_id', globalIds)
     : { data: [] }
 
   const linkedStatuses = new Map<string, SeasonStatus[]>()
+  const linkedSeasonSlugs = new Map<string, string[]>()
   for (const link of globalSeasonLinks || []) {
     const season = Array.isArray(link.seasons) ? link.seasons[0] : link.seasons
     if (!season) continue
     const statuses = linkedStatuses.get(link.challenge_id) ?? []
     statuses.push(getEffectiveSeasonStatus(season as { status: string; start_date: string; end_date: string }))
     linkedStatuses.set(link.challenge_id, statuses)
+    if (season.slug) {
+      const slugs = linkedSeasonSlugs.get(link.challenge_id) ?? []
+      slugs.push(season.slug)
+      linkedSeasonSlugs.set(link.challenge_id, slugs)
+    }
   }
 
-  const challenges = (globalChallenges || []).filter(challenge =>
-    isChallengePublicAfterSeasons(linkedStatuses.get(challenge.id) ?? [])
-  )
+  const challenges = (globalChallenges || [])
+    .filter(challenge => isChallengePublicAfterSeasons(linkedStatuses.get(challenge.id) ?? []))
+    .map(challenge => ({
+      ...challenge,
+      seasonSlugs: linkedSeasonSlugs.get(challenge.id) ?? [],
+    }))
+
   for (const c of exclusiveChallenges || []) {
     const season = Array.isArray(c.seasons) ? c.seasons[0] : c.seasons
     if (!season || getEffectiveSeasonStatus(season as { status: string; start_date: string; end_date: string }) === 'ended') {
       const { seasons, ...rest } = c
-      challenges.push(rest)
+      challenges.push({
+        ...rest,
+        seasonSlugs: season?.slug ? [season.slug] : [],
+      })
     }
   }
 
@@ -111,11 +141,20 @@ async function getChallengeData(userId?: string) {
   return { challenges, solvedIds, solvesById, ratingsById }
 }
 
-export default async function CTFPage() {
+export default async function CTFPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ season?: string }>
+}) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  const params = await searchParams
 
-  const { challenges, solvedIds, solvesById, ratingsById } = await getChallengeData(user?.id)
+  const [{ challenges, solvedIds, solvesById, ratingsById }, seasonOptions] = await Promise.all([
+    getChallengeData(user?.id),
+    getSeasonFilterData(),
+  ])
+  const seasonSlug = seasonOptions.some(season => season.slug === params.season) ? params.season! : 'all'
 
   return (
     <>
@@ -123,7 +162,14 @@ export default async function CTFPage() {
         <AnnouncementBanner />
         <AIFairPlayBanner />
       </div>
-      <CTFClient challenges={challenges} solvedIds={solvedIds} solvesById={solvesById} ratingsById={ratingsById} />
+      <CTFClient
+        challenges={challenges}
+        solvedIds={solvedIds}
+        solvesById={solvesById}
+        ratingsById={ratingsById}
+        seasonOptions={seasonOptions}
+        initialSeasonSlug={seasonSlug}
+      />
     </>
   )
 }

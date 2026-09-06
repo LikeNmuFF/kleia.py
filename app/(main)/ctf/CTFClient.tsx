@@ -35,6 +35,13 @@ interface Challenge {
   hint: string | null
   author: string | null
   created_at: string
+  seasonSlugs: string[]
+}
+
+interface SeasonOption {
+  id: string
+  name: string
+  slug: string
 }
 
 export default function CTFClient({
@@ -42,21 +49,31 @@ export default function CTFClient({
   solvedIds,
   solvesById,
   ratingsById,
+  seasonOptions,
+  initialSeasonSlug,
 }: {
   challenges: Challenge[]
   solvedIds: string[]
   solvesById: Record<string, number>
   ratingsById: Record<string, { avgDifficulty: number; avgQuality: number; reviewCount: number }>
+  seasonOptions: SeasonOption[]
+  initialSeasonSlug: string
 }) {
+  const activeSeasonSlug = seasonOptions.some(season => season.slug === initialSeasonSlug) ? initialSeasonSlug : 'all'
   const [activeCategory, setActiveCategory] = useState('all')
   const [activeSolvedFilter, setActiveSolvedFilter] = useState<SolvedFilter>('all')
 
   const solvedSet = useMemo(() => new Set(solvedIds), [solvedIds])
 
+  const bySeason = useMemo(() => {
+    if (activeSeasonSlug === 'all') return challenges
+    return challenges.filter(c => c.seasonSlugs.includes(activeSeasonSlug))
+  }, [challenges, activeSeasonSlug])
+
   const byCategory = useMemo(() => {
-    if (activeCategory === 'all') return challenges
-    return challenges.filter(c => c.category === activeCategory)
-  }, [challenges, activeCategory])
+    if (activeCategory === 'all') return bySeason
+    return bySeason.filter(c => c.category === activeCategory)
+  }, [bySeason, activeCategory])
 
   const filtered = useMemo(() => {
     if (activeSolvedFilter === 'all') return byCategory
@@ -65,12 +82,12 @@ export default function CTFClient({
   }, [byCategory, activeSolvedFilter, solvedSet])
 
   const stats = useMemo(() => {
-    const total = challenges.length
-    const totalPts = challenges.reduce((sum, c) => sum + c.points, 0)
-    const solvedCount = challenges.filter(c => solvedSet.has(c.id)).length
-    const totalSolves = challenges.reduce((sum, c) => sum + (solvesById[c.id] ?? 0), 0)
+    const total = bySeason.length
+    const totalPts = bySeason.reduce((sum, c) => sum + c.points, 0)
+    const solvedCount = bySeason.filter(c => solvedSet.has(c.id)).length
+    const totalSolves = bySeason.reduce((sum, c) => sum + (solvesById[c.id] ?? 0), 0)
     return { total, totalPts, solvedCount, totalSolves }
-  }, [challenges, solvedSet, solvesById])
+  }, [bySeason, solvedSet, solvesById])
 
   return (
     <div className="max-w-6xl mx-auto py-8 px-4">
@@ -157,13 +174,63 @@ export default function CTFClient({
         </div>
       </div>
 
+      {/* Season filter */}
+      {seasonOptions.length > 0 && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between gap-3 mb-2">
+            <span className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>
+              Season
+            </span>
+            {activeSeasonSlug !== 'all' && (
+              <Link href="/ctf?season=all" className="text-xs hover:underline" style={{ color: 'var(--accent)' }}>
+                Clear season filter
+              </Link>
+            )}
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {[
+              { id: 'all', name: 'All public challenges', slug: 'all' },
+              ...seasonOptions,
+            ].map(season => {
+              const isActive = activeSeasonSlug === season.slug
+              const count = season.slug === 'all'
+                ? challenges.length
+                : challenges.filter(c => c.seasonSlugs.includes(season.slug)).length
+
+              return (
+                <Link
+                  key={season.id}
+                  href={`/ctf?season=${season.slug}`}
+                  className="flex shrink-0 items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all"
+                  style={{
+                    backgroundColor: isActive ? 'var(--accent)' : 'var(--card-bg)',
+                    color: isActive ? '#fff' : 'var(--text-secondary)',
+                    border: isActive ? 'none' : '1px solid var(--border-color)',
+                  }}
+                >
+                  <span>{season.name}</span>
+                  <span
+                    className="ml-1 px-1.5 py-0.5 text-[10px] rounded-full"
+                    style={{
+                      backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : 'var(--bg-secondary)',
+                    }}
+                  >
+                    {count}
+                  </span>
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Category filter */}
       <div className="flex flex-wrap gap-2 mb-6">
         {CATEGORIES.map(cat => {
           const isActive = activeCategory === cat.key
           const count = cat.key === 'all'
-            ? challenges.length
-            : challenges.filter(c => c.category === cat.key).length
+            ? bySeason.length
+            : bySeason.filter(c => c.category === cat.key).length
           return (
             <button
               key={cat.key}
@@ -240,7 +307,9 @@ export default function CTFClient({
               ? 'No solved challenges'
               : activeSolvedFilter === 'unsolved'
                 ? 'All challenges solved!'
-                : activeCategory === 'all'
+                : activeSeasonSlug !== 'all'
+                  ? 'No challenges in this season'
+                  : activeCategory === 'all'
                   ? 'No challenges yet'
                   : 'No challenges in this category'}
           </h3>
@@ -249,7 +318,9 @@ export default function CTFClient({
               ? 'Challenges you solve will show up here.'
               : activeSolvedFilter === 'unsolved'
                 ? 'Great work — check back for new challenges.'
-                : activeCategory === 'all'
+                : activeSeasonSlug !== 'all'
+                  ? 'Pick another season or clear the season filter.'
+                  : activeCategory === 'all'
                   ? 'Challenges will appear here once they are created.'
                   : 'Check back later or browse other categories.'}
           </p>
