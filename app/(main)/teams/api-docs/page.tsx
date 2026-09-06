@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
-  title: "Practice Teams API",
+  title: "Teams API",
   description: "How to use your team API key to fetch streak and calendar stats.",
 };
 
@@ -60,7 +60,7 @@ export default function PracticeTeamApiDocsPage() {
     <main className="mx-auto max-w-4xl px-4 py-8">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white">Practice Teams API</h1>
+          <h1 className="text-3xl font-bold text-white">Teams API</h1>
           <p className="mt-2 max-w-2xl text-zinc-400">
             Pull your team&apos;s streak and calendar stats programmatically — for dashboards,
             Discord bots, or badges.

@@ -171,9 +171,9 @@ Faculty accounts can create cohorts, assign content, and view aggregated skill d
 
 Get matched with study partners based on complementary skills — strong in one area, learning in another.
 
-### 🏋️ Practice Teams
+### 🏋️ Teams
 
-Form practice teams of 5+ members, track daily activity on a shared calendar heatmap, and compete on the team leaderboard. Teams with at least 5 accepted members can generate an API key to fetch their streak and calendar stats programmatically.
+Form teams of 5+ members, track daily activity on a shared calendar heatmap, and compete on the team leaderboard. Teams with at least 5 accepted members can generate an API key to fetch their streak and calendar stats programmatically.
 
 📘 **API documentation:** see [docs/api.md](docs/api.md) or the in-app reference at [`/teams/api-docs`](https://www.kleia.site/teams/api-docs).
 

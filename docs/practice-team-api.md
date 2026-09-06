@@ -1,6 +1,6 @@
-# Practice Team Streak API
+# Team Streak API
 
-Practice teams can publish a read-only GitHub-style streak calendar to external landing pages. A team owner or admin can generate an API key only after the team has at least 5 accepted members, counting the owner.
+Teams can publish a read-only GitHub-style streak calendar to external landing pages. A team owner or admin can generate an API key only after the team has at least 5 accepted members, counting the owner.
 
 ## Endpoint
 

@@ -24,7 +24,7 @@ export default async function PracticeTeamPage({ params }: { params: Promise<{ s
 
     return (
       <main className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-3xl font-bold text-white">Create practice team</h1>
+        <h1 className="text-3xl font-bold text-white">Create team</h1>
         <p className="mt-2 text-zinc-400">Start a public team profile and invite at least five accepted members to enable the streak API.</p>
         <div className="mt-6">
           <PracticeTeamForm />

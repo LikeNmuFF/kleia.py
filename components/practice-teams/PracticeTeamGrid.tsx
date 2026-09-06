@@ -6,7 +6,7 @@ export default function PracticeTeamGrid({ teams }: { teams: PracticeTeamSummary
   if (teams.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-white/15 p-8 text-center text-zinc-400">
-        No practice teams yet.
+        No teams yet.
       </div>
     );
   }

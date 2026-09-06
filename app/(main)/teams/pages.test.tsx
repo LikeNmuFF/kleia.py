@@ -4,12 +4,18 @@ import { join } from "node:path";
 
 const read = (...parts: string[]) => readFileSync(join(process.cwd(), ...parts), "utf8");
 
-describe("practice team pages", () => {
+describe("team pages", () => {
   it("renders public team metadata and streak summaries on the list", () => {
     const page = read("app", "(main)", "teams", "page.tsx");
     const grid = read("components", "practice-teams", "PracticeTeamGrid.tsx");
 
     expect(page).toContain("getPublicPracticeTeams");
+    expect(page).toContain("title: \"Teams\"");
+    expect(page).toContain(">Teams<");
+    expect(page).not.toContain("Practice teams");
+    expect(page).not.toContain("practice teams");
+    expect(grid).toContain("No teams yet.");
+    expect(grid).not.toContain("No practice teams yet.");
     expect(grid).toContain("current streak");
     expect(grid).toContain("longest");
   });
@@ -27,6 +33,8 @@ describe("practice team pages", () => {
     const calendar = read("components", "practice-teams", "PracticeTeamCalendar.tsx");
 
     expect(page).toContain('slug === "new"');
+    expect(page).toContain("Create team");
+    expect(page).not.toContain("Create practice team");
     expect(page).toContain("getPracticeTeamBySlug");
     expect(page).toContain("PracticeTeamCalendar");
     expect(page).toContain("getPracticeTeamRecentSolves");
@@ -35,6 +43,8 @@ describe("practice team pages", () => {
     expect(page).toContain("lg:grid-cols-[minmax(0,1fr)_360px]");
     expect(page).toContain("min-w-0");
     expect(calendar).toContain("weeks.flatMap");
+    expect(calendar).toContain("title = \"Team streak\"");
+    expect(calendar).not.toContain("Practice streak");
     expect(calendar).toContain("aria-label");
     expect(calendar).toContain("overflow-x-auto");
     expect(calendar).toContain("w-max");

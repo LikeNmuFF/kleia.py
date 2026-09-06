@@ -6,8 +6,8 @@ import { getPublicPracticeTeams } from "@/lib/practice-teams/queries";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: "Practice Teams",
-  description: "Create CTF practice teams and share GitHub-style activity streaks.",
+  title: "Teams",
+  description: "Create CTF teams and share GitHub-style activity streaks.",
 };
 
 export default async function TeamsPage() {
@@ -18,9 +18,9 @@ export default async function TeamsPage() {
     <main className="mx-auto max-w-6xl px-4 py-8">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white">Practice teams</h1>
+          <h1 className="text-3xl font-bold text-white">Teams</h1>
           <p className="mt-2 max-w-2xl text-zinc-400">
-            Track team practice streaks and publish your progress to external pages.
+            Track team streaks and publish your progress to external pages.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

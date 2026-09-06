@@ -10,7 +10,7 @@ describe('desktop navigation grouping', () => {
     ).toEqual([])
   })
 
-  it('exposes practice teams in community navigation', () => {
+  it('exposes teams in community navigation', () => {
     expect(COMMUNITY_NAV.some((item) => item.href === '/teams')).toBe(true)
   })
 })

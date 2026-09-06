@@ -41,7 +41,7 @@ export default function PracticeTeamCalendar({
   calendar,
   current,
   longest,
-  title = "Practice streak",
+  title = "Team streak",
   subtitle,
   colorScheme = "emerald",
   density = "comfortable",
