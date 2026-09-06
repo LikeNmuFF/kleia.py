@@ -82,9 +82,11 @@ export default async function PracticeTeamPage({ params }: { params: Promise<{ s
           ) : null}
         </div>
       </div>
-      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-        <PracticeTeamCalendar calendar={team.calendar} current={team.streaks.current} longest={team.streaks.longest} />
-        <section className="rounded-lg border border-white/10 bg-zinc-950 p-5">
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="min-w-0">
+          <PracticeTeamCalendar calendar={team.calendar} current={team.streaks.current} longest={team.streaks.longest} />
+        </div>
+        <section className="min-w-0 rounded-lg border border-white/10 bg-zinc-950 p-5">
           <h2 className="text-lg font-semibold text-white">Recent team solves</h2>
           <p className="mt-1 text-sm text-zinc-500">Accepted members automatically credit the team when they solve CTF challenges.</p>
           <div className="mt-4 space-y-3">

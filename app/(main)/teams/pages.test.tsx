@@ -32,8 +32,13 @@ describe("practice team pages", () => {
     expect(page).toContain("getPracticeTeamRecentSolves");
     expect(page).toContain("Recent team solves");
     expect(page).toContain("member_count");
+    expect(page).toContain("lg:grid-cols-[minmax(0,1fr)_360px]");
+    expect(page).toContain("min-w-0");
     expect(calendar).toContain("calendar.map");
     expect(calendar).toContain("aria-label");
+    expect(calendar).toContain("overflow-x-auto");
+    expect(calendar).toContain("w-max");
+    expect(calendar).toContain("repeat(53,0.75rem)");
   });
 
   it("includes create controls for profile fields and avatar", () => {

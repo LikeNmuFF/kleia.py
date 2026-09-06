@@ -8,7 +8,7 @@ type Props = {
 
 export default function PracticeTeamCalendar({ calendar, current, longest }: Props) {
   return (
-    <section className="rounded-lg border border-white/10 bg-zinc-950 p-4">
+    <section className="min-w-0 rounded-lg border border-white/10 bg-zinc-950 p-4">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-white">Practice streak</h2>
@@ -24,15 +24,17 @@ export default function PracticeTeamCalendar({ calendar, current, longest }: Pro
           <span>More</span>
         </div>
       </div>
-      <div className="grid grid-cols-[repeat(53,minmax(0,1fr))] gap-1 overflow-x-auto pb-2">
-        {calendar.map((day) => (
-          <span
-            key={day.date}
-            aria-label={`${day.date}: ${day.count} practice activities`}
-            className={`h-3 w-3 rounded-sm ${intensityClass(day.count)}`}
-            title={`${day.date}: ${day.count}`}
-          />
-        ))}
+      <div className="overflow-x-auto pb-2">
+        <div className="grid w-max grid-cols-[repeat(53,0.75rem)] gap-1">
+          {calendar.map((day) => (
+            <span
+              key={day.date}
+              aria-label={`${day.date}: ${day.count} practice activities`}
+              className={`h-3 w-3 rounded-sm ${intensityClass(day.count)}`}
+              title={`${day.date}: ${day.count}`}
+            />
+          ))}
+        </div>
       </div>
     </section>
   );
