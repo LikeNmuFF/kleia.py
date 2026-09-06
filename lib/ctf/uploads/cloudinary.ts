@@ -10,6 +10,11 @@ export type CloudinaryUploadResult = {
   moderationStatus: 'pending' | 'approved'
 }
 
+export type PublicImageUploadResult = {
+  secureUrl: string
+  publicId: string
+}
+
 type ModerationStatus = 'pending' | 'approved' | 'rejected'
 
 function configureCloudinary() {
@@ -82,6 +87,34 @@ export async function uploadValidatedChallengeFile(upload: ValidatedUpload, owne
     assetId: result.asset_id,
     publicId: result.public_id,
     moderationStatus,
+  }
+}
+
+export async function uploadPublicImageBuffer(
+  buffer: Buffer,
+  options: { folder: string; mimeType: 'image/png' | 'image/jpeg' | 'image/gif' | 'image/webp' }
+): Promise<PublicImageUploadResult> {
+  configureCloudinary()
+
+  const result = await new Promise<UploadApiResponse>((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: options.folder,
+        resource_type: 'image',
+        type: 'upload',
+        format: options.mimeType.split('/').at(-1),
+      },
+      (error, response) => {
+        if (error || !response) reject(error ?? new Error('Upload failed'))
+        else resolve(response)
+      }
+    )
+    Readable.from(buffer).pipe(stream)
+  })
+
+  return {
+    secureUrl: result.secure_url,
+    publicId: result.public_id,
   }
 }
 
