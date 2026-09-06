@@ -28,6 +28,7 @@ describe('practice teams schema', () => {
 
     expect(sql).toContain('slug text not null unique')
     expect(sql).toContain('owner_id uuid not null references public.profiles(id) on delete cascade')
+    expect(sql).toContain('is_public boolean not null default true check (is_public = true)')
     expect(sql).toContain("role text not null check (role in ('owner', 'member'))")
     expect(sql).toContain("status text not null check (status in ('pending', 'accepted'))")
     expect(sql).toContain('primary key (team_id, user_id)')
@@ -50,10 +51,15 @@ describe('practice teams schema', () => {
     expect(sql).toContain('create policy "authenticated users can create practice teams"')
     expect(sql).toContain('with check (owner_id = (select auth.uid()))')
     expect(sql).toContain('create policy "owners and admins can update practice teams"')
+    expect(sql).toContain('with check (')
+    expect(sql).toContain('is_public = true')
     expect(sql).toContain('create policy "members can read own team membership"')
     expect(sql).toContain('create policy "owners and admins can insert team members"')
     expect(sql).toContain('create policy "owners and admins can delete team members"')
     expect(sql).toContain('create policy "owners and admins can read api key metadata"')
+    expect(sql).toContain('grant update (name, slug, description, avatar_url) on public.practice_teams to authenticated')
+    expect(sql).not.toContain('grant update on public.practice_teams to authenticated')
+    expect(sql).not.toContain('grant update (name, slug, description, avatar_url, owner_id)')
     expect(sql).toContain(
       'grant select (id, team_id, key_prefix, created_by, created_at, last_used_at, revoked_at) on public.practice_team_api_keys to authenticated'
     )

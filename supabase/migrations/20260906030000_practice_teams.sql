@@ -5,7 +5,7 @@ create table if not exists public.practice_teams (
   description text,
   avatar_url text,
   owner_id uuid not null references public.profiles(id) on delete cascade,
-  is_public boolean not null default true,
+  is_public boolean not null default true check (is_public = true),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -105,12 +105,15 @@ create policy "Owners and admins can update practice teams"
     )
   )
   with check (
-    owner_id = (select auth.uid())
-    or exists (
-      select 1
-      from public.profiles profile
-      where profile.id = (select auth.uid())
-        and profile.role = 'admin'
+    is_public = true
+    and (
+      owner_id = (select auth.uid())
+      or exists (
+        select 1
+        from public.profiles profile
+        where profile.id = (select auth.uid())
+          and profile.role = 'admin'
+      )
     )
   );
 
@@ -233,7 +236,8 @@ create policy "Owners and admins can read api key metadata"
   );
 
 grant select on public.practice_teams to anon, authenticated;
-grant insert, update on public.practice_teams to authenticated;
+grant insert on public.practice_teams to authenticated;
+grant update (name, slug, description, avatar_url) on public.practice_teams to authenticated;
 grant select on public.practice_team_members to authenticated;
 grant insert, delete on public.practice_team_members to authenticated;
 grant select on public.practice_team_activity to anon, authenticated;
