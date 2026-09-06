@@ -96,6 +96,16 @@ export const BADGES: BadgeDef[] = [
   { id:'peer_endorsed', name:'Endorsed', description:'Receive a peer endorsement', icon:'⭐', category:'social' },
   { id:'cohort_faculty', name:'Faculty Guide', description:'Create a cohort as faculty', icon:'🏫', category:'social' },
   { id:'skill_bridge', name:'Bridge Builder', description:'Improve a weakness into a strength', icon:'🌉', category:'learn' },
+  { id: 'basctf2026-rank-1', name: 'BaSCTF2026 Champion', description: 'Finished BaSCTF2026 at rank #1', icon: '🥇', category: 'ctf' },
+  { id: 'basctf2026-rank-2', name: 'BaSCTF2026 Top 2', description: 'Finished BaSCTF2026 at rank #2', icon: '🥈', category: 'ctf' },
+  { id: 'basctf2026-rank-3', name: 'BaSCTF2026 Top 3', description: 'Finished BaSCTF2026 at rank #3', icon: '🥉', category: 'ctf' },
+  { id: 'basctf2026-rank-4', name: 'BaSCTF2026 Top 4', description: 'Finished BaSCTF2026 at rank #4', icon: '🏅', category: 'ctf' },
+  { id: 'basctf2026-rank-5', name: 'BaSCTF2026 Top 5', description: 'Finished BaSCTF2026 at rank #5', icon: '🏅', category: 'ctf' },
+  { id: 'basctf2026-rank-6', name: 'BaSCTF2026 Top 6', description: 'Finished BaSCTF2026 at rank #6', icon: '🏅', category: 'ctf' },
+  { id: 'basctf2026-rank-7', name: 'BaSCTF2026 Top 7', description: 'Finished BaSCTF2026 at rank #7', icon: '🏅', category: 'ctf' },
+  { id: 'basctf2026-rank-8', name: 'BaSCTF2026 Top 8', description: 'Finished BaSCTF2026 at rank #8', icon: '🏅', category: 'ctf' },
+  { id: 'basctf2026-rank-9', name: 'BaSCTF2026 Top 9', description: 'Finished BaSCTF2026 at rank #9', icon: '🏅', category: 'ctf' },
+  { id: 'basctf2026-rank-10', name: 'BaSCTF2026 Top 10', description: 'Finished BaSCTF2026 at rank #10', icon: '🏅', category: 'ctf' },
 ]
 
 export function getBadgeById(id: string): BadgeDef | undefined {

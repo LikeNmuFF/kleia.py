@@ -1,3 +1,4 @@
+import { getSafeErrorMessage } from "@/lib/errorHandler";
 import { getServiceClient } from "@/lib/supabase/service";
 
 type SupabaseLike = {
@@ -45,7 +46,7 @@ export async function createSeason(
     .select("*")
     .single();
 
-  if (error) return { error: error.message ?? "Could not create season" };
+  if (error) return { error: getSafeErrorMessage(error, "Could not create season") };
   return { season: data };
 }
 
@@ -57,6 +58,6 @@ export async function endSeason(): Promise<{ success: true } | { error: string }
     .update({ is_active: false })
     .eq("is_active", true);
 
-  if (error) return { error: error.message ?? "Could not end season" };
+  if (error) return { error: getSafeErrorMessage(error, "Could not end season") };
   return { success: true };
 }

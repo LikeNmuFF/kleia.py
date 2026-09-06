@@ -23,4 +23,12 @@ describe("BaSCTF2026 rank badge awarding", () => {
     expect(code).toContain("getEffectiveSeasonStatus(season)");
     expect(code).toContain("!== 'ended'");
   });
+
+  it("wires the award action into the admin season UI", () => {
+    const code = readFileSync("app/(main)/admin/seasons/[slug]/SeasonAdminClient.tsx", "utf8");
+
+    expect(code).toContain("awardBaSCTF2026TopBadges");
+    expect(code).toContain("Award BaSCTF2026 top 10 badges");
+    expect(code).toContain("season.slug === 'basctf2026'");
+  });
 });

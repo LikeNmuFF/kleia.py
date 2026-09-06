@@ -8,6 +8,7 @@ import { logEvent } from '@/lib/logEvent'
 import { isAdmin } from '@/lib/admin'
 import { getEffectiveSeasonStatus, isSeasonRegistrationOpen } from './competition-status'
 import { parseManilaLocal } from '@/lib/utils/time'
+import { getServiceClient } from '@/lib/supabase/service'
 
 export async function getAllSeasons() {
   const supabase = await createClient()
@@ -136,6 +137,73 @@ export async function getSeasonLeaderboard(seasonId: string) {
       avatar_url: prof?.avatar_url ?? null,
     }
   })
+}
+
+export async function awardBaSCTF2026TopBadges() {
+  const start = Date.now()
+  const supabase = await createClient()
+  if (!(await isAdmin(supabase))) {
+    return { error: 'Unauthorized' }
+  }
+
+  const service = getServiceClient() as any
+  const { data: season, error: seasonError } = await service
+    .from('ctf_seasons')
+    .select('id, slug, name, status, start_date, end_date')
+    .or('slug.eq.basctf2026,name.eq.BaSCTF2026')
+    .maybeSingle()
+
+  if (seasonError) {
+    await logEvent({ endpoint: 'seasons.awardBaSCTF2026TopBadges', status: 'error', durationMs: Date.now() - start, errorMessage: seasonError.message })
+    return { error: getSafeErrorMessage(seasonError, 'Could not load BaSCTF2026') }
+  }
+
+  if (!season) {
+    return { error: 'BaSCTF2026 season not found' }
+  }
+
+  if (getEffectiveSeasonStatus(season) !== 'ended') {
+    return { error: 'BaSCTF2026 is not finished yet' }
+  }
+
+  const { data: leaderboard, error: leaderboardError } = await service
+    .from('ctf_season_participants')
+    .select('user_id, total_points, challenges_solved, joined_at')
+    .eq('season_id', season.id)
+    .order('total_points', { ascending: false })
+    .order('challenges_solved', { ascending: false })
+    .order('joined_at', { ascending: true })
+    .limit(10)
+
+  if (leaderboardError) {
+    await logEvent({ endpoint: 'seasons.awardBaSCTF2026TopBadges', status: 'error', durationMs: Date.now() - start, errorMessage: leaderboardError.message })
+    return { error: getSafeErrorMessage(leaderboardError, 'Could not load BaSCTF2026 leaderboard') }
+  }
+
+  const awards = (leaderboard ?? []).map((entry: any, index: number) => ({
+    user_id: entry.user_id,
+    badge_id: `basctf2026-rank-${index + 1}`,
+    earned_at: new Date().toISOString(),
+  }))
+
+  if (awards.length === 0) {
+    return { success: true, awarded: 0 }
+  }
+
+  const { error: awardError } = await service
+    .from('user_badges')
+    .upsert(awards, { onConflict: 'user_id,badge_id' })
+
+  if (awardError) {
+    await logEvent({ endpoint: 'seasons.awardBaSCTF2026TopBadges', status: 'error', durationMs: Date.now() - start, errorMessage: awardError.message })
+    return { error: getSafeErrorMessage(awardError, 'Could not award BaSCTF2026 badges') }
+  }
+
+  await logEvent({ endpoint: 'seasons.awardBaSCTF2026TopBadges', status: 'success', durationMs: Date.now() - start })
+  revalidatePath('/profile')
+  revalidatePath('/members')
+  revalidatePath('/leaderboard/achievements')
+  return { success: true, awarded: awards.length }
 }
 
 export async function getSeasonChallenges(seasonId: string) {

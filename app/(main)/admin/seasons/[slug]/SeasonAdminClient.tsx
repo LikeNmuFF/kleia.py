@@ -14,6 +14,7 @@ import {
 import { createSeasonChallenge } from '@/app/actions/ctf'
 import { createAccountFromRegistration } from '@/app/actions/registrations'
 import { addSeasonContributor, removeSeasonContributor } from '@/app/actions/contributors'
+import { awardBaSCTF2026TopBadges } from '@/app/actions/seasons'
 
 interface Season {
   id: string
@@ -193,6 +194,23 @@ export default function SeasonAdminClient({
           {statusBtn('End', 'ended', Square, effectiveStatus === 'ended', false)}
           {statusBtn('Set Upcoming', 'upcoming', Circle, false, false)}
         </div>
+        {season.slug === 'basctf2026' && (
+          <div className="mt-4 border-t pt-4" style={{ borderColor: 'var(--border-color)' }}>
+            <button
+              onClick={() => run(() => awardBaSCTF2026TopBadges(), 'BaSCTF2026 top 10 badges awarded')}
+              disabled={busy || effectiveStatus !== 'ended'}
+              className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40"
+              style={{ background: '#f59e0b', color: '#111827' }}
+            >
+              Award BaSCTF2026 top 10 badges
+            </button>
+            {effectiveStatus !== 'ended' && (
+              <p className="mt-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+                End the season before awarding final rank badges.
+              </p>
+            )}
+          </div>
+        )}
       </section>
 
       {/* Spectators */}

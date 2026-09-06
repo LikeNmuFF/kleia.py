@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { getSafeErrorMessage } from '@/lib/errorHandler'
 
 export type NotificationType =
   | 'post_like'
@@ -56,7 +57,7 @@ export async function createNotification(input: {
   })
   if (error) {
     console.error('createNotification failed', { type: input.type, error: error.message })
-    return { error: error.message }
+    return { error: getSafeErrorMessage(error, 'Failed to create notification') }
   }
   return { success: true }
 }
@@ -98,7 +99,7 @@ export async function markNotificationRead(notificationId: string) {
     .update({ read_at: new Date().toISOString() })
     .eq('id', notificationId)
     .eq('recipient_id', user.id)
-  return error ? { error: error.message } : { success: true }
+  return error ? { error: getSafeErrorMessage(error, 'Failed to mark notification as read') } : { success: true }
 }
 
 export async function markAllNotificationsRead() {
@@ -109,5 +110,5 @@ export async function markAllNotificationsRead() {
     .update({ read_at: new Date().toISOString() })
     .eq('recipient_id', user.id)
     .is('read_at', null)
-  return error ? { error: error.message } : { success: true }
+  return error ? { error: getSafeErrorMessage(error, 'Failed to mark notifications as read') } : { success: true }
 }

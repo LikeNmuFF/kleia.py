@@ -3,6 +3,7 @@ import ProfileForm from '@/components/profile/ProfileForm'
 import BadgeShowcase from '@/components/gamification/BadgeShowcase'
 import SkillAnalyticsDashboard from '@/components/profile/SkillAnalyticsDashboard'
 import type { SkillSnapshot } from '@/lib/skill-analytics/types'
+import { getBadgeById } from '@/lib/utils/gamification'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -16,7 +17,7 @@ export default async function ProfilePage() {
 
   const { data: badgeRows } = await supabase
     .from('user_badges')
-    .select('badge_id, badges(name, description, icon_url), created_at')
+    .select('badge_id, earned_at')
     .eq('user_id', user?.id || '')
 
   const { data: skillSnapshot } = await supabase
@@ -24,12 +25,16 @@ export default async function ProfilePage() {
     .select('*')
     .maybeSingle()
 
-  const earnedBadges = (badgeRows || []).map((b: any) => ({
-    name: b.badges?.name ?? b.badge_id,
-    description: b.badges?.description ?? '',
-    icon_url: b.badges?.icon_url ?? null,
-    earned_at: b.created_at,
-  }))
+  const earnedBadges = (badgeRows || []).map((b: any) => {
+    const badgeDefinition = getBadgeById(b.badge_id)
+
+    return {
+      name: badgeDefinition?.name ?? b.badge_id,
+      description: badgeDefinition?.description ?? '',
+      icon_url: null,
+      earned_at: b.earned_at,
+    }
+  })
 
   return (
     <div className="max-w-5xl mx-auto py-8 px-4">
