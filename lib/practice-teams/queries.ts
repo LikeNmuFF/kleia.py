@@ -62,27 +62,30 @@ export async function getPublicPracticeTeams(supabase: SupabaseLike): Promise<Pr
     .order("created_at", { ascending: false });
 
   const teams = data ?? [];
+  if (teams.length === 0) return [];
 
-  return Promise.all(
-    teams.map(async (team: any) => {
-      const [memberCount, activity, totalSolves] = await Promise.all([
-        getAcceptedMemberCount(supabase, team.id),
-        getPracticeTeamActivity(supabase, team.id),
-        getPracticeTeamSolveCount(supabase, team.id),
-      ]);
-      const streaks = calculateTeamStreaks(activity);
+  const teamIds = teams.map((t: any) => t.id);
 
-      return {
-        ...team,
-        member_count: memberCount,
-        total_solves: totalSolves,
-        streaks: {
-          current: streaks.current,
-          longest: streaks.longest,
-        },
-      };
-    }),
-  );
+  const [memberCounts, solveCounts, activity] = await Promise.all([
+    getBatchMemberCounts(supabase, teamIds),
+    getBatchSolveCounts(supabase, teamIds),
+    getBatchActivity(supabase, teamIds),
+  ]);
+
+  return teams.map((team: any) => {
+    const teamActivity = activity.get(team.id) ?? [];
+    const streaks = calculateTeamStreaks(teamActivity);
+
+    return {
+      ...team,
+      member_count: memberCounts.get(team.id) ?? 0,
+      total_solves: solveCounts.get(team.id) ?? 0,
+      streaks: {
+        current: streaks.current,
+        longest: streaks.longest,
+      },
+    };
+  });
 }
 
 export async function getPracticeTeamBySlug(supabase: SupabaseLike, slug: string): Promise<PracticeTeamDetails | null> {
@@ -220,4 +223,73 @@ async function getPracticeTeamSolveCount(supabase: SupabaseLike, teamId: string)
     .eq("team_id", teamId);
 
   return count ?? 0;
+}
+
+async function getBatchMemberCounts(supabase: SupabaseLike, teamIds: string[]): Promise<Map<string, number>> {
+  const { data } = await supabase
+    .from("practice_team_members")
+    .select("team_id")
+    .in("team_id", teamIds)
+    .eq("status", "accepted");
+
+  const counts = new Map<string, number>();
+  for (const row of data ?? []) {
+    counts.set(row.team_id, (counts.get(row.team_id) ?? 0) + 1);
+  }
+  return counts;
+}
+
+async function getBatchSolveCounts(supabase: SupabaseLike, teamIds: string[]): Promise<Map<string, number>> {
+  const { data } = await supabase
+    .from("practice_team_solves")
+    .select("team_id")
+    .in("team_id", teamIds);
+
+  const counts = new Map<string, number>();
+  for (const row of data ?? []) {
+    counts.set(row.team_id, (counts.get(row.team_id) ?? 0) + 1);
+  }
+  return counts;
+}
+
+async function getBatchActivity(supabase: SupabaseLike, teamIds: string[]): Promise<Map<string, DailyActivity[]>> {
+  const [{ data: manualActivity }, { data: solves }] = await Promise.all([
+    supabase
+      .from("practice_team_activity")
+      .select("team_id, activity_date, count")
+      .in("team_id", teamIds)
+      .order("activity_date", { ascending: true }),
+    supabase
+      .from("practice_team_solves")
+      .select("team_id, solved_at")
+      .in("team_id", teamIds),
+  ]);
+
+  const activityMap = new Map<string, Map<string, number>>();
+
+  for (const row of manualActivity ?? []) {
+    if (!activityMap.has(row.team_id)) activityMap.set(row.team_id, new Map());
+    const teamMap = activityMap.get(row.team_id)!;
+    teamMap.set(row.activity_date, (teamMap.get(row.activity_date) ?? 0) + row.count);
+  }
+
+  for (const row of solves ?? []) {
+    const date = String(row.solved_at).slice(0, 10);
+    if (date) {
+      if (!activityMap.has(row.team_id)) activityMap.set(row.team_id, new Map());
+      const teamMap = activityMap.get(row.team_id)!;
+      teamMap.set(date, (teamMap.get(date) ?? 0) + 1);
+    }
+  }
+
+  const result = new Map<string, DailyActivity[]>();
+  for (const [teamId, counts] of activityMap) {
+    result.set(
+      teamId,
+      Array.from(counts.entries())
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([date, count]) => ({ date, count })),
+    );
+  }
+  return result;
 }

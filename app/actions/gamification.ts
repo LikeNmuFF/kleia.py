@@ -44,21 +44,21 @@ export async function awardXp(
 
   if (updateError) return { error: getSafeErrorMessage(updateError, "Could not update XP") };
 
-  for (const teamId of teamIds) {
-    const { data: team } = await service
+  if (teamIds.length > 0) {
+    const { data: teams } = await service
       .from("practice_teams")
-      .select("xp")
-      .eq("id", teamId)
-      .maybeSingle();
+      .select("id, xp")
+      .in("id", teamIds);
 
-    if (team) {
+    const updates = (teams ?? []).map((team: any) => {
       const newTeamXP = team.xp + totalXp;
-      const newTeamLevel = calculateLevel(newTeamXP);
-      await service
+      return service
         .from("practice_teams")
-        .update({ xp: newTeamXP, level: newTeamLevel })
-        .eq("id", teamId);
-    }
+        .update({ xp: newTeamXP, level: calculateLevel(newTeamXP) })
+        .eq("id", team.id);
+    });
+
+    await Promise.all(updates);
   }
 
   await checkAndGrantBadges(userId, teamIds);
