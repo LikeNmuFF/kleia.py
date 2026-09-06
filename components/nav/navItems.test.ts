@@ -9,4 +9,8 @@ describe('desktop navigation grouping', () => {
       DESKTOP_PRIMARY_NAV.filter((item) => communityHrefs.has(item.href))
     ).toEqual([])
   })
+
+  it('exposes practice teams in community navigation', () => {
+    expect(COMMUNITY_NAV.some((item) => item.href === '/teams')).toBe(true)
+  })
 })

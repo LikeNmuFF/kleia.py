@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   GraduationCap,
   Handshake,
+  Activity,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -38,6 +39,7 @@ export const PRIMARY_NAV: NavItem[] = [
   { label: 'Members', href: '/members', icon: Users },
   { label: 'Cohorts', href: '/cohorts', icon: GraduationCap },
   { label: 'Peer Matching', href: '/peer-matching', icon: Handshake },
+  { label: 'Teams', href: '/teams', icon: Activity, matchPrefix: true },
   { label: 'Learn', href: '/learn', icon: BookOpen, matchPrefix: true },
   { label: 'Leaderboard', href: '/leaderboard', icon: Trophy, matchPrefix: true },
 ]
@@ -47,6 +49,7 @@ export const COMMUNITY_NAV: NavItem[] = [
   PRIMARY_NAV[4], // Members
   PRIMARY_NAV[5], // Cohorts
   PRIMARY_NAV[6], // Peer Matching
+  PRIMARY_NAV[7], // Teams
   PRIMARY_NAV[2], // Events
   PRIMARY_NAV[3], // Webinars
 ]
@@ -55,8 +58,8 @@ export const COMMUNITY_NAV: NavItem[] = [
 export const DESKTOP_PRIMARY_NAV: NavItem[] = [
   PRIMARY_NAV[0], // Feed
   PRIMARY_NAV[1], // Chat
-  PRIMARY_NAV[7], // Learn
-  PRIMARY_NAV[8], // Leaderboard
+  PRIMARY_NAV[8], // Learn
+  PRIMARY_NAV[9], // Leaderboard
 ]
 
 export const CHALLENGE_NAV: NavItem[] = [
@@ -104,7 +107,7 @@ export const MOBILE_TABS: NavItem[] = [
 export const MOBILE_SHEET_SECTIONS: { title: string; items: NavItem[] }[] = [
   {
     title: 'Community',
-    items: [PRIMARY_NAV[3], PRIMARY_NAV[4], PRIMARY_NAV[6]],
+    items: [PRIMARY_NAV[3], PRIMARY_NAV[4], PRIMARY_NAV[6], PRIMARY_NAV[7]],
   },
   {
     title: 'Challenges',
@@ -136,7 +139,7 @@ export function isMobileMoreActive(pathname: string): boolean {
     isChallengeRouteActive(pathname) ||
     isNavItemActive(pathname, ADMIN_NAV) ||
     isNavItemActive(pathname, CONTRIBUTOR_NAV) ||
-    ['/members', '/leaderboard'].some((p) =>
+    ['/members', '/leaderboard', '/teams'].some((p) =>
       pathname === p || pathname.startsWith(`${p}/`)
     )
   )
