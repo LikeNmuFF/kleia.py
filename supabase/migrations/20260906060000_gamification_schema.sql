@@ -39,7 +39,7 @@ create table if not exists public.earned_badges (
   badge_id uuid not null references public.badges(id) on delete cascade,
   season_id uuid references public.seasons(id) on delete set null,
   earned_at timestamptz not null default now(),
-  primary key (user_id, badge_id, coalesce(season_id, '00000000-0000-0000-0000-000000000000'::uuid))
+  primary key (user_id, badge_id, season_id)
 );
 
 -- 5. Create indexes
