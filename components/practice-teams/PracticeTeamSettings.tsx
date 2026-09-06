@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 
-import { generatePracticeTeamApiKey, revokePracticeTeamApiKey } from "@/app/actions/practice-teams";
+import { generatePracticeTeamApiKey, revokePracticeTeamApiKey, deletePracticeTeam } from "@/app/actions/practice-teams";
 import type { PracticeTeamApiKeyMetadata } from "@/lib/practice-teams/queries";
 
 type Props = {
@@ -14,12 +14,17 @@ type Props = {
 
 export default function PracticeTeamSettings({ slug, memberCount, apiKeys }: Props) {
   const [generatedKey, setGeneratedKey] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   async function generateKeyAction() {
     const result = await generatePracticeTeamApiKey(slug);
     if ("rawKey" in result) {
       setGeneratedKey(result.rawKey);
     }
+  }
+
+  async function deleteTeamAction() {
+    await deletePracticeTeam(slug);
   }
 
   return (
@@ -65,6 +70,41 @@ export default function PracticeTeamSettings({ slug, memberCount, apiKeys }: Pro
             ) : null}
           </div>
         ))}
+      </div>
+
+      <div className="mt-6 border-t border-white/10 pt-6">
+        <h3 className="text-lg font-semibold text-red-400">Danger zone</h3>
+        <p className="mt-1 text-sm text-zinc-400">
+          Permanently delete this team and all associated data. This action cannot be undone.
+        </p>
+        {showDeleteConfirm ? (
+          <div className="mt-3 rounded-md border border-red-500/30 bg-red-950/30 p-4">
+            <p className="text-sm text-red-200">Are you sure you want to delete this team? Type the team name to confirm.</p>
+            <div className="mt-3 flex gap-2">
+              <form action={deleteTeamAction} className="flex gap-2">
+                <button
+                  type="submit"
+                  className="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500"
+                >
+                  Delete team permanently
+                </button>
+              </form>
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="rounded-md border border-white/10 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="mt-3 rounded-md border border-red-500/40 px-4 py-2 text-sm text-red-200 hover:bg-red-950/30"
+          >
+            Delete team
+          </button>
+        )}
       </div>
     </section>
   );

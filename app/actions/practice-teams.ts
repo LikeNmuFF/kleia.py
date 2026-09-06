@@ -165,6 +165,21 @@ export async function removePracticeTeamMember(slug: string, userId: string): Pr
   return { success: true };
 }
 
+export async function deletePracticeTeam(slug: string): Promise<ActionResult> {
+  const manager = await requireTeamManager(slug);
+  if ("error" in manager) return manager;
+
+  const service = getServiceClient() as any;
+
+  const { error } = await service.from("practice_teams").delete().eq("id", manager.team.id);
+
+  if (error) return { error: getSafeErrorMessage(error, "Could not delete team") };
+
+  revalidatePath("/teams");
+  revalidatePath("/teams/leaderboard");
+  redirect("/teams");
+}
+
 export async function recordPracticeTeamActivity(slug: string, date: string, count: number): Promise<ActionResult> {
   const manager = await requireTeamManager(slug);
   if ("error" in manager) return manager;
