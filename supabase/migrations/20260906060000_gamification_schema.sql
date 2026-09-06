@@ -1,8 +1,12 @@
 -- 1. Add XP and level columns to existing tables
 alter table public.profiles add column if not exists xp integer not null default 0;
 alter table public.profiles add column if not exists level integer not null default 1;
+alter table public.profiles add constraint profiles_xp_check check (xp >= 0);
+alter table public.profiles add constraint profiles_level_check check (level >= 1);
 alter table public.practice_teams add column if not exists xp integer not null default 0;
 alter table public.practice_teams add column if not exists level integer not null default 1;
+alter table public.practice_teams add constraint practice_teams_xp_check check (xp >= 0);
+alter table public.practice_teams add constraint practice_teams_level_check check (level >= 1);
 
 -- 2. Create seasons table
 create table if not exists public.seasons (
@@ -39,10 +43,6 @@ create table if not exists public.earned_badges (
 );
 
 -- 5. Create indexes
-create index if not exists seasons_is_active_idx
-  on public.seasons (is_active)
-  where is_active = true;
-
 create index if not exists badges_type_idx
   on public.badges (type);
 
@@ -135,13 +135,6 @@ create policy "Users can read own earned badges"
         and profile.role = 'admin'
     )
   );
-
-drop policy if exists "System can grant badges" on public.earned_badges;
-create policy "System can grant badges"
-  on public.earned_badges
-  for insert
-  to authenticated
-  with check (true);
 
 -- 10. Grant permissions
 grant select on public.seasons to anon, authenticated;
