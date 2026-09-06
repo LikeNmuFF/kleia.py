@@ -5,8 +5,6 @@ import { useRouter } from 'next/navigation'
 import { createChallenge, updateChallenge, deleteChallenge, approveChallenge, rejectChallenge } from '@/app/actions/ctf'
 import LearnLinkPicker from '@/components/ctf/LearnLinkPicker'
 
-const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/raw/upload`
-
 interface Challenge {
   id: string
   title: string
@@ -60,7 +58,8 @@ export default function AdminCTFClient({
   const [success, setSuccess] = useState('')
   const [activeTab, setActiveTab] = useState('pending')
   const [uploading, setUploading] = useState<string | null>(null)
-  const [fileInputUrl, setFileInputUrl] = useState('')
+  const [fileInputName, setFileInputName] = useState('')
+  const [uploadId, setUploadId] = useState<string | null>(null)
   const [aiReviewing, setAiReviewing] = useState<string | null>(null)
   const [aiNotes, setAiNotes] = useState<Record<string, string>>({})
 
@@ -68,16 +67,23 @@ export default function AdminCTFClient({
 
   const filtered = activeTab === 'all' ? challenges : challenges.filter(c => c.status === activeTab)
 
-  const uploadToCloudinary = async (file: File): Promise<string | null> => {
+  const uploadChallengeFile = async (file: File): Promise<{ id: string; fileName: string } | null> => {
     const formData = new FormData()
     formData.append('file', file)
-    formData.append('upload_preset', 'kleia-ctf-files')
     try {
-      const res = await fetch(CLOUDINARY_URL, { method: 'POST', body: formData })
+      const res = await fetch('/api/ctf/uploads', { method: 'POST', body: formData })
       const data = await res.json()
-      return data.secure_url || null
+      if (!res.ok) {
+        setError(data.error || 'Upload failed.')
+        return null
+      }
+      if (data.status !== 'approved') {
+        setError('File is scanning. Wait for approval before creating the challenge.')
+        return null
+      }
+      return { id: data.id, fileName: data.fileName }
     } catch {
-      setError('Upload failed. Check your Cloudinary preset name.')
+      setError('Upload failed.')
       return null
     }
   }
@@ -94,7 +100,7 @@ export default function AdminCTFClient({
       points: parseInt(form.get('points') as string),
       flag: form.get('flag') as string,
       hint: form.get('hint') as string || undefined,
-      file_url: fileInputUrl || undefined,
+      upload_id: uploadId || undefined,
       link_url: (form.get('link_url') as string) || undefined,
       author: (form.get('author') as string) || undefined,
       learn_topic_slug: (form.get('learn_topic_slug') as string) || undefined,
@@ -105,7 +111,8 @@ export default function AdminCTFClient({
     else {
       setSuccess('Challenge created!')
       setShowCreate(false)
-      setFileInputUrl('')
+      setFileInputName('')
+      setUploadId(null)
       router.refresh()
     }
   }
@@ -200,8 +207,11 @@ export default function AdminCTFClient({
     const file = e.target.files?.[0]
     if (!file) return
     setUploading(file.name)
-    const url = await uploadToCloudinary(file)
-    if (url) setFileInputUrl(url)
+    const upload = await uploadChallengeFile(file)
+    if (upload) {
+      setUploadId(upload.id)
+      setFileInputName(upload.fileName)
+    }
     setUploading(null)
   }
 
@@ -270,11 +280,11 @@ export default function AdminCTFClient({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
               </svg>
               {uploading ? `Uploading ${uploading}...` : 'Attach file'}
-              <input type="file" className="hidden" onChange={handleFileUpload} />
+              <input type="file" accept=".zip,.png,.jpg,.jpeg,.gif,.webp,.pdf,.txt,.md,.json,.csv,.pcap,.pcapng" className="hidden" onChange={handleFileUpload} />
             </label>
-            {fileInputUrl && (
+            {fileInputName && (
               <span className="text-xs truncate flex-1" style={{ color: 'var(--text-muted)' }}>
-                ✓ {fileInputUrl.split('/').pop()}
+                ✓ {fileInputName}
               </span>
             )}
           </div>

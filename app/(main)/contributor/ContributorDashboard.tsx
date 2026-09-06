@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { PenTool, Plus, Save } from 'lucide-react'
 import { createChallenge, createSeasonChallenge, updateChallenge } from '@/app/actions/ctf'
@@ -34,18 +34,70 @@ interface Challenge {
 const categories = ['web', 'crypto', 'forensics', 'misc']
 const difficulties = ['easy', 'medium', 'hard']
 
+type UploadState = {
+  id: string | null
+  status: 'idle' | 'validating' | 'pending' | 'approved' | 'rejected' | 'error'
+  fileName: string
+  message: string
+}
+
+const emptyUpload: UploadState = { id: null, status: 'idle', fileName: '', message: '' }
+
 export default function ContributorDashboard({ seasons, challenges }: { seasons: Season[]; challenges: Challenge[] }) {
   const router = useRouter()
   const [workspaceId, setWorkspaceId] = useState('global')
   const [creating, setCreating] = useState(false)
   const [editing, setEditing] = useState<string | null>(null)
   const [message, setMessage] = useState('')
+  const [uploadState, setUploadState] = useState<UploadState>(emptyUpload)
   const workspaceChallenges = useMemo(
     () => challenges.filter((challenge) => (
       workspaceId === 'global' ? challenge.season_id === null : challenge.season_id === workspaceId
     )),
     [challenges, workspaceId]
   )
+
+  useEffect(() => {
+    if (uploadState.status !== 'pending' || !uploadState.id) return
+    const timer = window.setInterval(async () => {
+      const response = await fetch(`/api/ctf/uploads?id=${encodeURIComponent(uploadState.id!)}`)
+      const data = await response.json()
+      if (!response.ok) {
+        setUploadState((state) => ({ ...state, status: 'error', message: data.error || 'File scanning is temporarily unavailable' }))
+        window.clearInterval(timer)
+        return
+      }
+      if (data.status === 'approved') {
+        setUploadState((state) => ({ ...state, status: 'approved', message: 'Ready to attach' }))
+        window.clearInterval(timer)
+      } else if (data.status === 'rejected') {
+        setUploadState((state) => ({ ...state, status: 'rejected', message: 'File scan rejected' }))
+        window.clearInterval(timer)
+      }
+    }, 3000)
+    return () => window.clearInterval(timer)
+  }, [uploadState.id, uploadState.status])
+
+  const resetUpload = () => setUploadState(emptyUpload)
+
+  const uploadFile = async (file: File) => {
+    setUploadState({ id: null, status: 'validating', fileName: file.name, message: 'Validating file' })
+    const body = new FormData()
+    body.append('file', file)
+    if (workspaceId !== 'global') body.append('season_id', workspaceId)
+    const response = await fetch('/api/ctf/uploads', { method: 'POST', body })
+    const data = await response.json()
+    if (!response.ok) {
+      setUploadState({ id: null, status: 'error', fileName: file.name, message: data.error || 'File scanning is temporarily unavailable' })
+      return
+    }
+    setUploadState({
+      id: data.id,
+      status: data.status === 'approved' ? 'approved' : 'pending',
+      fileName: data.fileName,
+      message: data.status === 'approved' ? 'Ready to attach' : 'Scanning for malware',
+    })
+  }
 
   const values = (form: FormData) => ({
     title: String(form.get('title') || ''),
@@ -55,7 +107,7 @@ export default function ContributorDashboard({ seasons, challenges }: { seasons:
     points: Number(form.get('points')),
     flag: String(form.get('flag') || ''),
     hint: String(form.get('hint') || ''),
-    file_url: String(form.get('file_url') || ''),
+    upload_id: uploadState.status === 'approved' ? uploadState.id ?? undefined : undefined,
     link_url: String(form.get('link_url') || ''),
     author: String(form.get('author') || ''),
   })
@@ -70,6 +122,7 @@ export default function ContributorDashboard({ seasons, challenges }: { seasons:
     if (result.error) setMessage(result.error)
     else {
       setCreating(false)
+      resetUpload()
       setMessage(workspaceId === 'global' ? 'Global challenge published to /ctf.' : 'Season challenge published.')
       router.refresh()
     }
@@ -83,6 +136,7 @@ export default function ContributorDashboard({ seasons, challenges }: { seasons:
     if (result.error) setMessage(result.error)
     else {
       setEditing(null)
+      resetUpload()
       setMessage('Challenge updated and published.')
       router.refresh()
     }
@@ -96,7 +150,20 @@ export default function ContributorDashboard({ seasons, challenges }: { seasons:
     <input name="points" type="number" min="1" defaultValue={challenge?.points ?? 100} required className="input-field" placeholder="Points" />
     <input name="flag" type="password" required={!challenge} className="input-field" placeholder={challenge ? 'New flag (leave blank to keep)' : 'Flag'} />
     <textarea name="hint" defaultValue={challenge?.hint ?? ''} placeholder="Hint (optional)" className="input-field md:col-span-2" />
-    <input name="file_url" defaultValue={challenge?.file_url ?? ''} placeholder="File URL (optional)" className="input-field" />
+    <div className="md:col-span-2 rounded-lg p-3" style={{ backgroundColor: 'var(--input-bg)', border: '1px solid var(--border-color)' }}>
+      <div className="flex flex-wrap items-center gap-3">
+        <label className="cursor-pointer rounded-lg px-3 py-2 text-sm font-medium bg-emerald-600 text-white">
+          Attach file
+          <input type="file" accept=".zip,.png,.jpg,.jpeg,.gif,.webp,.pdf,.txt,.md,.json,.csv,.pcap,.pcapng" className="hidden" onChange={(event) => {
+            const file = event.target.files?.[0]
+            if (file) void uploadFile(file)
+          }} />
+        </label>
+        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>ZIP, images, PDF, text, JSON, CSV, PCAP. Max 25 MB.</span>
+      </div>
+      {challenge?.file_url && uploadState.status === 'idle' && <p className="mt-2 text-xs" style={{ color: 'var(--text-muted)' }}>Existing attachment will stay unless you upload a replacement.</p>}
+      {uploadState.fileName && <p className="mt-2 text-sm" style={{ color: uploadState.status === 'approved' ? '#22c55e' : uploadState.status === 'rejected' || uploadState.status === 'error' ? '#ef4444' : 'var(--text-secondary)' }}>{uploadState.fileName}: {uploadState.message}</p>}
+    </div>
     <input name="link_url" defaultValue={challenge?.link_url ?? ''} placeholder="Challenge URL (optional)" className="input-field" />
     <input name="author" defaultValue={challenge?.author ?? ''} placeholder="Author credit (optional)" className="input-field md:col-span-2" />
   </>
@@ -114,11 +181,11 @@ export default function ContributorDashboard({ seasons, challenges }: { seasons:
     {message && <div className="mb-5 rounded-xl p-3 text-sm" style={{ backgroundColor: 'var(--card-bg)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' }}>{message}</div>}
 
     <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-      <select value={workspaceId} onChange={(event) => { setWorkspaceId(event.target.value); setEditing(null); setCreating(false) }} className="input-field max-w-sm">
+      <select value={workspaceId} onChange={(event) => { setWorkspaceId(event.target.value); setEditing(null); setCreating(false); resetUpload() }} className="input-field max-w-sm">
         <option value="global">Global CTF</option>
         {seasons.map((season) => <option key={season.id} value={season.id}>{season.name}</option>)}
       </select>
-      <button onClick={() => setCreating((value) => !value)} className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium" style={{ background: 'var(--accent)', color: 'var(--accent-text)' }}>
+      <button onClick={() => { setCreating((value) => !value); setEditing(null); resetUpload() }} className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium" style={{ background: 'var(--accent)', color: 'var(--accent-text)' }}>
         <Plus className="w-4 h-4" />{creating ? 'Cancel' : 'Create challenge'}
       </button>
     </div>
@@ -127,7 +194,7 @@ export default function ContributorDashboard({ seasons, challenges }: { seasons:
 
     {creating && <form onSubmit={create} className="grid md:grid-cols-2 gap-3 rounded-2xl p-5 mb-6" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
       {fields()}
-      <button className="md:col-span-2 flex items-center justify-center gap-2 rounded-lg px-4 py-2 font-semibold bg-emerald-600 text-white"><Save className="w-4 h-4" />Publish challenge</button>
+      <button disabled={uploadState.status === 'validating' || uploadState.status === 'pending'} className="md:col-span-2 flex items-center justify-center gap-2 rounded-lg px-4 py-2 font-semibold bg-emerald-600 text-white disabled:opacity-50"><Save className="w-4 h-4" />Publish challenge</button>
     </form>}
 
     <div className="space-y-3">
@@ -139,11 +206,11 @@ export default function ContributorDashboard({ seasons, challenges }: { seasons:
               <h2 className="font-semibold" style={{ color: 'var(--text-primary)' }}>{challenge.title}</h2>
               <p className="text-xs mt-1 capitalize" style={{ color: 'var(--text-muted)' }}>{challenge.category} · {challenge.difficulty} · {challenge.points} points · {challenge.status}</p>
             </div>
-            <button onClick={() => setEditing(editing === challenge.id ? null : challenge.id)} className="text-sm" style={{ color: 'var(--accent)' }}>{editing === challenge.id ? 'Cancel' : 'Edit'}</button>
+            <button onClick={() => { setEditing(editing === challenge.id ? null : challenge.id); setCreating(false); resetUpload() }} className="text-sm" style={{ color: 'var(--accent)' }}>{editing === challenge.id ? 'Cancel' : 'Edit'}</button>
           </div>
           {editing === challenge.id && <form onSubmit={(event) => update(challenge.id, event)} className="grid md:grid-cols-2 gap-3 mt-5 pt-5 border-t" style={{ borderColor: 'var(--border-color)' }}>
             {fields(challenge)}
-            <button className="md:col-span-2 rounded-lg px-4 py-2 font-semibold bg-emerald-600 text-white">Save and publish</button>
+            <button disabled={uploadState.status === 'validating' || uploadState.status === 'pending'} className="md:col-span-2 rounded-lg px-4 py-2 font-semibold bg-emerald-600 text-white disabled:opacity-50">Save and publish</button>
           </form>}
         </div>)}
     </div>

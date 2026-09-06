@@ -67,4 +67,20 @@ describe('season challenge visibility', () => {
     expect(source).toContain("`/api/ctf/files/${")
     expect(source).not.toContain('file_url: data.file_url?.trim() || null')
   })
+
+  it('contributor dashboard uses secure upload ids instead of free-form file urls', () => {
+    const source = readFileSync(join(process.cwd(), 'app', '(main)', 'contributor', 'ContributorDashboard.tsx'), 'utf8')
+
+    expect(source).toContain('/api/ctf/uploads')
+    expect(source).toContain('upload_id')
+    expect(source).toContain('accept=".zip,.png,.jpg,.jpeg,.gif,.webp,.pdf,.txt,.md,.json,.csv,.pcap,.pcapng"')
+    expect(source).not.toContain('name="file_url"')
+  })
+
+  it('does not expose direct Cloudinary challenge uploads in admin ctf client', () => {
+    const source = readFileSync(join(process.cwd(), 'app', '(main)', 'admin', 'ctf', 'AdminCTFClient.tsx'), 'utf8')
+
+    expect(source).not.toContain('api.cloudinary.com')
+    expect(source).not.toContain('upload_preset')
+  })
 })
