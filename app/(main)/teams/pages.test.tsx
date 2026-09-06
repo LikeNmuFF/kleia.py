@@ -34,11 +34,21 @@ describe("practice team pages", () => {
     expect(page).toContain("member_count");
     expect(page).toContain("lg:grid-cols-[minmax(0,1fr)_360px]");
     expect(page).toContain("min-w-0");
-    expect(calendar).toContain("calendar.map");
+    expect(calendar).toContain("weeks.flatMap");
     expect(calendar).toContain("aria-label");
     expect(calendar).toContain("overflow-x-auto");
     expect(calendar).toContain("w-max");
-    expect(calendar).toContain("repeat(53,0.75rem)");
+    expect(calendar).toContain("buildCalendarWeeks");
+    expect(calendar).toContain("monthLabels");
+    expect(calendar).toContain("gridRowsClass");
+    expect(calendar).toContain("colorScheme = \"emerald\"");
+    expect(calendar).toContain("density = \"comfortable\"");
+    expect(calendar).toContain("showWeekdayLabels = true");
+    expect(calendar).toContain("showMonthLabels = true");
+    expect(calendar).toContain("showLegend = true");
+    expect(calendar).toContain("activeDays");
+    expect(calendar).toContain("bestDay");
+    expect(calendar).toContain("Total activity");
   });
 
   it("includes create controls for profile fields and avatar", () => {
