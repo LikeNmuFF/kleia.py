@@ -2,12 +2,18 @@ import { createHash, randomUUID, timingSafeEqual } from 'node:crypto'
 import { Readable } from 'node:stream'
 import { v2 as cloudinary } from 'cloudinary'
 import type { UploadApiResponse } from 'cloudinary'
-import type { ValidatedUpload } from './types'
 
 export type CloudinaryUploadResult = {
   assetId: string
   publicId: string
   moderationStatus: 'pending' | 'approved'
+}
+
+export type ChallengeUploadInput = {
+  buffer: Buffer
+  originalName: string
+  storedName: string
+  sha256: string
 }
 
 export type PublicImageUploadResult = {
@@ -48,7 +54,7 @@ export function getModerationStatus(input: unknown): ModerationStatus | null {
   return null
 }
 
-export async function uploadValidatedChallengeFile(upload: ValidatedUpload, ownerId: string): Promise<CloudinaryUploadResult> {
+export async function uploadChallengeFile(upload: ChallengeUploadInput, ownerId: string): Promise<CloudinaryUploadResult> {
   configureCloudinary()
   const publicId = `kleia-ctf-files/${ownerId}/${randomUUID()}`
   const notificationUrl = process.env.NEXT_PUBLIC_SITE_URL
@@ -67,6 +73,7 @@ export async function uploadValidatedChallengeFile(upload: ValidatedUpload, owne
           owner_id: ownerId,
           original_name: upload.originalName,
           sha256: upload.sha256,
+          stored_name: upload.storedName,
         },
       },
       (error, response) => {

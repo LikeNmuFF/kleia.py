@@ -3,8 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 import { getServiceClient } from '@/lib/supabase/service'
 import { checkNamedRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { logEvent } from '@/lib/logEvent'
-import { destroyChallengeFile, uploadValidatedChallengeFile } from '@/lib/ctf/uploads/cloudinary'
-import { validateChallengeUpload } from '@/lib/ctf/uploads/validate'
+import { createHash } from 'node:crypto'
+import { destroyChallengeFile, uploadChallengeFile } from '@/lib/ctf/uploads/cloudinary'
+import { normalizeUploadFileName } from '@/lib/ctf/uploads/validate'
 import {
   canUploadGlobalChallengeFile,
   canUploadSeasonChallengeFile,
@@ -73,19 +74,27 @@ export async function POST(request: NextRequest) {
     : canUploadGlobalChallengeFile(role)
   if (!allowed) return jsonError('Unauthorized', 403)
 
-  let validated
+  const buffer = Buffer.from(await file.arrayBuffer())
+  let normalized
   try {
-    const buffer = Buffer.from(await file.arrayBuffer())
-    validated = await validateChallengeUpload(file.name, buffer)
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unsupported file type'
-    await logEvent({ endpoint: 'ctf.upload', status: 'error', durationMs: Date.now() - start, errorMessage: message, userId: user.id })
-    return jsonError(message, message === 'File exceeds 25 MB' ? 413 : 400)
+    normalized = normalizeUploadFileName(file.name)
+  } catch {
+    await logEvent({ endpoint: 'ctf.upload', status: 'error', durationMs: Date.now() - start, errorMessage: 'Unsupported file type', userId: user.id })
+    return jsonError('Unsupported file type', 400)
   }
+  const sha256 = createHash('sha256').update(buffer).digest('hex')
 
   let uploaded
   try {
-    uploaded = await uploadValidatedChallengeFile(validated, user.id)
+    uploaded = await uploadChallengeFile(
+      {
+        buffer,
+        originalName: normalized.originalName,
+        storedName: normalized.storedName,
+        sha256,
+      },
+      user.id
+    )
   } catch (error) {
     const message = error instanceof Error ? error.message : 'File scanning is temporarily unavailable'
     await logEvent({ endpoint: 'ctf.upload', status: 'error', durationMs: Date.now() - start, errorMessage: message, userId: user.id })
@@ -101,11 +110,11 @@ export async function POST(request: NextRequest) {
       scope_season_id: seasonId,
       cloudinary_asset_id: uploaded.assetId,
       cloudinary_public_id: uploaded.publicId,
-      original_name: validated.originalName,
-      stored_name: validated.storedName,
-      extension: validated.extension,
-      size_bytes: validated.sizeBytes,
-      sha256: validated.sha256,
+      original_name: normalized.originalName,
+      stored_name: normalized.storedName,
+      extension: normalized.extension,
+      size_bytes: buffer.byteLength,
+      sha256,
       scan_status: uploaded.moderationStatus,
       scan_provider: 'perception_point',
       scan_result: { moderation_status: uploaded.moderationStatus },

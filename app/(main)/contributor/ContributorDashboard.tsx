@@ -81,7 +81,7 @@ export default function ContributorDashboard({ seasons, challenges }: { seasons:
   const resetUpload = () => setUploadState(emptyUpload)
 
   const uploadFile = async (file: File) => {
-    setUploadState({ id: null, status: 'validating', fileName: file.name, message: 'Validating file' })
+    setUploadState({ id: null, status: 'validating', fileName: file.name, message: 'Uploading file' })
     const body = new FormData()
     body.append('file', file)
     if (workspaceId !== 'global') body.append('season_id', workspaceId)
