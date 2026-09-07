@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import WordCycle from '@/components/WordCycle'
 import FeedbackHighlights from '@/components/landing/FeedbackHighlights'
+import CampusPartners from '@/components/landing/CampusPartners'
 import MouseGlow from '@/components/landing/MouseGlow'
 import StatsBar from '@/components/landing/StatsBar'
 import StreaksCarousel from '@/components/landing/StreaksCarousel'
@@ -179,6 +180,8 @@ export default function Home() {
           onlineCount={data?.onlineCount ?? 0}
           loading={loading}
         />
+
+        <CampusPartners />
 
         {/* Features Grid */}
         <section className="max-w-6xl mx-auto px-6 py-24">
