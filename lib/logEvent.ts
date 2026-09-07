@@ -1,5 +1,5 @@
 import { headers } from 'next/headers'
-import { createClient } from '@/lib/supabase/server'
+import { getServiceClient } from '@/lib/supabase/service'
 
 export function extractClientIp(headersList: Headers): string | null {
   const vercelIp = headersList.get('x-vercel-forwarded-for')
@@ -33,8 +33,8 @@ export async function logEvent({
   try {
     const headersList = await headers()
     const clientIp = extractClientIp(headersList)
-    const supabase = await createClient()
-    await supabase.from('events_log').insert({
+    const supabase = getServiceClient() as any
+    const { error } = await supabase.from('events_log').insert({
       endpoint,
       status,
       duration_ms: durationMs,
@@ -42,7 +42,8 @@ export async function logEvent({
       user_id: userId ?? null,
       client_ip: clientIp,
     })
-  } catch {
-    // Logging must never break the request — fire and forget
+    if (error) console.error('Event log persistence failed', { endpoint, errorMessage, error })
+  } catch (error) {
+    console.error('Event log persistence failed', { endpoint, errorMessage, error })
   }
 }

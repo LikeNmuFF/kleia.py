@@ -29,11 +29,11 @@ describe('getSafeErrorMessage', () => {
     expect(message).toBe('Failed to create group chat. Please try again.')
   })
 
-  it('shows detailed errors outside production for testing', async () => {
+  it('hides detailed errors even with debug flags enabled', async () => {
     const { getSafeErrorMessage } = await loadHandler({
       NODE_ENV: 'test',
-      DEBUG: undefined,
-      NEXT_PUBLIC_DEBUG: undefined,
+      DEBUG: 'true',
+      NEXT_PUBLIC_DEBUG: 'true',
     })
 
     const message = getSafeErrorMessage(
@@ -41,6 +41,6 @@ describe('getSafeErrorMessage', () => {
       'Failed to create group chat. Please try again.'
     )
 
-    expect(message).toBe('relation "conversation_members" does not exist')
+    expect(message).toBe('Failed to create group chat. Please try again.')
   })
 })

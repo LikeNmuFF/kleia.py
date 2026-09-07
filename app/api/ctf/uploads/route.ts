@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getServiceClient } from '@/lib/supabase/service'
 import { checkNamedRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { logEvent } from '@/lib/logEvent'
+import { getSafeErrorMessage } from '@/lib/errorHandler'
 import { createHash } from 'node:crypto'
 import {
   destroyChallengeFile,
@@ -10,6 +11,7 @@ import {
   uploadChallengeFile,
 } from '@/lib/ctf/uploads/cloudinary'
 import { normalizeUploadFileName } from '@/lib/ctf/uploads/filename'
+import { isAllowedUploadOrigin } from '@/lib/ctf/uploads/origin'
 import {
   canUploadGlobalChallengeFile,
   canUploadSeasonChallengeFile,
@@ -20,26 +22,39 @@ import { MAX_UPLOAD_BYTES } from '@/lib/ctf/uploads/types'
 export const runtime = 'nodejs'
 
 function jsonError(error: string, status: number) {
-  return NextResponse.json({ error }, { status })
+  return NextResponse.json({ error: getSafeErrorMessage(null, error) }, { status })
 }
 
 function isSameOrigin(request: NextRequest) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
   const origin = request.headers.get('origin')
-  return Boolean(siteUrl && origin && origin === siteUrl.replace(/\/$/, ''))
+  return isAllowedUploadOrigin(origin, siteUrl)
 }
 
 async function getCaller() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { supabase, user: null, role: null as CallerRole }
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const { data: profile, error } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (error) throw new Error(`Upload profile lookup failed: ${error.message}`)
   return { supabase, user, role: (profile?.role ?? null) as CallerRole }
 }
 
 export async function POST(request: NextRequest) {
+  try {
+    return await upload(request)
+  } catch (error) {
+    await logEvent({ endpoint: 'ctf.upload', status: 'error', durationMs: 0, errorMessage: error instanceof Error ? error.message : String(error) })
+    return jsonError('Unable to attach the file. Please try again later.', 500)
+  }
+}
+
+async function upload(request: NextRequest) {
   const start = Date.now()
-  if (!isSameOrigin(request)) return jsonError('Unauthorized', 403)
+  if (!isSameOrigin(request)) {
+    await logEvent({ endpoint: 'ctf.upload', status: 'error', durationMs: Date.now() - start, errorMessage: `Origin rejected: ${request.headers.get('origin')}; configured site: ${process.env.NEXT_PUBLIC_SITE_URL ?? 'unset'}` })
+    return jsonError('Unable to attach the file. Please refresh the page and try again.', 403)
+  }
 
   const length = Number(request.headers.get('content-length') || 0)
   if (Number.isFinite(length) && length > MAX_UPLOAD_BYTES) return jsonError('File exceeds 25 MB', 413)
@@ -64,19 +79,23 @@ export async function POST(request: NextRequest) {
   const seasonId = typeof seasonIdValue === 'string' && seasonIdValue.trim() ? seasonIdValue.trim() : null
   let invited = false
   if (seasonId && role === 'contributor') {
-    const { data: invitation } = await supabase
+    const { data: invitation, error } = await supabase
       .from('ctf_season_contributors')
       .select('user_id')
       .eq('season_id', seasonId)
       .eq('user_id', user.id)
       .maybeSingle()
+    if (error) throw new Error(`Upload invitation lookup failed: ${error.message}`)
     invited = Boolean(invitation)
   }
 
   const allowed = seasonId
     ? canUploadSeasonChallengeFile({ role, invited })
     : canUploadGlobalChallengeFile(role)
-  if (!allowed) return jsonError('Unauthorized', 403)
+  if (!allowed) {
+    await logEvent({ endpoint: 'ctf.upload', status: 'error', durationMs: Date.now() - start, userId: user.id, errorMessage: `Upload permission denied: role=${role}, season=${seasonId}, invited=${invited}` })
+    return jsonError('You do not have permission to attach files in this workspace.', 403)
+  }
 
   const buffer = Buffer.from(await file.arrayBuffer())
   let normalized
@@ -128,8 +147,8 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (insertError || !row) {
-    await destroyChallengeFile(uploaded.publicId)
     await logEvent({ endpoint: 'ctf.upload', status: 'error', durationMs: Date.now() - start, errorMessage: insertError?.message ?? 'Insert failed', userId: user.id })
+    await destroyChallengeFile(uploaded.publicId)
     return jsonError('File scanning is temporarily unavailable', 503)
   }
 
@@ -138,6 +157,15 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+  try {
+    return await uploadStatus(request)
+  } catch (error) {
+    await logEvent({ endpoint: 'ctf.upload.status', status: 'error', durationMs: 0, errorMessage: error instanceof Error ? error.message : String(error) })
+    return jsonError('Unable to check the file. Please try again later.', 500)
+  }
+}
+
+async function uploadStatus(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')
   if (!id) return jsonError('Upload required', 400)
@@ -145,12 +173,13 @@ export async function GET(request: NextRequest) {
   const { supabase, user } = await getCaller()
   if (!user) return jsonError('Not logged in', 401)
 
-  const { data: upload } = await supabase
+  const { data: upload, error: lookupError } = await supabase
     .from('ctf_challenge_uploads')
     .select('id, scan_status, stored_name, cloudinary_public_id')
     .eq('id', id)
     .maybeSingle()
 
+  if (lookupError) throw new Error(`Upload status lookup failed: ${lookupError.message}`)
   if (!upload) return jsonError('Upload not found', 404)
 
   let status = upload.scan_status
@@ -165,6 +194,7 @@ export async function GET(request: NextRequest) {
           .eq('id', upload.id)
           .eq('scan_status', 'pending')
 
+        if (error) throw new Error(`Upload status update failed: ${error.message}`)
         if (!error) {
           status = refreshedStatus
           if (refreshedStatus === 'rejected') await destroyChallengeFile(upload.cloudinary_public_id)

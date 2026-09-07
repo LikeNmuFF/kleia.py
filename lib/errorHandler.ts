@@ -1,19 +1,11 @@
 /**
  * Production-safe error handler.
- * In development (or when DEBUG=true), returns detailed error.
- * In production, logs detailed error server-side but returns generic message to client.
+ * Returns only the public fallback. Detailed errors belong in server-side logs.
  */
 
-const isDebug = process.env.NODE_ENV !== 'production' || process.env.DEBUG === 'true' || process.env.NEXT_PUBLIC_DEBUG === 'true'
 const CONTROL_CHARS = /[\r\n\t\b\f\v\0]/g
 
-export function getSafeErrorMessage(error: unknown, fallback = 'Something went wrong. Please try again.'): string {
-  if (isDebug) {
-    if (error instanceof Error) return error.message
-    if (typeof error === 'string') return error
-    if (error && typeof error === 'object' && 'message' in error) return String((error as any).message)
-    return fallback
-  }
+export function getSafeErrorMessage(_error: unknown, fallback = 'Something went wrong. Please try again.'): string {
   return fallback
 }
 
