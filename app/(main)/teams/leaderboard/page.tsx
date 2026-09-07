@@ -38,6 +38,7 @@ export default async function PracticeTeamLeaderboardPage() {
             rank: index + 1,
             id: team.id,
             name: team.name,
+            slug: team.slug,
             avatar_url: team.avatar_url,
             xp: team.xp,
             level: team.level,
@@ -48,4 +49,3 @@ export default async function PracticeTeamLeaderboardPage() {
     </main>
   );
 }
-

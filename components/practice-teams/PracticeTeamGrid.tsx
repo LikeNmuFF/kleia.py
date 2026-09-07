@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import TeamLevelBadge from "../gamification/TeamLevelBadge";
+import TeamRepresentativeBadge from "../gamification/TeamRepresentativeBadge";
 import type { PracticeTeamSummary } from "@/lib/practice-teams/queries";
 
 export default function PracticeTeamGrid({ teams }: { teams: PracticeTeamSummary[] }) {
@@ -27,8 +29,12 @@ export default function PracticeTeamGrid({ teams }: { teams: PracticeTeamSummary
                 {team.name.slice(0, 1).toUpperCase()}
               </div>
             )}
-            <div>
-              <h2 className="font-semibold text-white">{team.name}</h2>
+            <div className="min-w-0">
+              <h2 className="flex min-w-0 items-center gap-2 font-semibold text-white">
+                <span className="truncate">{team.name}</span>
+                <TeamLevelBadge level={team.level} />
+                <TeamRepresentativeBadge slug={team.slug} />
+              </h2>
               <p className="text-sm text-zinc-500">@{team.slug}</p>
             </div>
           </div>

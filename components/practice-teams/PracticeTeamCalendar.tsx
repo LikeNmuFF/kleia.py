@@ -63,27 +63,30 @@ export default function PracticeTeamCalendar({
   const weekStyle = { "--week-count": weeks.length } as CSSProperties;
 
   return (
-    <section className="min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.24)]">
+    <section className="min-w-0 rounded-lg border border-white/10 bg-zinc-950 p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-5">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight text-white">{title}</h2>
+          <h2 className="text-lg font-semibold text-white">{title}</h2>
           <p className="mt-1 max-w-xl text-sm leading-6 text-zinc-400">
             {subtitle ?? `${current} current streak · ${longest} longest streak`}
           </p>
         </div>
-        <div className="grid grid-cols-3 gap-2 text-right">
+        <div className="grid w-full grid-cols-2 gap-x-4 gap-y-3 border-y border-white/10 py-3 sm:grid-cols-4">
           <CalendarStat label="Current" value={current} />
+          <CalendarStat label="Longest streak" value={longest} />
           <CalendarStat label="Active days" value={activeDays} />
           <CalendarStat label="Total activity" value={totalActivity} />
         </div>
       </div>
 
-      <div className="mt-5 rounded-2xl border border-white/10 bg-black/40 p-4">
+      <div className="mt-5">
+        <div className="overflow-x-auto pb-2" tabIndex={0} role="region" aria-label="Team activity calendar">
+        <div className="w-max">
         {showMonthLabels && (
-          <div className={`ml-9 grid w-max ${GRID_COLUMNS[density]} gap-1 text-[10px] text-zinc-500`} style={weekStyle}>
-            {monthLabels.map((label) => (
-              <span key={`${label.index}-${label.month}`} className="truncate" style={{ gridColumnStart: label.index + 1 }}>
-                {label.month}
+          <div className={`${showWeekdayLabels ? "ml-9" : ""} grid w-max ${GRID_COLUMNS[density]} gap-1 text-xs text-zinc-400`} style={weekStyle}>
+            {monthLabels.map((label, index) => (
+              <span key={`${label.index}-${label.month}`} className="overflow-hidden whitespace-nowrap" style={{ gridColumn: `${label.index + 1} / ${monthLabels[index + 1] ? monthLabels[index + 1].index + 1 : weeks.length + 1}` }}>
+                {(monthLabels[index + 1]?.index ?? weeks.length) - label.index >= 3 ? label.month : ""}
               </span>
             ))}
           </div>
@@ -91,16 +94,16 @@ export default function PracticeTeamCalendar({
 
         <div className="mt-2 flex min-w-0 gap-2">
           {showWeekdayLabels && (
-            <div className="grid grid-rows-7 gap-1 pt-0.5 text-[10px] leading-3 text-zinc-500">
+            <div className="grid grid-rows-7 gap-1 text-[10px] leading-3 text-zinc-500">
               {WEEKDAY_LABELS.map((label, index) => (
-                <span key={`${label}-${index}`} className="h-3 w-7">
+                <span key={`${label}-${index}`} className={`${density === "compact" ? "h-2.5" : "h-3"} w-7`}>
                   {label}
                 </span>
               ))}
             </div>
           )}
 
-          <div className="min-w-0 flex-1 overflow-x-auto pb-2">
+          <div className="min-w-0">
             <div className={`grid w-max grid-flow-col ${gridRowsClass} ${GRID_COLUMNS[density]} gap-1`} style={weekStyle}>
               {weeks.flatMap((week, weekIndex) =>
                 week.map((day, dayIndex) =>
@@ -119,6 +122,8 @@ export default function PracticeTeamCalendar({
             </div>
           </div>
         </div>
+        </div>
+        </div>
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-3 text-xs text-zinc-500">
           <p>
@@ -130,8 +135,8 @@ export default function PracticeTeamCalendar({
           {showLegend && (
             <div className="flex items-center gap-1">
               <span>Less</span>
-              {[0, 1, 2, 3, 4].map((level) => (
-                <span key={level} className={`${cellSize} rounded-[3px] ${intensityClass(level, colors)}`} />
+              {colors.map((color, level) => (
+                <span key={level} aria-hidden="true" className={`${cellSize} rounded-[3px] ${color}`} />
               ))}
               <span>More</span>
             </div>
@@ -144,9 +149,9 @@ export default function PracticeTeamCalendar({
 
 function CalendarStat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
+    <div className="min-w-0">
       <div className="text-lg font-semibold tabular-nums text-white">{value}</div>
-      <div className="text-[10px] uppercase tracking-wide text-zinc-500">{label}</div>
+      <div className="text-xs text-zinc-400">{label}</div>
     </div>
   );
 }

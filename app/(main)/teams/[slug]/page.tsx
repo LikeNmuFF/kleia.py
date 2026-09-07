@@ -3,8 +3,8 @@ import { notFound, redirect } from "next/navigation";
 
 import PracticeTeamCalendar from "@/components/practice-teams/PracticeTeamCalendar";
 import PracticeTeamForm from "@/components/practice-teams/PracticeTeamForm";
-import TeamXPBadge from "@/components/gamification/TeamXPBadge";
-import BadgeShowcase from "@/components/gamification/BadgeShowcase";
+import TeamLevelBadge from "@/components/gamification/TeamLevelBadge";
+import TeamRepresentativeBadge from "@/components/gamification/TeamRepresentativeBadge";
 import { getPracticeTeamBySlug, getPracticeTeamRecentSolves } from "@/lib/practice-teams/queries";
 import { createClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/admin";
@@ -49,26 +49,28 @@ export default async function PracticeTeamPage({ params }: { params: Promise<{ s
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
       <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-start gap-4">
+        <div className="flex min-w-0 max-w-full items-start gap-4">
           {team.avatar_url ? (
-            <img src={team.avatar_url} alt="" className="h-16 w-16 rounded-lg object-cover" />
+            <img src={team.avatar_url} alt="" className="h-16 w-16 shrink-0 rounded-lg object-cover" />
           ) : (
-            <div className="grid h-16 w-16 place-items-center rounded-lg bg-zinc-800 text-2xl font-semibold text-zinc-300">
+            <div className="grid h-16 w-16 shrink-0 place-items-center rounded-lg bg-zinc-800 text-2xl font-semibold text-zinc-300">
               {team.name.slice(0, 1).toUpperCase()}
             </div>
           )}
-          <div>
-            <h1 className="text-3xl font-bold text-white">{team.name}</h1>
-            <p className="mt-1 text-zinc-500">@{team.slug}</p>
+          <div className="min-w-0">
+            <div className="flex min-w-0 items-center gap-2">
+              <h1 className="truncate text-3xl font-bold text-white" title={team.name}>{team.name}</h1>
+              <TeamLevelBadge level={team.level} />
+              <TeamRepresentativeBadge slug={team.slug} />
+            </div>
+            <p className="mt-1 break-all text-zinc-500">@{team.slug}</p>
             {team.description ? <p className="mt-3 max-w-2xl text-zinc-300">{team.description}</p> : null}
             <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
               <Stat label="members" value={team.member_count} />
               <Stat label="solves" value={team.total_solves} />
               <Stat label="current streak" value={team.streaks.current} />
             </div>
-            <div className="mt-4">
-              <TeamXPBadge xp={team.xp} level={team.level} />
-            </div>
+            <p className="mt-4 text-sm font-medium text-emerald-300">{team.xp.toLocaleString()} XP</p>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -119,9 +121,6 @@ export default async function PracticeTeamPage({ params }: { params: Promise<{ s
             )}
           </div>
         </section>
-      </div>
-      <div className="mt-8">
-        <BadgeShowcase badges={[]} />
       </div>
     </main>
   );

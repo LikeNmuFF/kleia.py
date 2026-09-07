@@ -1,7 +1,11 @@
+import TeamLevelBadge from "./TeamLevelBadge";
+import TeamRepresentativeBadge from "./TeamRepresentativeBadge";
+
 type LeaderboardEntry = {
   rank: number;
   id: string;
   name: string;
+  slug?: string;
   avatar_url: string | null;
   xp: number;
   level: number;
@@ -10,13 +14,12 @@ type LeaderboardEntry = {
 
 export default function LeaderboardTable({ entries }: { entries: LeaderboardEntry[] }) {
   return (
-    <div className="overflow-hidden rounded-lg border border-white/10 bg-zinc-950">
+    <div className="rounded-lg border border-white/10 bg-zinc-950">
       <table className="w-full">
         <thead>
           <tr className="border-b border-white/10 text-left text-xs uppercase tracking-wide text-zinc-500">
             <th className="px-4 py-3">Rank</th>
             <th className="px-4 py-3">Name</th>
-            <th className="px-4 py-3 text-right">Level</th>
             <th className="px-4 py-3 text-right">XP</th>
           </tr>
         </thead>
@@ -33,16 +36,19 @@ export default function LeaderboardTable({ entries }: { entries: LeaderboardEntr
                 )}
               </td>
               <td className="px-4 py-3">
-                <div className="flex items-center gap-2">
+                <div className="flex min-w-0 items-center gap-2">
                   {entry.avatar_url ? (
                     <img src={entry.avatar_url} alt="" className="h-6 w-6 rounded-full" />
                   ) : (
                     <div className="h-6 w-6 rounded-full bg-zinc-800" />
                   )}
-                  <span className="text-sm text-white">{entry.name}</span>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="truncate text-sm text-white">{entry.name}</span>
+                    <TeamLevelBadge level={entry.level} />
+                    <TeamRepresentativeBadge slug={entry.slug} />
+                  </div>
                 </div>
               </td>
-              <td className="px-4 py-3 text-right text-sm text-white">{entry.level}</td>
               <td className="px-4 py-3 text-right text-sm font-medium text-emerald-400">
                 {entry.xp.toLocaleString()}
               </td>
