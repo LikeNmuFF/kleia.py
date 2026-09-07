@@ -24,7 +24,7 @@ import { creditSeasonSolve } from './competition'
 import { areLinkedChallengeSubmissionsOpen, getEffectiveSeasonStatus } from './competition-status'
 import { creditPracticeTeamSolve } from './practice-teams'
 
-const VALID_CATEGORIES = ['web', 'crypto', 'forensics', 'misc']
+const VALID_CATEGORIES = ['web', 'crypto', 'forensics', 'osint', 'misc']
 const VALID_DIFFICULTIES = ['easy', 'medium', 'hard']
 
 const FLAG_WINDOW_MS = 30_000

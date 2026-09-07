@@ -14,6 +14,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   web: '#3b82f6',
   crypto: '#a855f7',
   forensics: '#f97316',
+  osint: '#06b6d4',
   misc: '#22c55e',
 }
 

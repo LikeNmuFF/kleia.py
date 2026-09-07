@@ -342,6 +342,7 @@ export default function SeasonAdminClient({
               <option value="web">Web</option>
               <option value="crypto">Crypto</option>
               <option value="forensics">Forensics</option>
+              <option value="osint">OSINT</option>
               <option value="misc">Misc</option>
             </select>
             <select name="difficulty" required className="w-full px-3 py-2 rounded-lg text-sm border bg-transparent" style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>

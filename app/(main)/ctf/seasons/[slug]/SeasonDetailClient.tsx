@@ -51,6 +51,7 @@ const CATEGORIES: Record<string, string> = {
   web: '🌐',
   crypto: '🔐',
   forensics: '🔍',
+  osint: '🌍',
   misc: '📌',
 }
 

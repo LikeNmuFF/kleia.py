@@ -18,6 +18,7 @@ const CATEGORY_ICONS: Record<string, string> = {
   web: '🌐',
   crypto: '🔐',
   forensics: '🔍',
+  osint: '🌍',
   misc: '📌',
 }
 

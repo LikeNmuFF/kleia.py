@@ -46,6 +46,7 @@ export async function checkAndUnlockNodes(userId: string) {
     web: 0,
     crypto: 0,
     forensics: 0,
+    osint: 0,
     misc: 0,
   }
 

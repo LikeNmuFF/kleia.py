@@ -64,7 +64,7 @@ export function quickBrokenChecks(pending: PendingChallenge): string[] {
   if (!pending.description.trim()) issues.push('Missing description')
   if (!isValidFlagFormat(pending.flag)) issues.push('Flag missing or too short')
   if (!Number.isInteger(pending.points) || pending.points < 10 || pending.points > 500) issues.push('Points should be 10-500')
-  if (!['web', 'crypto', 'forensics', 'misc'].includes(pending.category)) issues.push('Invalid category')
+  if (!['web', 'crypto', 'forensics', 'osint', 'misc'].includes(pending.category)) issues.push('Invalid category')
   if (!['easy', 'medium', 'hard'].includes(pending.difficulty)) issues.push('Invalid difficulty')
   if (pending.file_url && !pending.file_url.startsWith('https://')) issues.push('File URL must be https')
   if (pending.link_url && !pending.link_url.startsWith('https://')) issues.push('Link URL must be https')

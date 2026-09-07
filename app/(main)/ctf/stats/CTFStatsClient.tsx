@@ -23,6 +23,7 @@ const CATEGORIES = [
   { key: 'web', icon: '🌐', label: 'Web' },
   { key: 'crypto', icon: '🔐', label: 'Crypto' },
   { key: 'forensics', icon: '🔍', label: 'Forensics' },
+  { key: 'osint', icon: '🌍', label: 'OSINT' },
   { key: 'misc', icon: '📌', label: 'Misc' },
 ] as const
 

@@ -27,6 +27,7 @@ const CATEGORIES = [
   { key: 'web', icon: '🌐', label: 'Web', color: '#3b82f6' },
   { key: 'crypto', icon: '🔐', label: 'Crypto', color: '#8b5cf6' },
   { key: 'forensics', icon: '🔍', label: 'Forensics', color: '#10b981' },
+  { key: 'osint', icon: '🌍', label: 'OSINT', color: '#06b6d4' },
   { key: 'misc', icon: '📌', label: 'Misc', color: '#f59e0b' },
 ] as const
 
@@ -48,6 +49,7 @@ export default function SkillTreeClient({
       web: [],
       crypto: [],
       forensics: [],
+      osint: [],
       misc: [],
     }
 

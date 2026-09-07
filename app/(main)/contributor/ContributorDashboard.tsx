@@ -31,7 +31,7 @@ interface Challenge {
   created_at: string
 }
 
-const categories = ['web', 'crypto', 'forensics', 'misc']
+const categories = ['web', 'crypto', 'forensics', 'osint', 'misc']
 const difficulties = ['easy', 'medium', 'hard']
 
 type UploadState = {
@@ -128,7 +128,7 @@ export default function ContributorDashboard({ seasons, challenges }: { seasons:
   const fields = (challenge?: Challenge) => <>
     <input name="title" defaultValue={challenge?.title} required placeholder="Challenge title" className="input-field md:col-span-2" />
     <textarea name="description" defaultValue={challenge?.description} required placeholder="Challenge description" rows={5} className="input-field md:col-span-2" />
-    <select name="category" defaultValue={challenge?.category ?? 'web'} className="input-field">{categories.map((value) => <option key={value}>{value}</option>)}</select>
+    <select name="category" defaultValue={challenge?.category ?? 'web'} className="input-field">{categories.map((value) => <option key={value} value={value}>{value === 'osint' ? 'OSINT' : value}</option>)}</select>
     <select name="difficulty" defaultValue={challenge?.difficulty ?? 'easy'} className="input-field">{difficulties.map((value) => <option key={value}>{value}</option>)}</select>
     <input name="points" type="number" min="1" defaultValue={challenge?.points ?? 100} required className="input-field" placeholder="Points" />
     <input name="flag" type="password" required={!challenge} className="input-field" placeholder={challenge ? 'New flag (leave blank to keep)' : 'Flag'} />

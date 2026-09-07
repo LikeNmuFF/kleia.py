@@ -38,7 +38,7 @@ interface LessonLink {
   title: string
 }
 
-const CATEGORIES = ['web', 'crypto', 'forensics', 'misc']
+const CATEGORIES = ['web', 'crypto', 'forensics', 'osint', 'misc']
 const DIFFICULTIES = ['easy', 'medium', 'hard']
 const TABS = ['all', 'pending', 'approved', 'rejected', 'draft']
 
@@ -261,7 +261,7 @@ export default function AdminCTFClient({
             <textarea name="description" placeholder="Description" required rows={4} className="input-field col-span-2 resize-none" />
             <select name="category" required className="input-field">
               <option value="">Category</option>
-              {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              {CATEGORIES.map(c => <option key={c} value={c}>{c === 'osint' ? 'OSINT' : c}</option>)}
             </select>
             <select name="difficulty" required className="input-field">
               <option value="">Difficulty</option>
@@ -303,7 +303,7 @@ export default function AdminCTFClient({
                   <input name="title" defaultValue={ch.title} required className="input-field col-span-2" />
                   <textarea name="description" defaultValue={ch.description} required rows={3} className="input-field col-span-2 resize-none" />
                   <select name="category" defaultValue={ch.category} required className="input-field">
-                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    {CATEGORIES.map(c => <option key={c} value={c}>{c === 'osint' ? 'OSINT' : c}</option>)}
                   </select>
                   <select name="difficulty" defaultValue={ch.difficulty} required className="input-field">
                     {DIFFICULTIES.map(d => <option key={d} value={d}>{d}</option>)}

@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import LearnLinkPicker from '@/components/ctf/LearnLinkPicker'
 import Link from 'next/link'
 
-const CATEGORIES = ['web', 'crypto', 'forensics', 'misc']
+const CATEGORIES = ['web', 'crypto', 'forensics', 'osint', 'misc']
 const DIFFICULTIES = ['easy', 'medium', 'hard']
 
 export default async function SubmitChallengePage({
@@ -94,7 +94,7 @@ export default async function SubmitChallengePage({
               </label>
               <select name="category" required className="input-field w-full">
                 <option value="">Select category</option>
-                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                {CATEGORIES.map(c => <option key={c} value={c}>{c === 'osint' ? 'OSINT' : c}</option>)}
               </select>
             </div>
 
