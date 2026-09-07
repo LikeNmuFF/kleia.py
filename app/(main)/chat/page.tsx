@@ -122,6 +122,7 @@ export default function ChatPage() {
       <div className={`flex-1 ${mobileShowChat ? 'block' : 'hidden'} md:block`}>
         {selectedId && userId ? (
           <ChatWindow
+            key={selectedId}
             conversationId={selectedId}
             currentUserId={userId}
             onBack={handleBack}

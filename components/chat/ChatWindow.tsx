@@ -5,14 +5,12 @@ import { createClient } from '@/lib/supabase/client'
 import { useChatUnread } from '@/components/chat/ChatUnreadProvider'
 import MessageInput from './MessageInput'
 import Avatar from '@/components/Avatar'
+import MessageQuote from './MessageQuote'
+import MessageReactions from './MessageReactions'
+import type { ChatMessage, ReplyTarget } from '@/lib/chat/types'
+import type { MessageReaction } from '@/lib/chat/reactions'
 
-interface Message {
-  id: string
-  content: string
-  created_at: string
-  sender_id: string
-  read: boolean
-}
+type Message = ChatMessage
 
 interface SenderInfo {
   username: string
@@ -36,20 +34,44 @@ export default function ChatWindow({ conversationId, currentUserId, onBack }: Ch
   const [messages, setMessages] = useState<Message[]>([])
   const [senderMap, setSenderMap] = useState<Record<string, SenderInfo>>({})
   const [convInfo, setConvInfo] = useState<ConversationInfo | null>(null)
+  const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null)
+  const [reactions, setReactions] = useState<MessageReaction[]>([])
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [loadingMessages, setLoadingMessages] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
   const unreadCtx = useChatUnread()
+  const setActiveConversation = unreadCtx?.setActiveConversation
+  const markAsRead = unreadCtx?.markAsRead
 
   useEffect(() => {
-    unreadCtx?.setActiveConversation(conversationId)
-    return () => { unreadCtx?.setActiveConversation(null) }
-  }, [conversationId, unreadCtx])
+    setActiveConversation?.(conversationId)
+    return () => { setActiveConversation?.(null) }
+  }, [conversationId, setActiveConversation])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
   useEffect(() => {
+    let cancelled = false
+    let reactionRevision = 0
+    const knownSenders = new Set<string>()
+    const fetchReactions = async () => {
+      const revision = ++reactionRevision
+      const rows: MessageReaction[] = []
+      for (let offset = 0; ; offset += 1000) {
+        const { data, error } = await supabase.from('message_reactions')
+          .select('message_id, conversation_id, user_id, emoji, active')
+          .eq('conversation_id', conversationId).eq('active', true)
+          .order('message_id').order('user_id').order('emoji').range(offset, offset + 999)
+        if (cancelled || revision !== reactionRevision) return
+        if (error) { setLoadError('Could not load reactions. Please refresh to retry.'); return }
+        rows.push(...(data ?? []))
+        if (!data || data.length < 1000) break
+      }
+      if (!cancelled && revision === reactionRevision) setReactions(rows)
+    }
     const fetchConversationInfo = async () => {
       const { data: conv } = await supabase
         .from('conversations')
@@ -79,21 +101,28 @@ export default function ChatWindow({ conversationId, currentUserId, onBack }: Ch
         }
       }
 
-      setConvInfo({ name: conv.name, type: conv.type, memberCount, otherMember })
+      if (!cancelled) setConvInfo({ name: conv.name, type: conv.type, memberCount, otherMember })
     }
 
     fetchConversationInfo()
 
     const fetchMessages = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('messages')
-        .select('id, content, created_at, sender_id, read')
+        .select('id, content, created_at, sender_id, read, reply_to_id')
         .eq('conversation_id', conversationId)
-        .order('created_at', { ascending: true })
+        .order('created_at', { ascending: false })
         .limit(200)
 
+      if (cancelled) return
+      setLoadingMessages(false)
+      if (error) { setLoadError('Could not load messages. Please refresh to retry.'); return }
       if (data) {
-        setMessages(data)
+        setMessages((previous) => {
+          const merged = new Map(previous.map((message) => [message.id, message]))
+          for (const message of data) merged.set(message.id, message)
+          return Array.from(merged.values()).sort((a, b) => a.created_at.localeCompare(b.created_at))
+        })
 
         const senderIds: string[] = Array.from(new Set(data.map((m: { sender_id: string }) => m.sender_id)))
         const { data: profiles } = await supabase
@@ -102,17 +131,20 @@ export default function ChatWindow({ conversationId, currentUserId, onBack }: Ch
           .in('id', senderIds)
         const map: Record<string, SenderInfo> = {}
         for (const p of profiles || []) {
+          knownSenders.add(p.id)
           map[p.id] = { username: p.username, avatar_url: p.avatar_url }
         }
-        setSenderMap(map)
+        if (cancelled) return
+        setSenderMap((previous) => ({ ...previous, ...map }))
 
-        unreadCtx?.markAsRead(conversationId)
+        markAsRead?.(conversationId)
         // Optimistically mark all messages from others as read
         setMessages((prev) => prev.map((m) => m.sender_id !== currentUserId ? { ...m, read: true } : m))
       }
     }
 
     fetchMessages()
+    fetchReactions()
 
     const channel = supabase
       .channel(`messages:${conversationId}`)
@@ -126,22 +158,24 @@ export default function ChatWindow({ conversationId, currentUserId, onBack }: Ch
         },
         async (payload: { new: Message }) => {
           const newMsg = payload.new as Message
-          setMessages((prev) => [...prev, newMsg])
+          if (cancelled) return
+          setMessages((prev) => prev.some((m) => m.id === newMsg.id) ? prev : [...prev, newMsg])
 
           if (newMsg.sender_id !== currentUserId) {
-            unreadCtx?.markAsRead(conversationId)
+            markAsRead?.(conversationId)
             // Optimistically mark existing messages from others as read
             setMessages((prev) => prev.map((m) => m.sender_id !== currentUserId ? { ...m, read: true } : m))
           }
 
-          if (!senderMap[newMsg.sender_id]) {
+          if (!knownSenders.has(newMsg.sender_id)) {
             const { data: profile } = await supabase
               .from('profiles')
               .select('username, avatar_url')
               .eq('id', newMsg.sender_id)
               .single()
 
-            if (profile) {
+            if (profile && !cancelled) {
+              knownSenders.add(newMsg.sender_id)
               setSenderMap((prev) => ({ ...prev, [newMsg.sender_id]: profile }))
             }
           }
@@ -157,19 +191,21 @@ export default function ChatWindow({ conversationId, currentUserId, onBack }: Ch
         },
         (payload: { new: Message }) => {
           const updated = payload.new as Message
-          setMessages((prev) => prev.map((m) => m.id === updated.id ? { ...m, read: updated.read } : m))
+          if (!cancelled) setMessages((prev) => prev.map((m) => m.id === updated.id ? { ...m, read: updated.read, reply_to_id: updated.reply_to_id } : m))
         }
       )
-      .subscribe()
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'message_reactions', filter: `conversation_id=eq.${conversationId}` }, () => { fetchReactions() })
+      .subscribe((status: string) => { if (status === 'SUBSCRIBED') { fetchMessages(); fetchReactions() } })
 
     return () => {
+      cancelled = true
       supabase.removeChannel(channel)
     }
-  }, [conversationId])
+  }, [conversationId, currentUserId, supabase, markAsRead])
 
   useEffect(() => {
     scrollToBottom()
-  }, [messages])
+  }, [messages.length])
 
   const displayName = convInfo
     ? convInfo.type === 'group'
@@ -220,9 +256,12 @@ export default function ChatWindow({ conversationId, currentUserId, onBack }: Ch
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-4 md:px-6 lg:px-8 py-4 space-y-4">
-        {messages.length === 0 ? (
+        {loadError && <p role="alert" className="text-sm text-red-400">{loadError}</p>}
+        {loadingMessages ? (
+          <p role="status" className="text-center text-sm" style={{ color: 'var(--text-muted)' }}>Loading messages...</p>
+        ) : messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <p style={{ color: 'var(--text-muted)' }}>No messages yet. Start the conversation!</p>
+            {!loadError && <p style={{ color: 'var(--text-muted)' }}>No messages yet. Start the conversation!</p>}
           </div>
         ) : (
           messages.map((msg) => {
@@ -258,7 +297,16 @@ export default function ChatWindow({ conversationId, currentUserId, onBack }: Ch
                       {sender?.username || 'Unknown'}
                     </p>
                   )}
-                  <p className="leading-relaxed">{msg.content}</p>
+                  {msg.reply_to_id && <MessageQuote key={msg.reply_to_id} messageId={msg.reply_to_id} conversationId={conversationId} />}
+                  <p className="whitespace-pre-wrap break-words leading-relaxed">{msg.content}</p>
+                  <MessageReactions
+                    conversationId={conversationId}
+                    messageId={msg.id}
+                    currentUserId={currentUserId}
+                    reactions={reactions.filter((reaction) => reaction.message_id === msg.id)}
+                    onReply={() => setReplyTo({ id: msg.id, content: msg.content, username: isOwn ? 'yourself' : sender?.username || 'Unknown' })}
+                    onChange={(reaction) => setReactions((previous) => [...previous.filter((r) => !(r.message_id === reaction.message_id && r.user_id === reaction.user_id && r.emoji === reaction.emoji)), reaction])}
+                  />
                   <div className={`flex items-center gap-1 mt-1 ${isOwn ? 'justify-end' : ''}`}>
                     <p className={`text-[10px] ${isOwn ? 'text-white/60' : ''}`} style={!isOwn ? { color: 'var(--text-muted)' } : undefined}>
                       {new Date(msg.created_at).toLocaleTimeString('en-US', {
@@ -290,7 +338,7 @@ export default function ChatWindow({ conversationId, currentUserId, onBack }: Ch
       </div>
 
       {/* Message Input */}
-      <MessageInput conversationId={conversationId} />
+      <MessageInput conversationId={conversationId} replyTo={replyTo} onCancelReply={() => setReplyTo(null)} onSent={(message) => setMessages((previous) => previous.some((m) => m.id === message.id) ? previous : [...previous, message])} />
     </div>
   )
 }

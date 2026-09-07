@@ -41,12 +41,14 @@ supabase/migrations/*
 !supabase/migrations/20260906010000_season_contributors.sql
 !supabase/migrations/20260906020000_global_contributor_challenges.sql
 !supabase/migrations/20260906060000_gamification_schema.sql
+!supabase/migrations/20260907090112_chat_replies_reactions.sql
 !supabase/tests/
 supabase/tests/*
 !supabase/tests/skill_snapshots_rls.sql
 !supabase/tests/chat_schema.test.ts
 !supabase/tests/webinars_schema.test.ts
 !supabase/tests/gamification_schema.test.ts
+!supabase/tests/chat_interactions.sql
 supabase/.temp/
 docs/superpowers/specs/
 docs/

@@ -7,6 +7,7 @@ import { logEvent } from '@/lib/logEvent'
 import { isAdmin } from '@/lib/admin'
 import { getCompetitionAccess } from './competition'
 import { getSafeErrorMessage } from '@/lib/errorHandler'
+import { isReactionId } from '../../lib/chat/reactions'
 
 async function isParticipantLocked() {
   const access = await getCompetitionAccess()
@@ -173,7 +174,7 @@ export async function createGroupConversation(memberIds: string[], name: string)
   return { conversationId: conv.id }
 }
 
-export async function sendMessage(conversationId: string, content: string) {
+export async function sendMessage(conversationId: string, content: string, replyToId: string | null = null) {
   const start = Date.now()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -196,11 +197,21 @@ export async function sendMessage(conversationId: string, content: string) {
 
   if (!count || count === 0) return { error: 'Not a member of this conversation' }
 
-  const { error } = await supabase.from('messages').insert({
+  if (typeof content !== 'string' || !content.trim() || content.trim().length > 4000) {
+    return { error: 'Messages must contain 1 to 4000 characters' }
+  }
+  if (replyToId) {
+    const { data: parent } = await supabase.from('messages').select('id')
+      .eq('id', replyToId).eq('conversation_id', conversationId).maybeSingle()
+    if (!parent) return { error: 'The message you are replying to is no longer available' }
+  }
+
+  const { data: message, error } = await supabase.from('messages').insert({
     conversation_id: conversationId,
     sender_id: user.id,
     content: content.trim(),
-  })
+    reply_to_id: replyToId,
+  }).select('id, content, created_at, sender_id, read, reply_to_id').single()
 
   if (error) {
     await logEvent({ endpoint: 'chat.sendMessage', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user.id })
@@ -209,9 +220,33 @@ export async function sendMessage(conversationId: string, content: string) {
 
   await logEvent({ endpoint: 'chat.sendMessage', status: 'success', durationMs: Date.now() - start, userId: user.id })
 
-  const { completeMission } = await import('./gamification')
-  await completeMission('message')
+  try {
+    const { completeMission } = await import('./gamification')
+    await completeMission('message')
+  } catch {
+    // A mission failure must not make a delivered message appear unsent.
+  }
 
+  return { success: true, message }
+}
+
+export async function setMessageReaction(conversationId: string, messageId: string, emoji: string, active: boolean) {
+  if (!isReactionId(emoji) || typeof active !== 'boolean') return { error: 'Invalid reaction' }
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not logged in' }
+  if (await isParticipantLocked()) return { error: 'Messaging is disabled during the competition' }
+  const { data: member } = await supabase.from('conversation_members').select('user_id')
+    .eq('conversation_id', conversationId).eq('user_id', user.id).maybeSingle()
+  if (!member) return { error: 'Not a member of this conversation' }
+  const { data: message } = await supabase.from('messages').select('id')
+    .eq('id', messageId).eq('conversation_id', conversationId).maybeSingle()
+  if (!message) return { error: 'Message is no longer available' }
+  const service = getServiceClient() as any
+  const { error } = await service.from('message_reactions').upsert({
+    message_id: messageId, conversation_id: conversationId, user_id: user.id, emoji, active,
+  }, { onConflict: 'message_id,user_id,emoji' })
+  if (error) return { error: getSafeErrorMessage(error, 'Could not update reaction') }
   return { success: true }
 }
 
