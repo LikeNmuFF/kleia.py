@@ -1,8 +1,14 @@
 import { createHash } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
-import { getModerationStatus, refreshChallengeFileModerationStatus, verifyCloudinaryWebhookSignature } from './cloudinary'
+import { cloudinaryUploadError, getModerationStatus, refreshChallengeFileModerationStatus, verifyCloudinaryWebhookSignature } from './cloudinary'
 
 describe('cloudinary upload boundary', () => {
+  it('preserves plain SDK errors for server-side diagnostics', () => {
+    const error = cloudinaryUploadError({ message: "You don't have an active subscription for Perception Point", http_code: 420 })
+    expect(error).toBeInstanceOf(Error)
+    expect(error.message).toContain("You don't have an active subscription for Perception Point")
+  })
+
   it('extracts Perception Point moderation statuses only', () => {
     expect(getModerationStatus({ moderation: [{ kind: 'perception_point', status: 'pending' }] })).toBe('pending')
     expect(getModerationStatus({ moderation: [{ kind: 'perception_point', status: 'approved' }] })).toBe('approved')

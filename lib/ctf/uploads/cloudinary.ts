@@ -24,6 +24,14 @@ export type PublicImageUploadResult = {
 type ModerationStatus = 'pending' | 'approved' | 'rejected'
 type ResourceFetcher = (publicId: string, options: Record<string, unknown>) => Promise<unknown>
 
+export function cloudinaryUploadError(error: unknown): Error {
+  if (error instanceof Error) return error
+  if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
+    return new Error(`Cloudinary upload failed: ${error.message}`)
+  }
+  return new Error('Cloudinary upload failed without an error message')
+}
+
 function configureCloudinary() {
   const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
   const apiKey = process.env.CLOUDINARY_API_KEY
@@ -92,7 +100,7 @@ export async function uploadChallengeFile(upload: ChallengeUploadInput, ownerId:
         },
       },
       (error, response) => {
-        if (error || !response) reject(error ?? new Error('Upload failed'))
+        if (error || !response) reject(cloudinaryUploadError(error))
         else resolve(response)
       }
     )
@@ -102,7 +110,7 @@ export async function uploadChallengeFile(upload: ChallengeUploadInput, ownerId:
   const moderationStatus = getModerationStatus(result)
   if (moderationStatus !== 'pending' && moderationStatus !== 'approved') {
     await destroyChallengeFile(result.public_id)
-    throw new Error('File scanning is temporarily unavailable')
+    throw new Error(`Cloudinary returned an unusable Perception Point moderation status: ${moderationStatus ?? 'missing'}`)
   }
 
   return {
@@ -127,7 +135,7 @@ export async function uploadPublicImageBuffer(
         format: options.mimeType.split('/').at(-1),
       },
       (error, response) => {
-        if (error || !response) reject(error ?? new Error('Upload failed'))
+        if (error || !response) reject(cloudinaryUploadError(error))
         else resolve(response)
       }
     )
