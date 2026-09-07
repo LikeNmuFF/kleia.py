@@ -101,6 +101,7 @@ export default async function PracticeTeamPage({ params }: { params: Promise<{ s
                 <Link
                   key={solve.id}
                   href={`/ctf/${solve.challenge_id}`}
+                  prefetch={false}
                   className="block rounded-md border border-white/10 bg-black p-3 transition hover:border-emerald-400/60"
                 >
                   <div className="flex items-start justify-between gap-3">

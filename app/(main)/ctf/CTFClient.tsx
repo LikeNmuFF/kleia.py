@@ -337,6 +337,7 @@ export default function CTFClient({
               <Link
                 key={challenge.id}
                 href={`/ctf/${challenge.id}`}
+                prefetch={false}
                 className="group block rounded-xl transition-all hover:scale-[1.02] hover:shadow-lg"
                 style={{
                   backgroundColor: isSolved ? 'rgba(34,197,94,0.04)' : 'var(--card-bg)',

@@ -99,6 +99,7 @@ export default async function LessonPage({
               <Link
                 key={c.id}
                 href={`/ctf/${c.id}`}
+                prefetch={false}
                 className="flex items-center justify-between rounded-lg px-4 py-3 transition-all hover:scale-[1.01] hover:shadow-lg"
                 style={{ backgroundColor: 'var(--input-bg)', border: '1px solid var(--border-color)' }}
               >

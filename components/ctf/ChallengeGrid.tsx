@@ -53,6 +53,7 @@ export default function ChallengeGrid({
                 <Link
                   key={challenge.id}
                   href={`/ctf/${challenge.id}`}
+                  prefetch={false}
                   className="group relative flex flex-col items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-lg transition-all hover:scale-110"
                   style={{
                     backgroundColor: solved ? `${borderColor}15` : 'var(--input-bg)',

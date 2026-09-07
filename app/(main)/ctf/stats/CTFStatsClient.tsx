@@ -224,6 +224,7 @@ export default function CTFStatsClient({
                 <Link
                   key={solve.challenge_id}
                   href={`/ctf/${solve.challenge_id}`}
+                  prefetch={false}
                   className="flex items-center gap-3 p-3 rounded-lg transition-all hover:scale-[1.01]"
                   style={{ backgroundColor: 'var(--input-bg)' }}
                 >
