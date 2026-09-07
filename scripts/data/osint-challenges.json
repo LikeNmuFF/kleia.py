@@ -1,0 +1,408 @@
+[
+  {
+    "title": "OSINT 01 - The Right Profile",
+    "difficulty": "easy",
+    "points": 75,
+    "hint": "A matching display name is weak evidence. Follow the exact account URL endorsed by the organizer and check its identifier.",
+    "question": "An archived club directory endorses a mapping volunteer's account. Identify the handle of the endorsed account whose public key matches the directory. Other accounts reuse the display name. Return KLEIA{HANDLE}, replacing hyphens with underscores.",
+    "evidence": {
+      "directory": {
+        "organization": "Meridian Mapping Club",
+        "profile_url": "https://social.example/@maple-signal",
+        "public_key": "MC-7A91"
+      },
+      "profiles": [
+        {
+          "handle": "maple-signal",
+          "url": "https://social.example/@maple-signal",
+          "display_name": "Maple Maps",
+          "public_key": "MC-7A91"
+        },
+        {
+          "handle": "maple-maps",
+          "url": "https://social.example/@maple-maps",
+          "display_name": "Maple Maps",
+          "public_key": "MC-1B33"
+        },
+        {
+          "handle": "maple-signal-old",
+          "url": "https://social.example/@maple-signal-old",
+          "display_name": "Maple Maps",
+          "public_key": "MC-7A91"
+        }
+      ]
+    },
+    "id": "b7120510-0910-4a10-8b10-000000000001",
+    "flag_hash": "b43c954ab33bb8c32f52cad7041c59959165b8037b58fac6eafb77699ce0fe2c"
+  },
+  {
+    "title": "OSINT 02 - Across the Water",
+    "difficulty": "easy",
+    "points": 100,
+    "hint": "Use all three landmarks and preserve east/west direction.",
+    "question": "Locate the camera using the complete observation and the local survey below. Bearings are cardinal directions, not image-left/image-right. Return the location label as KLEIA{WORDS_WITH_UNDERSCORES}.",
+    "evidence": {
+      "observation": {
+        "tower": "west",
+        "bridge": "north",
+        "mural": "south"
+      },
+      "survey": [
+        {
+          "location": "West Pier",
+          "tower": "east",
+          "bridge": "north",
+          "mural": "south"
+        },
+        {
+          "location": "East Pier",
+          "tower": "west",
+          "bridge": "north",
+          "mural": "south"
+        },
+        {
+          "location": "South Steps",
+          "tower": "west",
+          "bridge": "south",
+          "mural": "north"
+        },
+        {
+          "location": "East Market",
+          "tower": "west",
+          "bridge": "north",
+          "mural": "east"
+        }
+      ]
+    },
+    "id": "b7120510-0910-4a10-8b10-000000000002",
+    "flag_hash": "01676ff0ddfc560761a79c15df405ecc9c60f66d2382b3fa8d8b557a5651ec69"
+  },
+  {
+    "title": "OSINT 03 - Before the Edit",
+    "difficulty": "easy",
+    "points": 100,
+    "hint": "Select the latest captured version strictly before the cutoff, then read its event date.",
+    "question": "What event date did the organizer's page advertise immediately before 2024-05-10T12:00:00Z, according to the latest available capture before that cutoff? Report the event date, not the capture date, as KLEIA{YYYY_MM_DD}.",
+    "evidence": {
+      "cutoff": "2024-05-10T12:00:00Z",
+      "captures": [
+        {
+          "captured_at": "2024-05-01T09:00:00Z",
+          "event_date": "2024-06-11"
+        },
+        {
+          "captured_at": "2024-05-10T11:55:00Z",
+          "event_date": "2024-06-18"
+        },
+        {
+          "captured_at": "2024-05-10T12:00:00Z",
+          "event_date": "2024-06-25"
+        },
+        {
+          "captured_at": "2024-05-12T09:00:00Z",
+          "event_date": "2024-06-25"
+        }
+      ]
+    },
+    "id": "b7120510-0910-4a10-8b10-000000000003",
+    "flag_hash": "6edf61da3d8f9e43c9eef6bb44deb278818f76abe4f0e0391b37aeabac028e33"
+  },
+  {
+    "title": "OSINT 04 - Two Independent Links",
+    "difficulty": "medium",
+    "points": 150,
+    "hint": "Shared hosting alone does not establish common ownership. Require both identifiers from the target.",
+    "question": "Which organization is linked to beacon.test by BOTH its analytics identifier and its legal registration number? Treat this as attribution within this fictional dossier only. Return the organization as KLEIA{WORDS_WITH_UNDERSCORES}.",
+    "evidence": {
+      "target": {
+        "domain": "beacon.test",
+        "analytics": "G-N7Q4",
+        "registration": "REG-2048",
+        "ip": "192.0.2.40"
+      },
+      "organizations": [
+        {
+          "name": "Northstar Lab",
+          "domain": "northstar.test",
+          "analytics": "G-N7Q4",
+          "registration": "REG-2048",
+          "ip": "192.0.2.90"
+        },
+        {
+          "name": "Beacon Studio",
+          "domain": "beacon-studio.test",
+          "analytics": "G-N7Q4",
+          "registration": "REG-7777",
+          "ip": "192.0.2.40"
+        },
+        {
+          "name": "Harbor Works",
+          "domain": "harbor.test",
+          "analytics": "G-W2A8",
+          "registration": "REG-2048",
+          "ip": "192.0.2.40"
+        },
+        {
+          "name": "Westline Group",
+          "domain": "westline.test",
+          "analytics": "G-P9B1",
+          "registration": "REG-9000",
+          "ip": "192.0.2.40"
+        }
+      ]
+    },
+    "id": "b7120510-0910-4a10-8b10-000000000004",
+    "flag_hash": "35cdddc621fdae3181af249a443bf8ce1f624c01cba1ef6f5d3b99da4eabb4f0"
+  },
+  {
+    "title": "OSINT 05 - One Moment, Two Clocks",
+    "difficulty": "medium",
+    "points": 150,
+    "hint": "The explicit offsets already include any daylight-saving adjustment. Compare UTC instants, not clock faces.",
+    "question": "Three archived posts claim to record the same public launch. Two timestamps agree exactly after conversion to UTC; one is a repost with a different timestamp. Find the shared UTC minute. Return KLEIA{YYYY_MM_DD_HHMM}, using a 24-hour clock.",
+    "evidence": {
+      "posts": [
+        {
+          "source": "Venue bulletin",
+          "timestamp": "2025-03-15T00:15:00+08:00"
+        },
+        {
+          "source": "Organizer log",
+          "timestamp": "2025-03-14T12:15:00-04:00"
+        },
+        {
+          "source": "Repost",
+          "timestamp": "2025-03-14T16:45:00Z"
+        }
+      ]
+    },
+    "id": "b7120510-0910-4a10-8b10-000000000005",
+    "flag_hash": "32286204cf8115a35bc6e26ab15d76a3d497a17f2fcb7700f592ab06f9a27453"
+  },
+  {
+    "title": "OSINT 06 - The Renamed Publisher",
+    "difficulty": "medium",
+    "points": 175,
+    "hint": "Display names can be copied; the platform's immutable account ID survives a rename.",
+    "question": "A fictional publisher used the handle night-index in the oldest snapshot. Follow its immutable account ID to the most recent snapshot and report its current handle as KLEIA{HANDLE}, replacing hyphens with underscores. Do not follow a newly created account that acquired the old handle.",
+    "evidence": {
+      "snapshots": [
+        {
+          "captured_at": "2023-02-01",
+          "account_id": "acct-041",
+          "handle": "night-index"
+        },
+        {
+          "captured_at": "2024-07-01",
+          "account_id": "acct-041",
+          "handle": "lantern-notes"
+        },
+        {
+          "captured_at": "2025-01-20",
+          "account_id": "acct-900",
+          "handle": "night-index"
+        },
+        {
+          "captured_at": "2025-02-10",
+          "account_id": "acct-041",
+          "handle": "lantern-atlas"
+        },
+        {
+          "captured_at": "2025-02-12",
+          "account_id": "acct-900",
+          "handle": "night-index"
+        }
+      ]
+    },
+    "id": "b7120510-0910-4a10-8b10-000000000006",
+    "flag_hash": "7d44c0ed0ca9ee72225592c2875d6d30a6c1fd48bc77fc7e49dc6eb386c53353"
+  },
+  {
+    "title": "OSINT 07 - Certificate Trail",
+    "difficulty": "medium",
+    "points": 200,
+    "hint": "Look at log observation times. A certificate's validity start is not proof that the hostname was publicly observed then.",
+    "question": "Find the exact non-wildcard subdomain of meridian.test first observed in the supplied certificate-transparency extract strictly before 2024-02-01T00:00:00Z. Exclude the apex domain and unrelated suffix lookalikes. Return KLEIA{HOSTNAME_WITH_DOTS_REPLACED_BY_UNDERSCORES}.",
+    "evidence": {
+      "cutoff": "2024-02-01T00:00:00Z",
+      "certificates": [
+        {
+          "dns_name": "*.meridian.test",
+          "logged_at": "2024-01-01T00:00:00Z",
+          "not_before": "2023-12-31T00:00:00Z"
+        },
+        {
+          "dns_name": "meridian.test",
+          "logged_at": "2024-01-02T00:00:00Z",
+          "not_before": "2024-01-01T00:00:00Z"
+        },
+        {
+          "dns_name": "archive.meridian.test",
+          "logged_at": "2024-01-12T08:30:00Z",
+          "not_before": "2024-01-11T00:00:00Z"
+        },
+        {
+          "dns_name": "portal.meridian.test",
+          "logged_at": "2024-02-03T08:00:00Z",
+          "not_before": "2024-01-20T00:00:00Z"
+        },
+        {
+          "dns_name": "archive.meridian.test.example",
+          "logged_at": "2024-01-05T00:00:00Z",
+          "not_before": "2024-01-04T00:00:00Z"
+        }
+      ]
+    },
+    "id": "b7120510-0910-4a10-8b10-000000000007",
+    "flag_hash": "01bd8ff0e433ce04ceae469a16ed9438efeff885cb0d53d8eae1b1ade3fcc16c"
+  },
+  {
+    "title": "OSINT 08 - The Earliest Exact Copy",
+    "difficulty": "hard",
+    "points": 250,
+    "hint": "Match the complete content digest, then use independently captured timestamps instead of the publisher's claimed date.",
+    "question": "A viral image is attributed to several archive entries. Among entries whose SHA-256 exactly matches the target, which entry was independently captured earliest? This establishes the earliest evidenced copy in this dataset, not the creator. Return KLEIA{ENTRY_ID}, replacing hyphens with underscores.",
+    "evidence": {
+      "target_sha256": "a19c7d2e9f04b6a83e12c7d56a09f4b23d87e0c156ab924f8e61d3c70b2594af",
+      "entries": [
+        {
+          "id": "frame-011",
+          "claimed_date": "2020-01-01",
+          "captured_at": "2025-01-10T08:00:00Z",
+          "sha256": "a19c7d2e9f04b6a83e12c7d56a09f4b23d87e0c156ab924f8e61d3c70b2594af"
+        },
+        {
+          "id": "frame-027",
+          "claimed_date": "2024-12-20",
+          "captured_at": "2024-12-21T09:00:00Z",
+          "sha256": "a19c7d2e9f04b6a83e12c7d56a09f4b23d87e0c156ab924f8e61d3c70b2594af"
+        },
+        {
+          "id": "frame-003",
+          "claimed_date": "2019-01-01",
+          "captured_at": "2023-06-01T00:00:00Z",
+          "sha256": "b19c7d2e9f04b6a83e12c7d56a09f4b23d87e0c156ab924f8e61d3c70b2594af"
+        },
+        {
+          "id": "frame-044",
+          "claimed_date": "2024-12-19",
+          "captured_at": "2024-12-22T10:00:00Z",
+          "sha256": "a19c7d2e9f04b6a83e12c7d56a09f4b23d87e0c156ab924f8e61d3c70b2594af"
+        }
+      ]
+    },
+    "id": "b7120510-0910-4a10-8b10-000000000008",
+    "flag_hash": "9959c54691bd23e07c399800147d8b1b28f52dd3ac1f42a63190f1a96fa4eb1d"
+  },
+  {
+    "title": "OSINT 09 - The Transfer Window",
+    "difficulty": "hard",
+    "points": 250,
+    "hint": "Intersect the two route stop lists, calculate each transfer interval, and exclude closed stations.",
+    "question": "An archived public itinerary requires a transfer from the Blue route to the Gold route on 2025-04-12. The station must be served by both, open that day, and offer a transfer wait of 5 through 12 minutes inclusive. All times are local on the same day. Which station fits all conditions? Return KLEIA{STATION_NAME_WITH_UNDERSCORES}.",
+    "evidence": {
+      "blue_arrivals": [
+        {
+          "station": "Canal Exchange",
+          "time": "09:12"
+        },
+        {
+          "station": "Market Square",
+          "time": "09:20"
+        },
+        {
+          "station": "Museum Gate",
+          "time": "09:30"
+        },
+        {
+          "station": "Hill Junction",
+          "time": "09:45"
+        }
+      ],
+      "gold_departures": [
+        {
+          "station": "Canal Exchange",
+          "time": "09:20"
+        },
+        {
+          "station": "Market Square",
+          "time": "09:40"
+        },
+        {
+          "station": "Museum Gate",
+          "time": "09:37"
+        },
+        {
+          "station": "South Terminal",
+          "time": "10:00"
+        }
+      ],
+      "closures": [
+        {
+          "station": "Museum Gate",
+          "date": "2025-04-12"
+        }
+      ]
+    },
+    "id": "b7120510-0910-4a10-8b10-000000000009",
+    "flag_hash": "4218372b34391a4017c83e4808bf48ec4408461158c6ad96a3dca48832b182ef"
+  },
+  {
+    "title": "OSINT 10 - Corroborate the Bulletin",
+    "difficulty": "hard",
+    "points": 300,
+    "hint": "Match the notice ID across independent records, verify the gate against the map, then convert the notice's local time to UTC.",
+    "question": "Identify the one public maintenance notice corroborated by BOTH the official gate registry and an independent observer record with the same notice ID, gate, and instant. All UTC offsets are explicit. Return KLEIA{LOCATION_YYYY_MM_DD_HHMM}, using the registry location and UTC date/time. Spaces become underscores.",
+    "evidence": {
+      "registry": [
+        {
+          "gate": "G-7",
+          "location": "North Dock"
+        },
+        {
+          "gate": "G-2",
+          "location": "South Dock"
+        }
+      ],
+      "notices": [
+        {
+          "id": "N-410",
+          "gate": "G-7",
+          "location": "North Dock",
+          "timestamp": "2025-04-12T16:10:00+08:00"
+        },
+        {
+          "id": "N-411",
+          "gate": "G-2",
+          "location": "North Dock",
+          "timestamp": "2025-04-12T16:10:00+08:00"
+        },
+        {
+          "id": "N-412",
+          "gate": "G-7",
+          "location": "North Dock",
+          "timestamp": "2025-04-12T16:40:00+08:00"
+        }
+      ],
+      "observations": [
+        {
+          "notice_id": "N-410",
+          "gate": "G-7",
+          "timestamp": "2025-04-12T08:10:00Z"
+        },
+        {
+          "notice_id": "N-411",
+          "gate": "G-2",
+          "timestamp": "2025-04-12T08:10:00Z"
+        },
+        {
+          "notice_id": "N-412",
+          "gate": "G-7",
+          "timestamp": "2025-04-12T08:10:00Z"
+        }
+      ]
+    },
+    "id": "b7120510-0910-4a10-8b10-000000000010",
+    "flag_hash": "ebd67615a97d4b010730d0f152aed118d652c29f39bcdb898031c4e672bc8743"
+  }
+]
