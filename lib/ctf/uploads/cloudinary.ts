@@ -22,6 +22,7 @@ export type PublicImageUploadResult = {
 }
 
 type ModerationStatus = 'pending' | 'approved' | 'rejected'
+type ResourceFetcher = (publicId: string, options: Record<string, unknown>) => Promise<unknown>
 
 function configureCloudinary() {
   const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
@@ -52,6 +53,20 @@ export function getModerationStatus(input: unknown): ModerationStatus | null {
     }
   }
   return null
+}
+
+export async function refreshChallengeFileModerationStatus(
+  publicId: string,
+  fetchResource?: ResourceFetcher
+): Promise<ModerationStatus | null> {
+  if (!fetchResource) configureCloudinary()
+  const resource = fetchResource ?? ((id, options) => cloudinary.api.resource(id, options))
+  const result = await resource(publicId, {
+    resource_type: 'raw',
+    type: 'authenticated',
+    moderation: true,
+  })
+  return getModerationStatus(result)
 }
 
 export async function uploadChallengeFile(upload: ChallengeUploadInput, ownerId: string): Promise<CloudinaryUploadResult> {

@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
-import { getModerationStatus, verifyCloudinaryWebhookSignature } from './cloudinary'
+import { getModerationStatus, refreshChallengeFileModerationStatus, verifyCloudinaryWebhookSignature } from './cloudinary'
 
 describe('cloudinary upload boundary', () => {
   it('extracts Perception Point moderation statuses only', () => {
@@ -8,6 +8,16 @@ describe('cloudinary upload boundary', () => {
     expect(getModerationStatus({ moderation: [{ kind: 'perception_point', status: 'approved' }] })).toBe('approved')
     expect(getModerationStatus({ moderation: [{ kind: 'perception_point', status: 'rejected' }] })).toBe('rejected')
     expect(getModerationStatus({ moderation: [{ kind: 'manual', status: 'approved' }] })).toBeNull()
+  })
+
+  it('refreshes a raw authenticated upload moderation status by public ID', async () => {
+    const fetchResource = async (publicId: string, options: Record<string, unknown>) => {
+      expect(publicId).toBe('kleia-ctf-files/user/upload')
+      expect(options).toEqual({ resource_type: 'raw', type: 'authenticated', moderation: true })
+      return { moderation: [{ kind: 'perception_point', status: 'approved' }] }
+    }
+
+    await expect(refreshChallengeFileModerationStatus('kleia-ctf-files/user/upload', fetchResource)).resolves.toBe('approved')
   })
 
   it('verifies webhook signatures within five minutes', () => {

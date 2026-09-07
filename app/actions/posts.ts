@@ -4,6 +4,7 @@ import { getSafeErrorMessage } from '@/lib/errorHandler'
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { getServiceClient } from '@/lib/supabase/service'
 import { isPostReaction, normalizeSubjects, type ReactionType } from '@/lib/feed/constants'
 import { emptyReactionCounts, type ReactionCounts } from '@/lib/feed/types'
 import { logEvent } from '@/lib/logEvent'
@@ -328,7 +329,8 @@ export async function togglePin(postId: string) {
 
   const newPinned = !post?.is_pinned
 
-  const { error } = await supabase
+  const service = getServiceClient() as any
+  const { error } = await service
     .from('posts')
     .update({ is_pinned: newPinned })
     .eq('id', postId)

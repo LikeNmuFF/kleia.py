@@ -17,5 +17,7 @@ describe('/api/ctf/uploads route', () => {
     expect(source).toContain('canUploadSeasonChallengeFile')
     expect(source).toContain('canUploadGlobalChallengeFile')
     expect(source).toContain('destroyChallengeFile')
+    expect(source).toContain('refreshChallengeFileModerationStatus')
+    expect(source).toContain(".update({ scan_status: refreshedStatus")
   })
 })

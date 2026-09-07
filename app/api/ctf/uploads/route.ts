@@ -4,7 +4,11 @@ import { getServiceClient } from '@/lib/supabase/service'
 import { checkNamedRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { logEvent } from '@/lib/logEvent'
 import { createHash } from 'node:crypto'
-import { destroyChallengeFile, uploadChallengeFile } from '@/lib/ctf/uploads/cloudinary'
+import {
+  destroyChallengeFile,
+  refreshChallengeFileModerationStatus,
+  uploadChallengeFile,
+} from '@/lib/ctf/uploads/cloudinary'
 import { normalizeUploadFileName } from '@/lib/ctf/uploads/validate'
 import {
   canUploadGlobalChallengeFile,
@@ -143,10 +147,39 @@ export async function GET(request: NextRequest) {
 
   const { data: upload } = await supabase
     .from('ctf_challenge_uploads')
-    .select('id, scan_status, stored_name')
+    .select('id, scan_status, stored_name, cloudinary_public_id')
     .eq('id', id)
     .maybeSingle()
 
   if (!upload) return jsonError('Upload not found', 404)
-  return NextResponse.json({ id: upload.id, status: upload.scan_status, fileName: upload.stored_name })
+
+  let status = upload.scan_status
+  if (status === 'pending') {
+    try {
+      const refreshedStatus = await refreshChallengeFileModerationStatus(upload.cloudinary_public_id)
+      if (refreshedStatus === 'approved' || refreshedStatus === 'rejected') {
+        const service = getServiceClient() as any
+        const { error } = await service
+          .from('ctf_challenge_uploads')
+          .update({ scan_status: refreshedStatus, scan_result: { moderation_status: refreshedStatus }, scanned_at: new Date().toISOString() })
+          .eq('id', upload.id)
+          .eq('scan_status', 'pending')
+
+        if (!error) {
+          status = refreshedStatus
+          if (refreshedStatus === 'rejected') await destroyChallengeFile(upload.cloudinary_public_id)
+        }
+      }
+    } catch (error) {
+      await logEvent({
+        endpoint: 'ctf.upload.status',
+        status: 'error',
+        durationMs: 0,
+        errorMessage: error instanceof Error ? error.message : 'Moderation status lookup failed',
+        userId: user.id,
+      })
+    }
+  }
+
+  return NextResponse.json({ id: upload.id, status, fileName: upload.stored_name })
 }
