@@ -74,6 +74,8 @@ async function upload(request: NextRequest) {
 
   const file = form.get('file')
   if (!(file instanceof File)) return jsonError('Unsupported file type', 400)
+  if (file.size < 1) return jsonError('File is empty', 400)
+  if (file.size > MAX_UPLOAD_BYTES) return jsonError('File exceeds 25 MB', 413)
 
   const seasonIdValue = form.get('season_id')
   const seasonId = typeof seasonIdValue === 'string' && seasonIdValue.trim() ? seasonIdValue.trim() : null
@@ -119,9 +121,9 @@ async function upload(request: NextRequest) {
       user.id
     )
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'File scanning is temporarily unavailable'
+    const message = error instanceof Error ? error.message : 'Cloudinary upload failed'
     await logEvent({ endpoint: 'ctf.upload', status: 'error', durationMs: Date.now() - start, errorMessage: message, userId: user.id })
-    return jsonError('File scanning is temporarily unavailable', 503)
+    return jsonError('File upload is temporarily unavailable. Please try again later.', 503)
   }
 
   const service = getServiceClient() as any
@@ -138,10 +140,11 @@ async function upload(request: NextRequest) {
       extension: normalized.extension,
       size_bytes: buffer.byteLength,
       sha256,
-      scan_status: uploaded.moderationStatus,
-      scan_provider: 'perception_point',
-      scan_result: { moderation_status: uploaded.moderationStatus },
-      scanned_at: uploaded.moderationStatus === 'approved' ? new Date().toISOString() : null,
+      // Approved means attachable; these files have not been malware-scanned.
+      scan_status: 'approved',
+      scan_provider: 'none',
+      scan_result: { scanning: 'disabled' },
+      scanned_at: null,
     })
     .select('id, scan_status, stored_name')
     .single()
@@ -149,7 +152,7 @@ async function upload(request: NextRequest) {
   if (insertError || !row) {
     await logEvent({ endpoint: 'ctf.upload', status: 'error', durationMs: Date.now() - start, errorMessage: insertError?.message ?? 'Insert failed', userId: user.id })
     await destroyChallengeFile(uploaded.publicId)
-    return jsonError('File scanning is temporarily unavailable', 503)
+    return jsonError('File upload is temporarily unavailable. Please try again later.', 503)
   }
 
   await logEvent({ endpoint: 'ctf.upload', status: 'success', durationMs: Date.now() - start, userId: user.id })

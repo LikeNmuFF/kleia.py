@@ -76,7 +76,7 @@ export type ChallengeUploadRow = {
   size_bytes: number
   sha256: string
   scan_status: 'pending' | 'approved' | 'rejected'
-  scan_provider: 'perception_point'
+  scan_provider: 'perception_point' | 'none'
   scan_result: unknown
   created_at: string
   scanned_at: string | null

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { PenTool, Plus, Save } from 'lucide-react'
 import { createChallenge, createSeasonChallenge, updateChallenge } from '@/app/actions/ctf'
@@ -57,46 +57,29 @@ export default function ContributorDashboard({ seasons, challenges }: { seasons:
     [challenges, workspaceId]
   )
 
-  useEffect(() => {
-    if (uploadState.status !== 'pending' || !uploadState.id) return
-    const timer = window.setInterval(async () => {
-      const response = await fetch(`/api/ctf/uploads?id=${encodeURIComponent(uploadState.id!)}`)
-      const data = await response.json().catch(() => ({}))
-      if (!response.ok) {
-        setUploadState((state) => ({ ...state, status: 'error', message: data.error || 'File scanning is temporarily unavailable' }))
-        window.clearInterval(timer)
-        return
-      }
-      if (data.status === 'approved') {
-        setUploadState((state) => ({ ...state, status: 'approved', message: 'Ready to attach' }))
-        window.clearInterval(timer)
-      } else if (data.status === 'rejected') {
-        setUploadState((state) => ({ ...state, status: 'rejected', message: 'File scan rejected' }))
-        window.clearInterval(timer)
-      }
-    }, 3000)
-    return () => window.clearInterval(timer)
-  }, [uploadState.id, uploadState.status])
-
   const resetUpload = () => setUploadState(emptyUpload)
 
   const uploadFile = async (file: File) => {
     setUploadState({ id: null, status: 'validating', fileName: file.name, message: 'Uploading file' })
+    try {
     const body = new FormData()
     body.append('file', file)
     if (workspaceId !== 'global') body.append('season_id', workspaceId)
     const response = await fetch('/api/ctf/uploads', { method: 'POST', body })
     const data = await response.json().catch(() => ({}))
-    if (!response.ok) {
-      setUploadState({ id: null, status: 'error', fileName: file.name, message: data.error || 'File scanning is temporarily unavailable' })
+    if (!response.ok || !data.id || data.status !== 'approved') {
+      setUploadState({ id: null, status: 'error', fileName: file.name, message: data.error || 'Unable to attach the file. Please try again.' })
       return
     }
     setUploadState({
       id: data.id,
-      status: data.status === 'approved' ? 'approved' : 'pending',
+      status: 'approved',
       fileName: data.fileName,
-      message: data.status === 'approved' ? 'Ready to attach' : 'Scanning for malware',
+      message: 'Ready to attach',
     })
+    } catch {
+      setUploadState({ id: null, status: 'error', fileName: file.name, message: 'Unable to upload the file. Please check your connection and try again.' })
+    }
   }
 
   const values = (form: FormData) => ({

@@ -6,7 +6,6 @@ import type { UploadApiResponse } from 'cloudinary'
 export type CloudinaryUploadResult = {
   assetId: string
   publicId: string
-  moderationStatus: 'pending' | 'approved'
 }
 
 export type ChallengeUploadInput = {
@@ -80,9 +79,6 @@ export async function refreshChallengeFileModerationStatus(
 export async function uploadChallengeFile(upload: ChallengeUploadInput, ownerId: string): Promise<CloudinaryUploadResult> {
   configureCloudinary()
   const publicId = `kleia-ctf-files/${ownerId}/${randomUUID()}`
-  const notificationUrl = process.env.NEXT_PUBLIC_SITE_URL
-    ? `${process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, '')}/api/webhooks/cloudinary`
-    : undefined
 
   const result = await new Promise<UploadApiResponse>((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
@@ -90,8 +86,6 @@ export async function uploadChallengeFile(upload: ChallengeUploadInput, ownerId:
         public_id: publicId,
         resource_type: 'raw',
         type: 'authenticated',
-        moderation: 'perception_point',
-        notification_url: notificationUrl,
         context: {
           owner_id: ownerId,
           original_name: upload.originalName,
@@ -107,16 +101,9 @@ export async function uploadChallengeFile(upload: ChallengeUploadInput, ownerId:
     Readable.from(upload.buffer).pipe(stream)
   })
 
-  const moderationStatus = getModerationStatus(result)
-  if (moderationStatus !== 'pending' && moderationStatus !== 'approved') {
-    await destroyChallengeFile(result.public_id)
-    throw new Error(`Cloudinary returned an unusable Perception Point moderation status: ${moderationStatus ?? 'missing'}`)
-  }
-
   return {
     assetId: result.asset_id,
     publicId: result.public_id,
-    moderationStatus,
   }
 }
 
