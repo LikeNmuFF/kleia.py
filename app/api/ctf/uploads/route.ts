@@ -9,7 +9,7 @@ import {
   refreshChallengeFileModerationStatus,
   uploadChallengeFile,
 } from '@/lib/ctf/uploads/cloudinary'
-import { normalizeUploadFileName } from '@/lib/ctf/uploads/validate'
+import { normalizeUploadFileName } from '@/lib/ctf/uploads/filename'
 import {
   canUploadGlobalChallengeFile,
   canUploadSeasonChallengeFile,

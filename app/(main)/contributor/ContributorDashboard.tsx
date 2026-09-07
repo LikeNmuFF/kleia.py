@@ -61,7 +61,7 @@ export default function ContributorDashboard({ seasons, challenges }: { seasons:
     if (uploadState.status !== 'pending' || !uploadState.id) return
     const timer = window.setInterval(async () => {
       const response = await fetch(`/api/ctf/uploads?id=${encodeURIComponent(uploadState.id!)}`)
-      const data = await response.json()
+      const data = await response.json().catch(() => ({}))
       if (!response.ok) {
         setUploadState((state) => ({ ...state, status: 'error', message: data.error || 'File scanning is temporarily unavailable' }))
         window.clearInterval(timer)
@@ -86,7 +86,7 @@ export default function ContributorDashboard({ seasons, challenges }: { seasons:
     body.append('file', file)
     if (workspaceId !== 'global') body.append('season_id', workspaceId)
     const response = await fetch('/api/ctf/uploads', { method: 'POST', body })
-    const data = await response.json()
+    const data = await response.json().catch(() => ({}))
     if (!response.ok) {
       setUploadState({ id: null, status: 'error', fileName: file.name, message: data.error || 'File scanning is temporarily unavailable' })
       return

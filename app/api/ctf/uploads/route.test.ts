@@ -11,6 +11,8 @@ describe('/api/ctf/uploads route', () => {
     expect(source).toContain('checkNamedRateLimit')
     expect(source).toContain('ctf-upload')
     expect(source).toContain('normalizeUploadFileName')
+    expect(source).toContain("from '@/lib/ctf/uploads/filename'")
+    expect(source).not.toContain("from '@/lib/ctf/uploads/validate'")
     expect(source).toContain('uploadChallengeFile')
     expect(source).toContain('getServiceClient')
     expect(source).toContain('ctf_challenge_uploads')
