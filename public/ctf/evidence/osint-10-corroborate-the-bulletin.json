@@ -1,0 +1,49 @@
+{
+  "registry": [
+    {
+      "gate": "G-7",
+      "location": "North Dock"
+    },
+    {
+      "gate": "G-2",
+      "location": "South Dock"
+    }
+  ],
+  "notices": [
+    {
+      "id": "N-410",
+      "gate": "G-7",
+      "location": "North Dock",
+      "timestamp": "2025-04-12T16:10:00+08:00"
+    },
+    {
+      "id": "N-411",
+      "gate": "G-2",
+      "location": "North Dock",
+      "timestamp": "2025-04-12T16:10:00+08:00"
+    },
+    {
+      "id": "N-412",
+      "gate": "G-7",
+      "location": "North Dock",
+      "timestamp": "2025-04-12T16:40:00+08:00"
+    }
+  ],
+  "observations": [
+    {
+      "notice_id": "N-410",
+      "gate": "G-7",
+      "timestamp": "2025-04-12T08:10:00Z"
+    },
+    {
+      "notice_id": "N-411",
+      "gate": "G-2",
+      "timestamp": "2025-04-12T08:10:00Z"
+    },
+    {
+      "notice_id": "N-412",
+      "gate": "G-7",
+      "timestamp": "2025-04-12T08:10:00Z"
+    }
+  ]
+}

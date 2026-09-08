@@ -1,0 +1,27 @@
+{
+  "directory": {
+    "organization": "Meridian Mapping Club",
+    "profile_url": "https://social.example/@maple-signal",
+    "public_key": "MC-7A91"
+  },
+  "profiles": [
+    {
+      "handle": "maple-signal",
+      "url": "https://social.example/@maple-signal",
+      "display_name": "Maple Maps",
+      "public_key": "MC-7A91"
+    },
+    {
+      "handle": "maple-maps",
+      "url": "https://social.example/@maple-maps",
+      "display_name": "Maple Maps",
+      "public_key": "MC-1B33"
+    },
+    {
+      "handle": "maple-signal-old",
+      "url": "https://social.example/@maple-signal-old",
+      "display_name": "Maple Maps",
+      "public_key": "MC-7A91"
+    }
+  ]
+}

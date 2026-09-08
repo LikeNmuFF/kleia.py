@@ -1,0 +1,33 @@
+{
+  "observation": {
+    "tower": "west",
+    "bridge": "north",
+    "mural": "south"
+  },
+  "survey": [
+    {
+      "location": "West Pier",
+      "tower": "east",
+      "bridge": "north",
+      "mural": "south"
+    },
+    {
+      "location": "East Pier",
+      "tower": "west",
+      "bridge": "north",
+      "mural": "south"
+    },
+    {
+      "location": "South Steps",
+      "tower": "west",
+      "bridge": "south",
+      "mural": "north"
+    },
+    {
+      "location": "East Market",
+      "tower": "west",
+      "bridge": "north",
+      "mural": "east"
+    }
+  ]
+}

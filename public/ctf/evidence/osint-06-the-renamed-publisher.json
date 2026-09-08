@@ -1,0 +1,29 @@
+{
+  "snapshots": [
+    {
+      "captured_at": "2023-02-01",
+      "account_id": "acct-041",
+      "handle": "night-index"
+    },
+    {
+      "captured_at": "2024-07-01",
+      "account_id": "acct-041",
+      "handle": "lantern-notes"
+    },
+    {
+      "captured_at": "2025-01-20",
+      "account_id": "acct-900",
+      "handle": "night-index"
+    },
+    {
+      "captured_at": "2025-02-10",
+      "account_id": "acct-041",
+      "handle": "lantern-atlas"
+    },
+    {
+      "captured_at": "2025-02-12",
+      "account_id": "acct-900",
+      "handle": "night-index"
+    }
+  ]
+}

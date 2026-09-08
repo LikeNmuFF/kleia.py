@@ -1,0 +1,44 @@
+{
+  "blue_arrivals": [
+    {
+      "station": "Canal Exchange",
+      "time": "09:12"
+    },
+    {
+      "station": "Market Square",
+      "time": "09:20"
+    },
+    {
+      "station": "Museum Gate",
+      "time": "09:30"
+    },
+    {
+      "station": "Hill Junction",
+      "time": "09:45"
+    }
+  ],
+  "gold_departures": [
+    {
+      "station": "Canal Exchange",
+      "time": "09:20"
+    },
+    {
+      "station": "Market Square",
+      "time": "09:40"
+    },
+    {
+      "station": "Museum Gate",
+      "time": "09:37"
+    },
+    {
+      "station": "South Terminal",
+      "time": "10:00"
+    }
+  ],
+  "closures": [
+    {
+      "station": "Museum Gate",
+      "date": "2025-04-12"
+    }
+  ]
+}

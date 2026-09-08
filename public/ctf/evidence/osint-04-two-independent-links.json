@@ -1,0 +1,38 @@
+{
+  "target": {
+    "domain": "beacon.test",
+    "analytics": "G-N7Q4",
+    "registration": "REG-2048",
+    "ip": "192.0.2.40"
+  },
+  "organizations": [
+    {
+      "name": "Northstar Lab",
+      "domain": "northstar.test",
+      "analytics": "G-N7Q4",
+      "registration": "REG-2048",
+      "ip": "192.0.2.90"
+    },
+    {
+      "name": "Beacon Studio",
+      "domain": "beacon-studio.test",
+      "analytics": "G-N7Q4",
+      "registration": "REG-7777",
+      "ip": "192.0.2.40"
+    },
+    {
+      "name": "Harbor Works",
+      "domain": "harbor.test",
+      "analytics": "G-W2A8",
+      "registration": "REG-2048",
+      "ip": "192.0.2.40"
+    },
+    {
+      "name": "Westline Group",
+      "domain": "westline.test",
+      "analytics": "G-P9B1",
+      "registration": "REG-9000",
+      "ip": "192.0.2.40"
+    }
+  ]
+}

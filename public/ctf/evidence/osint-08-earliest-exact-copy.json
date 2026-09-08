@@ -1,0 +1,29 @@
+{
+  "target_sha256": "a19c7d2e9f04b6a83e12c7d56a09f4b23d87e0c156ab924f8e61d3c70b2594af",
+  "entries": [
+    {
+      "id": "frame-011",
+      "claimed_date": "2020-01-01",
+      "captured_at": "2025-01-10T08:00:00Z",
+      "sha256": "a19c7d2e9f04b6a83e12c7d56a09f4b23d87e0c156ab924f8e61d3c70b2594af"
+    },
+    {
+      "id": "frame-027",
+      "claimed_date": "2024-12-20",
+      "captured_at": "2024-12-21T09:00:00Z",
+      "sha256": "a19c7d2e9f04b6a83e12c7d56a09f4b23d87e0c156ab924f8e61d3c70b2594af"
+    },
+    {
+      "id": "frame-003",
+      "claimed_date": "2019-01-01",
+      "captured_at": "2023-06-01T00:00:00Z",
+      "sha256": "b19c7d2e9f04b6a83e12c7d56a09f4b23d87e0c156ab924f8e61d3c70b2594af"
+    },
+    {
+      "id": "frame-044",
+      "claimed_date": "2024-12-19",
+      "captured_at": "2024-12-22T10:00:00Z",
+      "sha256": "a19c7d2e9f04b6a83e12c7d56a09f4b23d87e0c156ab924f8e61d3c70b2594af"
+    }
+  ]
+}
