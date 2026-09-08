@@ -13,9 +13,11 @@ import SeasonsAdminTab from './SeasonsAdminTab'
 import EmailTab from './EmailTab'
 import LogsTab from './LogsTab'
 import CcoSignupsTab from './CcoSignupsTab'
+import FeedbackTab from './FeedbackTab'
 
 const TABS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+  { id: 'feedback', label: 'Feedback', icon: MessageSquare },
   { id: 'users', label: 'Users', icon: Users },
   { id: 'content', label: 'Content', icon: MessageSquare },
   { id: 'chat', label: 'Chat', icon: MessageSquare },
@@ -66,6 +68,7 @@ export default function AdminDashboard({ role }: { role: string }) {
 
       {/* Tab Content */}
       {activeTab === 'overview' && <OverviewTab />}
+      {activeTab === 'feedback' && <FeedbackTab />}
       {activeTab === 'users' && <UsersTab />}
       {activeTab === 'content' && <ContentTab />}
       {activeTab === 'chat' && <ChatTab />}
