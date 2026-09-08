@@ -178,6 +178,10 @@ export default function CompetitionClient({
     }
   }
 
+  const detailFileIsStatic = detail?.file_url?.startsWith('/') ?? false
+  const detailFileIsApiDownload = detail?.file_url?.startsWith('/api/ctf/files/') ?? false
+  const detailFileShouldOpenInNewTab = detail?.file_url ? !detailFileIsStatic && !detailFileIsApiDownload : false
+
   if (effectiveStatus === 'upcoming') {
     return (
       <div className="min-h-[80vh] flex items-center justify-center px-4">
@@ -380,7 +384,14 @@ export default function CompetitionClient({
               {(detail?.file_url || detail?.link_url) && (
                 <div className="mb-5 flex flex-wrap gap-3">
                   {detail.file_url && (
-                    <a href={detail.file_url} target="_blank" rel="noopener noreferrer" className="rounded-lg px-4 py-2 text-sm font-medium" style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' }}>
+                    <a
+                      href={detail.file_url}
+                      target={detailFileShouldOpenInNewTab ? '_blank' : undefined}
+                      rel={detailFileShouldOpenInNewTab ? 'noopener noreferrer' : undefined}
+                      download={detailFileIsStatic ? '' : undefined}
+                      className="rounded-lg px-4 py-2 text-sm font-medium"
+                      style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' }}
+                    >
                       Download File
                     </a>
                   )}
