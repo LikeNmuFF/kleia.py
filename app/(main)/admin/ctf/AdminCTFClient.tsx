@@ -62,6 +62,8 @@ export default function AdminCTFClient({
   const [uploadId, setUploadId] = useState<string | null>(null)
   const [aiReviewing, setAiReviewing] = useState<string | null>(null)
   const [aiNotes, setAiNotes] = useState<Record<string, string>>({})
+  const [activeOverrides, setActiveOverrides] = useState<Record<string, boolean>>({})
+  const [togglingId, setTogglingId] = useState<string | null>(null)
 
   const clearMessages = () => { setError(''); setSuccess('') }
 
@@ -166,11 +168,19 @@ export default function AdminCTFClient({
 
   const handleToggleActive = async (id: string, current: boolean) => {
     clearMessages()
-    const result = await updateChallenge(id, { is_active: !current })
-    if (result.error) setError(result.error)
-    else {
-      setSuccess(`Challenge ${current ? 'deactivated' : 'activated'}`)
-      router.refresh()
+    setTogglingId(id)
+    try {
+      const result = await updateChallenge(id, { is_active: !current })
+      if (result.error) setError(result.error)
+      else {
+        setActiveOverrides(previous => ({ ...previous, [id]: !current }))
+        setSuccess(current ? 'Challenge is now under maintenance.' : 'Challenge re-enabled.')
+        router.refresh()
+      }
+    } catch {
+      setError('Could not update maintenance status. Please try again.')
+    } finally {
+      setTogglingId(null)
     }
   }
 
@@ -332,6 +342,9 @@ export default function AdminCTFClient({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <span className="font-medium truncate max-w-[200px]" style={{ color: 'var(--text-primary)' }}>{ch.title}</span>
+                      {(activeOverrides[ch.id] ?? ch.is_active) === false && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400">Under maintenance</span>
+                      )}
                       {ch.season_id && (
                         <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-md" style={{ backgroundColor: 'rgba(139,92,246,0.15)', color: '#a78bfa' }}>
                           Season-only
@@ -375,8 +388,13 @@ export default function AdminCTFClient({
                       </>
                     )}
                     <button onClick={() => { setEditingId(ch.id); setShowCreate(false) }} className="px-2 py-1 text-xs rounded hover:bg-white/5" style={{ color: 'var(--text-muted)' }}>Edit</button>
-                    <button onClick={() => handleToggleActive(ch.id, ch.is_active)} className="px-2 py-1 text-xs rounded hover:bg-white/5" style={{ color: 'var(--text-muted)' }}>
-                      {ch.is_active ? 'Deactivate' : 'Activate'}
+                    <button
+                      onClick={() => handleToggleActive(ch.id, activeOverrides[ch.id] ?? ch.is_active)}
+                      disabled={togglingId !== null}
+                      className="px-2 py-1 text-xs rounded hover:bg-white/5 disabled:opacity-50"
+                      style={{ color: 'var(--text-muted)' }}
+                    >
+                      {togglingId === ch.id ? 'Updating...' : (activeOverrides[ch.id] ?? ch.is_active) ? 'Disable for maintenance' : 'Re-enable challenge'}
                     </button>
                     <button onClick={() => handleDelete(ch.id)} className="px-2 py-1 text-xs rounded hover:bg-white/5 text-red-400">Delete</button>
                   </div>

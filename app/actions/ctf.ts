@@ -126,13 +126,17 @@ export async function submitFlag(challengeId: string, submittedFlag: string) {
 
   const { data: challenge } = await supabase
     .from('ctf_challenges')
-    .select('id, season_id')
+    .select('id, season_id, is_active')
     .eq('id', challengeId)
     .eq('status', 'approved')
     .single()
 
   if (!challenge) {
     return { error: 'Challenge not found' }
+  }
+
+  if (challenge.is_active === false) {
+    return { error: 'Challenge is under maintenance.' }
   }
 
   if (challenge.season_id) {
@@ -644,6 +648,8 @@ export async function updateChallenge(
     updateData.status = data.status
   }
   if (data.is_active !== undefined) {
+    if (profile?.role !== 'admin') return { error: 'Only admins can change challenge maintenance status' }
+    if (typeof data.is_active !== 'boolean') return { error: 'Invalid challenge status' }
     updateData.is_active = data.is_active
   }
   if (data.learn_topic_slug !== undefined || data.learn_lesson_slug !== undefined) {
@@ -656,16 +662,20 @@ export async function updateChallenge(
     updateData.learn_lesson_slug = learnLink.learn_lesson_slug
   }
 
-  const { error } = await supabase
+  const { data: updatedChallenge, error } = await supabase
     .from('ctf_challenges')
     .update(updateData)
     .eq('id', id)
+    .select('id')
+    .maybeSingle()
 
   if (error) {
     const { data: { user } } = await supabase.auth.getUser()
     await logEvent({ endpoint: 'ctf.updateChallenge', status: 'error', durationMs: Date.now() - start, errorMessage: error.message, userId: user?.id })
     return { error: getSafeErrorMessage(error, 'Something went wrong. Please try again.') }
   }
+
+  if (!updatedChallenge) return { error: 'Challenge not found or update not permitted' }
 
   if (data.upload_id !== undefined) {
     const linkUpload = await linkApprovedUploadToChallenge(data.upload_id, user.id, id)
@@ -677,6 +687,9 @@ export async function updateChallenge(
 
   await logEvent({ endpoint: 'ctf.updateChallenge', status: 'success', durationMs: Date.now() - start })
   revalidatePath('/ctf')
+  revalidatePath(`/ctf/${id}`)
+  revalidatePath('/admin')
+  revalidatePath('/admin/ctf')
   revalidatePath('/contributor')
   return { success: true }
 }

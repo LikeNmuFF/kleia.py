@@ -29,6 +29,7 @@ type SolvedFilter = (typeof SOLVED_FILTERS)[number]['key']
 
 interface Challenge {
   id: string
+  is_active: boolean
   title: string
   category: string
   difficulty: string
@@ -385,6 +386,11 @@ export default function CTFClient({
                   >
                     {challenge.title}
                   </h3>
+                  {challenge.is_active === false && (
+                    <p className="mt-2 text-xs font-medium text-amber-400">
+                      Challenge is under maintenance.
+                    </p>
+                  )}
                 </div>
 
                 {/* Bottom bar: hint + author + solves */}

@@ -29,7 +29,7 @@ export default async function ChallengePage({ params }: { params: Promise<{ id: 
 
   const { data: challenge } = await supabase
     .from('ctf_challenges')
-    .select('id, title, description, category, difficulty, points, hint, hint_xp_cost, file_url, link_url, author, created_at, learn_topic_slug, learn_lesson_slug, season_id')
+    .select('id, title, description, category, difficulty, points, hint, hint_xp_cost, file_url, link_url, author, created_at, learn_topic_slug, learn_lesson_slug, season_id, is_active')
     .eq('id', id)
     .eq('status', 'approved')
     .single()
@@ -55,6 +55,21 @@ export default async function ChallengePage({ params }: { params: Promise<{ id: 
     if (season) statuses.push(getEffectiveSeasonStatus(season))
   }
   if (!isChallengePublicAfterSeasons(statuses)) notFound()
+
+  if (challenge.is_active === false) {
+    return (
+      <div className="max-w-3xl mx-auto py-8 px-4">
+        <Link href="/ctf" className="inline-block mb-6 text-sm" style={{ color: 'var(--text-muted)' }}>
+          Back to Challenges
+        </Link>
+        <div className="rounded-xl p-6" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
+          <h1 className="text-xl sm:text-2xl font-bold break-words" style={{ color: 'var(--text-primary)' }}>{challenge.title}</h1>
+          <p role="status" className="mt-4 font-medium text-amber-400">Challenge is under maintenance.</p>
+          <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>Please check back later. Flag submissions are temporarily disabled.</p>
+        </div>
+      </div>
+    )
+  }
 
   let learnLessonTitle: string | null = null
   if (challenge.learn_topic_slug && challenge.learn_lesson_slug) {

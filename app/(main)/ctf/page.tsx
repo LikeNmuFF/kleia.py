@@ -33,13 +33,13 @@ async function getChallengeData(userId?: string) {
   const [{ data: globalChallenges }, { data: exclusiveChallenges }] = await Promise.all([
     supabase
       .from('ctf_challenges')
-      .select('id, title, category, difficulty, points, hint, author, created_at')
+      .select('id, title, category, difficulty, points, hint, author, created_at, is_active')
       .is('season_id', null)
       .eq('status', 'approved')
       .order('created_at', { ascending: false }),
     supabase
       .from('ctf_challenges')
-      .select('id, title, category, difficulty, points, hint, author, created_at, seasons:season_id (slug, status, start_date, end_date)')
+      .select('id, title, category, difficulty, points, hint, author, created_at, is_active, seasons:season_id (slug, status, start_date, end_date)')
       .not('season_id', 'is', null)
       .eq('status', 'approved'),
   ])
