@@ -83,9 +83,9 @@ async function upload(request: NextRequest) {
   const roomIdValue = form.get('room_id')
   const roomId = typeof roomIdValue === 'string' && roomIdValue.trim() ? roomIdValue.trim() : null
   if (roomId) {
-    if (!canUploadPracticeRoomFile({ role, hasSeasonScope: Boolean(seasonId) }) || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(roomId)) return jsonError('Invalid practice room upload.', 403)
+    if (!canUploadPracticeRoomFile({ role, hasSeasonScope: Boolean(seasonId) }) || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(roomId)) return jsonError('Invalid lab upload.', 403)
     const { data: room, error } = await supabase.from('practice_rooms').select('id').eq('id', roomId).maybeSingle()
-    if (error || !room) return jsonError('Practice room not found.', 404)
+    if (error || !room) return jsonError('Lab not found.', 404)
   }
   let invited = false
   if (seasonId && role === 'contributor') {

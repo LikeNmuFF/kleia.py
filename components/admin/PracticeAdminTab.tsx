@@ -22,7 +22,7 @@ export default function PracticeAdminTab() {
         setRooms(result.rooms)
       })
       .catch(() => {
-        if (active) setError('Could not load private practice rooms.')
+        if (active) setError('Could not load Labs.')
       })
       .finally(() => {
         if (active) setLoading(false)
@@ -30,7 +30,7 @@ export default function PracticeAdminTab() {
     return () => { active = false }
   }, [])
 
-  if (loading) return <p className="py-8 text-sm" style={{ color: 'var(--text-muted)' }}>Loading private practice rooms…</p>
+  if (loading) return <p className="py-8 text-sm" style={{ color: 'var(--text-muted)' }}>Loading Labs…</p>
   if (error) return <p role="alert" className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-500">{error}</p>
   return <RoomList rooms={rooms} isAdmin />
 }

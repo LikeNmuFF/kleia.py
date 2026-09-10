@@ -11,6 +11,7 @@ const db = new PGlite()
 try {
   await db.exec(await readFile(resolve(here, 'private_practice.bootstrap.sql'), 'utf8'))
   await db.exec(await readFile(resolve(here, '../migrations/20260909150022_private_practice.sql'), 'utf8'))
+  await db.exec(await readFile(resolve(here, '../migrations/20260910030057_rename_private_practice_to_labs.sql'), 'utf8'))
   console.log('Practice migration applied to disposable PostgreSQL runtime.')
   const tests = await readFile(resolve(here, 'private_practice.sql'), 'utf8')
   await db.exec(tests)

@@ -95,7 +95,7 @@ export default function ChallengeEditor({ roomId, challenge, onSaved, onCancel }
             <label className={`${labelClass} sm:col-span-2`}>Title<input required maxLength={160} name="title" defaultValue={challenge?.title} className={fieldClass} placeholder="Signed cookie trail" /></label>
             <label className={labelClass}>Category<select name="category" defaultValue={challenge?.category ?? 'web'} className={fieldClass}>{['web', 'crypto', 'forensics', 'osint', 'misc'].map((value) => <option key={value}>{value}</option>)}</select></label>
             <label className={labelClass}>Difficulty<select name="difficulty" defaultValue={challenge?.difficulty ?? 'easy'} className={fieldClass}>{['easy', 'medium', 'hard'].map((value) => <option key={value}>{value}</option>)}</select></label>
-            <label className={labelClass}>Practice points<input required min={1} max={10000} type="number" name="points" defaultValue={challenge?.points ?? 100} className={fieldClass} /></label>
+            <label className={labelClass}>Lab points<input required min={1} max={10000} type="number" name="points" defaultValue={challenge?.points ?? 100} className={fieldClass} /></label>
             <label className={`${labelClass} sm:col-span-2`}>Description<textarea required maxLength={20000} rows={6} name="description" defaultValue={challenge?.description} className={fieldClass} placeholder="Explain the scenario and objective." /></label>
           </div>
         </fieldset>

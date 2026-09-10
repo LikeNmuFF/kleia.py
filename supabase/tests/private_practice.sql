@@ -31,10 +31,12 @@ select pg_temp.assert_true(pg_temp.denied($q$select public.practice_invite('0000
 select pg_temp.assert_true(pg_temp.denied($q$select public.practice_invite('00000000-0000-0000-0000-000000009010','00000000-0000-0000-0000-000000009002',true)$q$,'Reminder cooldown'),'reminder cooldown');
 reset role;
 select pg_temp.assert_true((select count(*)=1 from public.notifications where type='practice_invite' and recipient_id='00000000-0000-0000-0000-000000009002'),'invite atomic and idempotent');
+select pg_temp.assert_true((select title='Labs invitation' from public.notifications where type='practice_invite' and recipient_id='00000000-0000-0000-0000-000000009002'),'invite uses Labs product name');
 update public.practice_room_members set invited_at=now()-interval '10 minutes' where room_id='00000000-0000-0000-0000-000000009010';
 set local role authenticated;
 select public.practice_invite('00000000-0000-0000-0000-000000009010','00000000-0000-0000-0000-000000009002',true);
 reset role;
+select pg_temp.assert_true((select title='Labs reminder' from public.notifications where type='practice_reminder' and recipient_id='00000000-0000-0000-0000-000000009002'),'reminder uses Labs product name');
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000009002',true);
 set local role authenticated;
 select pg_temp.assert_true((select count(*)=1 from public.practice_rooms),'invited member reads room');

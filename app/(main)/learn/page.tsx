@@ -35,7 +35,7 @@ export default async function LearnPage() {
           Interactive lessons and quizzes on Python and Linux. Complete lessons to earn XP and level up.
         </p>
         {hasAccess && <Link href="/practice" className="mt-4 inline-flex rounded-lg px-4 py-2 text-sm font-medium" style={{ backgroundColor: 'var(--input-bg)', color: 'var(--accent)', border: '1px solid var(--border-color)' }}>
-          Open invite-only private practice
+          Open Labs
         </Link>}
       </div>
 

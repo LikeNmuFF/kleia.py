@@ -13,7 +13,7 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }))
 
 const room = { id: 'room-1', title: 'Web Review Lab', description: 'Test challenges before release.', created_at: '2026-09-09T00:00:00Z', member_count: 2, challenge_count: 3, active_challenge_count: 2 }
 
-describe('private practice UI', () => {
+describe('Labs UI', () => {
   it('explains the invite-only empty state', () => {
     const html = renderToStaticMarkup(<RoomList rooms={[]} isAdmin={false} />)
     expect(html).toMatch(/invite-only/i)
@@ -22,12 +22,13 @@ describe('private practice UI', () => {
 
   it('gives admins room creation controls', () => {
     const html = renderToStaticMarkup(<RoomList rooms={[room]} isAdmin />)
-    expect(html).toContain('Create room')
+    expect(html).toContain('Create lab')
     expect(html).toContain('Web Review Lab')
-    expect(html).toContain('Practice workspace')
+    expect(html).toContain('Labs workspace')
     expect(html).toContain('3 challenges')
     expect(html).toContain('2 testers')
-    expect(html).toContain('Manage room')
+    expect(html).toContain('Manage lab')
+    expect(html).not.toMatch(/private practice/i)
   })
 
   it('renders member solve, download, lesson, and feedback controls', () => {
@@ -39,7 +40,7 @@ describe('private practice UI', () => {
     expect(html).toContain('Send feedback')
     expect(html).toContain('/api/practice/files/upload-1')
     expect(html).toContain('/learn/web/cookies')
-    expect(html).toContain('Practice points only')
+    expect(html).toContain('Lab points only')
     expect(html).toContain('Your progress')
     expect(html).toContain('1 of 1 complete')
   })
@@ -62,9 +63,10 @@ describe('private practice UI', () => {
     expect(html).toContain('Incorrect')
     expect(html).toContain('Test User')
     expect(html).toContain('Clarify the hint.')
-    expect(html).toContain('Room control')
+    expect(html).toContain('Lab control')
     expect(html).toContain('Tester access')
     expect(html).toContain('Challenge pipeline')
+    expect(html).not.toMatch(/private practice/i)
   })
 
   it('groups challenge setup into clear sections', () => {

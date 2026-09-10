@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import RoomList from '@/components/practice/RoomList'
 import { getPracticeRooms } from '@/app/actions/practice'
 
-export const metadata: Metadata = { title: 'Private Practice', description: 'Invite-only challenge testing rooms.' }
+export const metadata: Metadata = { title: 'Labs', description: 'Invite-only challenge testing and learning spaces.' }
 
 export default async function PracticePage() {
   const { rooms, isAdmin, error } = await getPracticeRooms()

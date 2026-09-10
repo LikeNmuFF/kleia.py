@@ -130,7 +130,7 @@ function ChallengeCard({ challenge, data, onEdit }: { challenge: PracticeChallen
                   if ('error' in result) setPublishMessage(result.error)
                   else {
                     setPublishedId(result.id)
-                    setPublishMessage('Published as a global snapshot. Later practice edits remain private.')
+                    setPublishMessage('Published as a global snapshot. Later lab edits remain private.')
                   }
                 } catch {
                   setPublishMessage('Unable to publish the challenge. Please try again.')
@@ -208,18 +208,18 @@ export default function PracticeRoom({ data }: { data: PracticeRoomData }) {
 
   return (
     <div className="space-y-6">
-      <Link href={data.isAdmin ? '/admin' : '/practice'} className="inline-flex items-center gap-2 text-sm font-medium" style={{ color: 'var(--text-muted)' }}><ArrowLeft className="h-4 w-4" aria-hidden />{data.isAdmin ? 'Back to admin workspace' : 'All practice rooms'}</Link>
+      <Link href={data.isAdmin ? '/admin' : '/practice'} className="inline-flex items-center gap-2 text-sm font-medium" style={{ color: 'var(--text-muted)' }}><ArrowLeft className="h-4 w-4" aria-hidden />{data.isAdmin ? 'Back to admin workspace' : 'All Labs'}</Link>
 
       <section className="rounded-2xl border p-5 sm:p-7" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--border-color)' }}>
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
-            <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--accent)' }}><LockKeyhole className="h-4 w-4" aria-hidden />{data.isAdmin ? 'Room control' : 'Private testing room'}</div>
+            <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--accent)' }}><LockKeyhole className="h-4 w-4" aria-hidden />{data.isAdmin ? 'Lab control' : 'Private lab'}</div>
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl" style={{ color: 'var(--text-primary)' }}>{data.room.title}</h1>
             <p className="mt-3 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{data.room.description}</p>
-            <p className="mt-4 inline-flex items-start gap-2 rounded-lg border px-3 py-2 text-xs font-medium" style={{ backgroundColor: 'var(--input-bg)', borderColor: 'var(--border-color)', color: 'var(--text-muted)' }}><FlaskConical className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden /><span><strong style={{ color: 'var(--text-secondary)' }}>Practice points only.</strong> Solves here do not affect XP, global scores, badges, teams, or first blood.</span></p>
+            <p className="mt-4 inline-flex items-start gap-2 rounded-lg border px-3 py-2 text-xs font-medium" style={{ backgroundColor: 'var(--input-bg)', borderColor: 'var(--border-color)', color: 'var(--text-muted)' }}><FlaskConical className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden /><span><strong style={{ color: 'var(--text-secondary)' }}>Lab points only.</strong> Solves here do not affect XP, global scores, badges, teams, or first blood.</span></p>
           </div>
           <div className="grid grid-cols-3 gap-2 lg:min-w-80">
-            {data.isAdmin ? <><Stat label="testers" value={data.members.length} /><Stat label="active challenges" value={activeChallenges.length} /><Stat label="feedback" value={feedbackCount} /></> : <><Stat label="completed" value={solvedCount} /><Stat label="available" value={activeChallenges.length} /><Stat label="practice points" value={activeChallenges.filter((challenge) => data.attempts.some((attempt) => attempt.challenge_id === challenge.id && attempt.user_id === data.userId && attempt.is_correct)).reduce((sum, challenge) => sum + challenge.points, 0)} /></>}
+            {data.isAdmin ? <><Stat label="testers" value={data.members.length} /><Stat label="active challenges" value={activeChallenges.length} /><Stat label="feedback" value={feedbackCount} /></> : <><Stat label="completed" value={solvedCount} /><Stat label="available" value={activeChallenges.length} /><Stat label="lab points" value={activeChallenges.filter((challenge) => data.attempts.some((attempt) => attempt.challenge_id === challenge.id && attempt.user_id === data.userId && attempt.is_correct)).reduce((sum, challenge) => sum + challenge.points, 0)} /></>}
           </div>
         </div>
       </section>
@@ -235,7 +235,7 @@ export default function PracticeRoom({ data }: { data: PracticeRoomData }) {
         <div className="min-w-0 space-y-5">
           {data.isAdmin && (
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <div><p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: 'var(--accent)' }}>Challenge pipeline</p><h2 className="mt-1 text-2xl font-semibold tracking-tight">Build and validate</h2><p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>Publishing creates a separate global snapshot. Practice edits remain private.</p></div>
+              <div><p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: 'var(--accent)' }}>Challenge pipeline</p><h2 className="mt-1 text-2xl font-semibold tracking-tight">Build and validate</h2><p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>Publishing creates a separate global snapshot. Lab edits remain private.</p></div>
               <button className="btn-primary inline-flex min-h-10 items-center justify-center gap-2 px-4" onClick={() => setEditing('new')}><Plus className="h-4 w-4" aria-hidden />Add challenge</button>
             </div>
           )}
@@ -243,7 +243,7 @@ export default function PracticeRoom({ data }: { data: PracticeRoomData }) {
           {editing && <ChallengeEditor key={editing === 'new' ? 'new' : editing.id} roomId={data.room.id} challenge={editing === 'new' ? undefined : editing} onCancel={() => setEditing(null)} onSaved={() => { setEditing(null); router.refresh() }} />}
 
           {data.challenges.length === 0 ? (
-            <div className="rounded-2xl border px-6 py-14 text-center" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--border-color)' }}><Lightbulb className="mx-auto h-8 w-8" style={{ color: 'var(--text-muted)' }} aria-hidden /><h3 className="mt-4 font-semibold">No challenges available</h3><p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>{data.isAdmin ? 'Add the first challenge when the room brief is ready.' : 'The admin is still preparing this room.'}</p></div>
+            <div className="rounded-2xl border px-6 py-14 text-center" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--border-color)' }}><Lightbulb className="mx-auto h-8 w-8" style={{ color: 'var(--text-muted)' }} aria-hidden /><h3 className="mt-4 font-semibold">No challenges available</h3><p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>{data.isAdmin ? 'Add the first challenge when the lab brief is ready.' : 'The admin is still preparing this lab.'}</p></div>
           ) : (
             <div className="space-y-4">{data.challenges.map((challenge) => <ChallengeCard key={challenge.id} challenge={challenge} data={data} onEdit={() => setEditing(challenge)} />)}</div>
           )}

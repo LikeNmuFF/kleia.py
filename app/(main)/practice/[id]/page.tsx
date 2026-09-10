@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { getPracticeRoom } from '@/app/actions/practice'
 import PracticeRoom from '@/components/practice/PracticeRoom'
 
-export const metadata: Metadata = { title: 'Practice Room' }
+export const metadata: Metadata = { title: 'Lab' }
 
 export default async function PracticeRoomPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params

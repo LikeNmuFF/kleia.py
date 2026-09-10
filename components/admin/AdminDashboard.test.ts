@@ -11,11 +11,11 @@ describe('AdminDashboard CCO tab', () => {
     expect(source).toContain('<CcoSignupsTab />')
   })
 
-  it('exposes private practice room management to admins', () => {
+  it('exposes Labs management to admins', () => {
     const source = readFileSync(join(process.cwd(), 'components', 'admin', 'AdminDashboard.tsx'), 'utf8')
 
     expect(source).toContain("id: 'practice'")
-    expect(source).toContain("label: 'Private Practice'")
+    expect(source).toContain("label: 'Labs'")
     expect(source).toContain('<PracticeAdminTab />')
   })
 })

@@ -34,7 +34,7 @@ export async function getPracticeRooms(): Promise<{ rooms: PracticeRoom[]; isAdm
         active_challenge_count: (challenges.data ?? []).filter((challenge) => challenge.room_id === room.id && challenge.is_active).length,
       })),
     }
-  } catch (error) { return { rooms: [], isAdmin: false, ...practiceError(error, 'Could not load practice rooms.') } }
+  } catch (error) { return { rooms: [], isAdmin: false, ...practiceError(error, 'Could not load Labs.') } }
 }
 
 export async function getPracticeVisibility(): Promise<{ hasAccess: boolean; isAdmin: boolean }> {
@@ -57,13 +57,13 @@ export async function getPracticeRoom(roomId: string): Promise<PracticeRoomData 
   const { supabase, user, isAdmin } = await practiceCaller()
   if (!(await canAccessPracticeRoom(supabase, roomId))) return null
   const { data: room, error: roomError } = await supabase.from('practice_rooms').select(roomFields).eq('id', roomId).maybeSingle()
-  if (roomError) throw new Error('Could not load practice room')
+  if (roomError) throw new Error('Could not load lab')
   if (!room) return null
   const [{ data: challenges, error: challengeError }, { data: members, error: memberError }] = await Promise.all([
     supabase.from('practice_challenges').select(challengeFields).eq('room_id', roomId).order('created_at', { ascending: true }),
     supabase.from('practice_room_members').select('user_id, invited_at, last_reminded_at, profiles:user_id(username)').eq('room_id', roomId),
   ])
-  if (challengeError || memberError) throw new Error('Could not load practice room')
+  if (challengeError || memberError) throw new Error('Could not load lab')
   const ids = (challenges ?? []).map(row => row.id)
   const [attempts, feedback, publications, solvedAttempts] = ids.length ? await Promise.all([
     supabase.from('practice_attempts').select('id, challenge_id, user_id, is_correct, created_at').in('challenge_id', ids).order('created_at', { ascending: false }).limit(500),
@@ -71,7 +71,7 @@ export async function getPracticeRoom(roomId: string): Promise<PracticeRoomData 
     supabase.from('practice_publications').select('practice_challenge_id, ctf_challenge_id, published_at').in('practice_challenge_id', ids),
     supabase.from('practice_attempts').select('id, challenge_id, user_id, is_correct, created_at').in('challenge_id', ids).eq('user_id', user.id).eq('is_correct', true),
   ]) : [{ data: [], error: null }, { data: [], error: null }, { data: [], error: null }, { data: [], error: null }]
-  if (attempts.error || feedback.error || publications.error || solvedAttempts.error) throw new Error('Could not load practice activity')
+  if (attempts.error || feedback.error || publications.error || solvedAttempts.error) throw new Error('Could not load lab activity')
   return {
     room, userId: user.id, isAdmin, challenges: challenges ?? [],
     members: (members ?? []).map(member => {
@@ -88,7 +88,7 @@ export async function createPracticeRoom(input: { title: string; description: st
     const { user } = await practiceCaller(true)
     if (typeof input?.title !== 'string' || !input.title.trim() || input.title.trim().length > 120 || typeof input.description !== 'string' || input.description.length > 2000) return { error: 'Enter a title (up to 120 characters) and description (up to 2000 characters).' }
     const { data, error } = await practiceService().from('practice_rooms').insert({ title: input.title.trim(), description: input.description.trim(), created_by: user.id }).select('id').single()
-    if (error || !data) return { error: 'Could not create the room.' }
+    if (error || !data) return { error: 'Could not create the lab.' }
     revalidatePath('/practice'); revalidatePath('/admin')
     return { success: true, id: data.id }
   } catch (error) { return practiceError(error) }
@@ -106,7 +106,7 @@ export async function findPracticeUsers(query: string): Promise<Array<{ id: stri
 async function inviteOrRemind(roomId: string, userId: string, remind: boolean): Promise<PracticeResult> {
   try {
     const { supabase } = await practiceCaller(true)
-    if (!isPracticeId(roomId) || !isPracticeId(userId)) return { error: 'Invalid room or user.' }
+    if (!isPracticeId(roomId) || !isPracticeId(userId)) return { error: 'Invalid lab or user.' }
     const { error } = await supabase.rpc('practice_invite', { p_room_id: roomId, p_user_id: userId, p_remind: remind })
     if (error) return { error: remind ? 'Could not send reminder. Check membership and wait five minutes between reminders.' : 'Could not invite this user.' }
     refreshRoom(roomId)
@@ -120,7 +120,7 @@ export async function remindPracticeMember(roomId: string, userId: string) { ret
 export async function revokePracticeMember(roomId: string, userId: string): Promise<PracticeResult> {
   try {
     await practiceCaller(true)
-    if (!isPracticeId(roomId) || !isPracticeId(userId)) return { error: 'Invalid room or user.' }
+    if (!isPracticeId(roomId) || !isPracticeId(userId)) return { error: 'Invalid lab or user.' }
     const { error } = await practiceService().from('practice_room_members').delete().eq('room_id', roomId).eq('user_id', userId)
     if (error) return { error: 'Could not revoke access.' }
     refreshRoom(roomId)
@@ -131,12 +131,12 @@ export async function revokePracticeMember(roomId: string, userId: string): Prom
 export async function savePracticeChallenge(roomId: string, challengeId: string | null, input: PracticeChallengeInput): Promise<PracticeResult> {
   try {
     const { supabase, user } = await practiceCaller(true)
-    if (!isPracticeId(roomId) || (challengeId !== null && !isPracticeId(challengeId))) return { error: 'Invalid room or challenge.' }
+    if (!isPracticeId(roomId) || (challengeId !== null && !isPracticeId(challengeId))) return { error: 'Invalid lab or challenge.' }
     if (!input || typeof input.title !== 'string' || !input.title.trim() || input.title.length > 160 || typeof input.description !== 'string' || !input.description.trim() || input.description.length > 20000) return { error: 'Enter a title and description within the character limits.' }
     if (!['web', 'crypto', 'forensics', 'osint', 'misc'].includes(input.category) || !['easy', 'medium', 'hard'].includes(input.difficulty) || !Number.isInteger(input.points) || input.points < 1 || input.points > 10000 || typeof input.is_active !== 'boolean') return { error: 'Check the category, difficulty, points and availability.' }
     for (const text of [input.hint, input.explanation]) if (text !== undefined && (typeof text !== 'string' || text.length > 20000)) return { error: 'Hint or explanation is too long.' }
     if ((!challengeId && !input.flag?.trim()) || (input.flag !== undefined && (typeof input.flag !== 'string' || input.flag.length > 500))) return { error: 'Enter a flag of 1 to 500 characters.' }
-    if (!(await canAccessPracticeRoom(supabase, roomId))) return { error: 'Room not found.' }
+    if (!(await canAccessPracticeRoom(supabase, roomId))) return { error: 'Lab not found.' }
     const service = practiceService()
     let existing: { id: string; upload_id: string | null; created_by: string } | null = null
     if (challengeId) {
@@ -147,7 +147,7 @@ export async function savePracticeChallenge(roomId: string, challengeId: string 
     if (input.upload_id !== undefined && input.upload_id !== null) {
       if (!isPracticeId(input.upload_id)) return { error: 'Invalid attachment.' }
       const { data: upload, error } = await service.from('ctf_challenge_uploads').select('id, owner_id, scope_room_id, scope_season_id, challenge_id, scan_status').eq('id', input.upload_id).maybeSingle()
-      if (error || !upload || upload.scope_room_id !== roomId || upload.scope_season_id || upload.challenge_id || upload.scan_status !== 'approved' || (upload.owner_id !== user.id && input.upload_id !== existing?.upload_id)) return { error: 'Attachment does not belong to this room.' }
+      if (error || !upload || upload.scope_room_id !== roomId || upload.scope_season_id || upload.challenge_id || upload.scan_status !== 'approved' || (upload.owner_id !== user.id && input.upload_id !== existing?.upload_id)) return { error: 'Attachment does not belong to this lab.' }
     }
     const topic = input.learn_topic_slug?.trim() || null
     const lesson = input.learn_lesson_slug?.trim() || null
@@ -179,7 +179,7 @@ export async function submitPracticeFlag(challengeId: string, flag: string): Pro
     if (!isPracticeId(challengeId) || typeof flag !== 'string' || !flag.trim() || flag.length > 500) return { error: 'Enter a flag of 1 to 500 characters.' }
     const { supabase } = await practiceCaller()
     const { data, error } = await supabase.rpc('practice_submit', { p_challenge_id: challengeId, p_flag: flag })
-    if (error || !data || typeof data.correct !== 'boolean') return { error: 'Submission unavailable. Check your room access, challenge availability, or wait before retrying.' }
+    if (error || !data || typeof data.correct !== 'boolean') return { error: 'Submission unavailable. Check your lab access, challenge availability, or wait before retrying.' }
     revalidatePath('/practice', 'layout')
     return { success: true, correct: data.correct, alreadySolved: data.alreadySolved === true }
   } catch (error) { return practiceError(error) }

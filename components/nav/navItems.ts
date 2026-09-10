@@ -65,7 +65,7 @@ export const DESKTOP_PRIMARY_NAV: NavItem[] = [
 
 export const CHALLENGE_NAV: NavItem[] = [
   {
-    label: 'Private Practice',
+    label: 'Labs',
     href: '/practice',
     icon: FlaskConical,
     matchPrefix: true,

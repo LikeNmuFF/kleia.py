@@ -14,8 +14,8 @@ describe('desktop navigation grouping', () => {
     expect(COMMUNITY_NAV.some((item) => item.href === '/teams')).toBe(true)
   })
 
-  it('only exposes private practice to invited users or admins', () => {
+  it('only exposes Labs to invited users or admins', () => {
     expect(getChallengeNav(false).some((item) => item.href === '/practice')).toBe(false)
-    expect(getChallengeNav(true).some((item) => item.href === '/practice')).toBe(true)
+    expect(getChallengeNav(true).find((item) => item.href === '/practice')?.label).toBe('Labs')
   })
 })

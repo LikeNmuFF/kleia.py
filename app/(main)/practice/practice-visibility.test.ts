@@ -4,17 +4,20 @@ import { join } from 'node:path'
 
 const read = (...parts: string[]) => readFileSync(join(process.cwd(), ...parts), 'utf8')
 
-describe('private practice discovery', () => {
+describe('Labs discovery', () => {
   it('redirects uninvited users away from the room listing', () => {
     const source = read('app', '(main)', 'practice', 'page.tsx')
     expect(source).toContain("redirect('/learn')")
     expect(source).toContain('<RoomList rooms={rooms} isAdmin={false} />')
+    expect(source).toContain("title: 'Labs'")
+    expect(source).not.toContain("title: 'Private Practice'")
   })
 
   it('only shows the Learn link when practice access is available', () => {
     const source = read('app', '(main)', 'learn', 'page.tsx')
     expect(source).toContain('getPracticeVisibility()')
     expect(source).toContain('{hasAccess &&')
+    expect(source).toContain('Open Labs')
   })
 
   it('passes the server-derived access signal into desktop and mobile navigation', () => {

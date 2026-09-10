@@ -23,7 +23,7 @@ const TABS = [
   { id: 'content', label: 'Content', icon: MessageSquare },
   { id: 'chat', label: 'Chat', icon: MessageSquare },
   { id: 'ctf', label: 'CTF', icon: Flag },
-  { id: 'practice', label: 'Private Practice', icon: FlaskConical },
+  { id: 'practice', label: 'Labs', icon: FlaskConical },
   { id: 'seasons', label: 'Seasons', icon: Trophy },
   { id: 'regex-golf', label: 'Regex Golf', icon: Regex },
   { id: 'cco', label: 'CCO Sign-ups', icon: ClipboardList },
