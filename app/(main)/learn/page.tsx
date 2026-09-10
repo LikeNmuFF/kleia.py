@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getLearnData } from '@/app/actions/learn'
+import { getPracticeVisibility } from '@/app/actions/practice'
 import { getLevelInfo } from '@/lib/utils/learn'
 
 export const metadata: Metadata = {
@@ -9,7 +10,10 @@ export const metadata: Metadata = {
 }
 
 export default async function LearnPage() {
-  const { topics, lessons, completedLessonIds, totalXp } = await getLearnData()
+  const [{ topics, lessons, completedLessonIds, totalXp }, { hasAccess }] = await Promise.all([
+    getLearnData(),
+    getPracticeVisibility(),
+  ])
   const levelInfo = getLevelInfo(totalXp)
 
   const lessonsByTopic: Record<string, typeof lessons> = {}
@@ -30,9 +34,9 @@ export default async function LearnPage() {
         <p style={{ color: 'var(--text-secondary)' }}>
           Interactive lessons and quizzes on Python and Linux. Complete lessons to earn XP and level up.
         </p>
-        <Link href="/practice" className="mt-4 inline-flex rounded-lg px-4 py-2 text-sm font-medium" style={{ backgroundColor: 'var(--input-bg)', color: 'var(--accent)', border: '1px solid var(--border-color)' }}>
+        {hasAccess && <Link href="/practice" className="mt-4 inline-flex rounded-lg px-4 py-2 text-sm font-medium" style={{ backgroundColor: 'var(--input-bg)', color: 'var(--accent)', border: '1px solid var(--border-color)' }}>
           Open invite-only private practice
-        </Link>
+        </Link>}
       </div>
 
       {/* XP / Level card */}

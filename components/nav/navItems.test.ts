@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { COMMUNITY_NAV, DESKTOP_PRIMARY_NAV } from './navItems'
+import { COMMUNITY_NAV, DESKTOP_PRIMARY_NAV, getChallengeNav } from './navItems'
 
 describe('desktop navigation grouping', () => {
   it('keeps community items out of the desktop top-level links', () => {
@@ -12,5 +12,10 @@ describe('desktop navigation grouping', () => {
 
   it('exposes teams in community navigation', () => {
     expect(COMMUNITY_NAV.some((item) => item.href === '/teams')).toBe(true)
+  })
+
+  it('only exposes private practice to invited users or admins', () => {
+    expect(getChallengeNav(false).some((item) => item.href === '/practice')).toBe(false)
+    expect(getChallengeNav(true).some((item) => item.href === '/practice')).toBe(true)
   })
 })

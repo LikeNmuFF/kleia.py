@@ -5,7 +5,7 @@ vi.mock('@/lib/supabase/service', () => ({ getServiceClient: mocks.service }))
 vi.mock('@/lib/utils/ctf', async () => import('../../lib/utils/ctf'))
 vi.mock('@/lib/practice/access', async () => import('../../lib/practice/access'))
 vi.mock('next/cache', () => ({ revalidatePath: mocks.revalidate }))
-import { createPracticeRoom, invitePracticeMember, revokePracticeMember, submitPracticeFlag, publishPracticeChallenge, getPracticeRoom, savePracticeFeedback } from './practice'
+import { createPracticeRoom, invitePracticeMember, revokePracticeMember, submitPracticeFlag, publishPracticeChallenge, getPracticeRoom, getPracticeVisibility, savePracticeFeedback } from './practice'
 
 const id = '00000000-0000-4000-8000-000000000001'
 const userId = '00000000-0000-4000-8000-000000000002'
@@ -29,7 +29,7 @@ beforeEach(() => {
         insert: () => { mutations.push(table); return query }, upsert: () => { mutations.push(table); return query },
         delete: () => { mutations.push(table); return query },
         single: async () => result(), maybeSingle: async () => result(),
-        then: (resolve: (value: unknown) => unknown) => Promise.resolve({ data: [], error: null }).then(resolve),
+        then: (resolve: (value: unknown) => unknown) => Promise.resolve({ data: table === 'practice_room_members' && access ? [{ room_id: id }] : [], error: null }).then(resolve),
       }
       return query
     },
@@ -60,6 +60,13 @@ it('returns unavailable rooms for revoked or uninvited users', async () => {
   access = false
   expect(await getPracticeRoom(id)).toBeNull()
   expect(selected.some(columns => columns.includes('flag_hash'))).toBe(false)
+})
+it('only advertises practice when the user is invited or is an admin', async () => {
+  expect(await getPracticeVisibility()).toEqual({ hasAccess: true, isAdmin: false })
+  access = false
+  expect(await getPracticeVisibility()).toEqual({ hasAccess: false, isAdmin: false })
+  role = 'admin'
+  expect(await getPracticeVisibility()).toEqual({ hasAccess: true, isAdmin: true })
 })
 it('rejects feedback when room access has been revoked', async () => {
   access = false

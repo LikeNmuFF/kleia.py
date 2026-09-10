@@ -87,6 +87,12 @@ export const CHALLENGE_NAV: NavItem[] = [
   },
 ]
 
+export function getChallengeNav(hasPracticeAccess: boolean): NavItem[] {
+  return hasPracticeAccess
+    ? CHALLENGE_NAV
+    : CHALLENGE_NAV.filter((item) => item.href !== '/practice')
+}
+
 /** Admin-only link, rendered when the current user's profile role is 'admin'. */
 export const ADMIN_NAV: NavItem = {
   label: 'Admin',

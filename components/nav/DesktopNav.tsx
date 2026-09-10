@@ -7,7 +7,7 @@ import ChallengesDropdown from './ChallengesDropdown'
 import CommunityDropdown from './CommunityDropdown'
 import { ADMIN_NAV, CONTRIBUTOR_NAV, DESKTOP_PRIMARY_NAV } from './navItems'
 
-export default function DesktopNav({ competitionHref, isAdmin, isContributor }: { competitionHref?: string | null; isAdmin?: boolean; isContributor?: boolean }) {
+export default function DesktopNav({ competitionHref, isAdmin, isContributor, hasPracticeAccess = false }: { competitionHref?: string | null; isAdmin?: boolean; isContributor?: boolean; hasPracticeAccess?: boolean }) {
   if (competitionHref) {
     return (
       <div className="hidden lg:flex items-center gap-0.5 lg:gap-1 flex-1 justify-center min-w-0">
@@ -30,7 +30,7 @@ export default function DesktopNav({ competitionHref, isAdmin, isContributor }: 
         )
       )}
       <CommunityDropdown />
-      <ChallengesDropdown />
+      <ChallengesDropdown hasPracticeAccess={hasPracticeAccess} />
       {isAdmin && <NavLink item={ADMIN_NAV} />}
       {isContributor && <NavLink item={CONTRIBUTOR_NAV} />}
     </div>

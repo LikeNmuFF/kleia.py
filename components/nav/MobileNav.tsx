@@ -10,6 +10,7 @@ import { useChatUnread } from '@/components/chat/ChatUnreadProvider'
 import {
   ADMIN_NAV,
   CONTRIBUTOR_NAV,
+  getChallengeNav,
   isMobileMoreActive,
   isNavItemActive,
   MOBILE_SHEET_SECTIONS,
@@ -57,7 +58,7 @@ function TabLink({
   )
 }
 
-export default function MobileNav({ competitionHref, isAdmin, isContributor }: { competitionHref?: string | null; isAdmin?: boolean; isContributor?: boolean }) {
+export default function MobileNav({ competitionHref, isAdmin, isContributor, hasPracticeAccess = false }: { competitionHref?: string | null; isAdmin?: boolean; isContributor?: boolean; hasPracticeAccess?: boolean }) {
   const pathname = usePathname()
   const [sheetOpen, setSheetOpen] = useState(false)
   const chat = useChatUnread()
@@ -71,11 +72,14 @@ export default function MobileNav({ competitionHref, isAdmin, isContributor }: {
       ]
     : MOBILE_TABS
   const roleItems = [...(isAdmin ? [ADMIN_NAV] : []), ...(isContributor ? [CONTRIBUTOR_NAV] : [])]
+  const standardSections = MOBILE_SHEET_SECTIONS.map((section) =>
+    section.title === 'Challenges' ? { ...section, items: getChallengeNav(hasPracticeAccess) } : section
+  )
   const sheetSections = competitionHref
     ? []
     : roleItems.length
-      ? [...MOBILE_SHEET_SECTIONS, { title: 'Workspaces', items: roleItems }]
-      : MOBILE_SHEET_SECTIONS
+      ? [...standardSections, { title: 'Workspaces', items: roleItems }]
+      : standardSections
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {

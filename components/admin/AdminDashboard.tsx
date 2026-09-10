@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Users, MessageSquare, Shield, Flag, LayoutDashboard, Regex, Trophy, Mail, ScrollText, ClipboardList } from 'lucide-react'
+import { Users, MessageSquare, Shield, Flag, LayoutDashboard, Regex, Trophy, Mail, ScrollText, ClipboardList, FlaskConical } from 'lucide-react'
 import OverviewTab from './OverviewTab'
 import UsersTab from './UsersTab'
 import ContentTab from './ContentTab'
@@ -14,6 +14,7 @@ import EmailTab from './EmailTab'
 import LogsTab from './LogsTab'
 import CcoSignupsTab from './CcoSignupsTab'
 import FeedbackTab from './FeedbackTab'
+import PracticeAdminTab from './PracticeAdminTab'
 
 const TABS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -22,6 +23,7 @@ const TABS = [
   { id: 'content', label: 'Content', icon: MessageSquare },
   { id: 'chat', label: 'Chat', icon: MessageSquare },
   { id: 'ctf', label: 'CTF', icon: Flag },
+  { id: 'practice', label: 'Private Practice', icon: FlaskConical },
   { id: 'seasons', label: 'Seasons', icon: Trophy },
   { id: 'regex-golf', label: 'Regex Golf', icon: Regex },
   { id: 'cco', label: 'CCO Sign-ups', icon: ClipboardList },
@@ -73,6 +75,7 @@ export default function AdminDashboard({ role }: { role: string }) {
       {activeTab === 'content' && <ContentTab />}
       {activeTab === 'chat' && <ChatTab />}
       {activeTab === 'ctf' && <CTFAdminTab />}
+      {activeTab === 'practice' && <PracticeAdminTab />}
       {activeTab === 'seasons' && <SeasonsAdminTab />}
       {activeTab === 'regex-golf' && <RegexGolfAdminTab />}
       {activeTab === 'cco' && <CcoSignupsTab />}

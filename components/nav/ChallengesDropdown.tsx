@@ -5,9 +5,9 @@ import { usePathname } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
 import NavLink from './NavLink'
-import { CHALLENGE_ICON, CHALLENGE_LABEL, CHALLENGE_NAV, isChallengeRouteActive } from './navItems'
+import { CHALLENGE_ICON, CHALLENGE_LABEL, getChallengeNav, isChallengeRouteActive } from './navItems'
 
-export default function ChallengesDropdown() {
+export default function ChallengesDropdown({ hasPracticeAccess = false }: { hasPracticeAccess?: boolean }) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -91,7 +91,7 @@ export default function ChallengesDropdown() {
               borderColor: 'var(--border-color)',
             }}
           >
-            {CHALLENGE_NAV.map((item) => (
+            {getChallengeNav(hasPracticeAccess).map((item) => (
               <NavLink
                 key={item.href}
                 item={item}

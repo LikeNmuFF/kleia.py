@@ -21,6 +21,21 @@ export async function getPracticeRooms(): Promise<{ rooms: PracticeRoom[]; isAdm
   } catch (error) { return { rooms: [], isAdmin: false, ...practiceError(error, 'Could not load practice rooms.') } }
 }
 
+export async function getPracticeVisibility(): Promise<{ hasAccess: boolean; isAdmin: boolean }> {
+  try {
+    const { supabase, user, isAdmin } = await practiceCaller()
+    if (isAdmin) return { hasAccess: true, isAdmin: true }
+    const { data, error } = await supabase
+      .from('practice_room_members')
+      .select('room_id')
+      .eq('user_id', user.id)
+      .limit(1)
+    return { hasAccess: !error && Boolean(data?.length), isAdmin: false }
+  } catch {
+    return { hasAccess: false, isAdmin: false }
+  }
+}
+
 export async function getPracticeRoom(roomId: string): Promise<PracticeRoomData | null> {
   if (!isPracticeId(roomId)) return null
   const { supabase, user, isAdmin } = await practiceCaller()
@@ -58,7 +73,7 @@ export async function createPracticeRoom(input: { title: string; description: st
     if (typeof input?.title !== 'string' || !input.title.trim() || input.title.trim().length > 120 || typeof input.description !== 'string' || input.description.length > 2000) return { error: 'Enter a title (up to 120 characters) and description (up to 2000 characters).' }
     const { data, error } = await practiceService().from('practice_rooms').insert({ title: input.title.trim(), description: input.description.trim(), created_by: user.id }).select('id').single()
     if (error || !data) return { error: 'Could not create the room.' }
-    revalidatePath('/practice')
+    revalidatePath('/practice'); revalidatePath('/admin')
     return { success: true, id: data.id }
   } catch (error) { return practiceError(error) }
 }

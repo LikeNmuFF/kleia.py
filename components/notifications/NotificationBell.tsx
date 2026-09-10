@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Bell } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getNotifications, markAllNotificationsRead, markNotificationRead, type Notification } from '@/app/actions/notifications'
 
 export default function NotificationBell({ userId, initialCount = 0 }: { userId: string; initialCount?: number }) {
+  const router = useRouter()
   const [count, setCount] = useState(initialCount)
   const [open, setOpen] = useState(false)
   const [items, setItems] = useState<Notification[]>([])
@@ -17,10 +19,11 @@ export default function NotificationBell({ userId, initialCount = 0 }: { userId:
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `recipient_id=eq.${userId}` }, (payload: { new: Notification }) => {
         setCount((value) => value + 1)
         setItems((value) => [payload.new as Notification, ...value].slice(0, 20))
+        if (payload.new.type === 'practice_invite') router.refresh()
       })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
-  }, [userId])
+  }, [router, userId])
 
   const toggle = async () => {
     const next = !open

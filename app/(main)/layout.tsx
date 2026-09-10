@@ -15,6 +15,7 @@ import SupportButton from '@/components/SupportButton'
 import SeasonBoundaryRefresh from '@/components/competition/SeasonBoundaryRefresh'
 import NotificationBell from '@/components/notifications/NotificationBell'
 import { getUnreadNotificationCount } from '@/app/actions/notifications'
+import { getPracticeVisibility } from '@/app/actions/practice'
 
 export default async function MainLayout({
   children,
@@ -62,7 +63,10 @@ export default async function MainLayout({
 
   const isAdmin = profile?.role === 'admin'
   const isContributor = profile?.role === 'contributor'
-  const unreadNotifications = await getUnreadNotificationCount()
+  const [unreadNotifications, practiceVisibility] = await Promise.all([
+    getUnreadNotificationCount(),
+    getPracticeVisibility(),
+  ])
 
   return (
     <ChatUnreadProvider userId={user?.id || null}>
@@ -93,7 +97,7 @@ export default async function MainLayout({
             </Link>
 
             {/* Desktop Navigation Links */}
-            <DesktopNav competitionHref={competitionHref} isAdmin={isAdmin} isContributor={isContributor} />
+            <DesktopNav competitionHref={competitionHref} isAdmin={isAdmin} isContributor={isContributor} hasPracticeAccess={practiceVisibility.hasAccess} />
 
             {/* User Menu */}
             <div className="flex items-center justify-end gap-2 lg:gap-2.5 shrink-0">
@@ -140,7 +144,7 @@ export default async function MainLayout({
       </div>
 
       {/* Mobile bottom navigation */}
-      <MobileNav competitionHref={competitionHref} isAdmin={isAdmin} isContributor={isContributor} />
+      <MobileNav competitionHref={competitionHref} isAdmin={isAdmin} isContributor={isContributor} hasPracticeAccess={practiceVisibility.hasAccess} />
     </ChatUnreadProvider>
   )
 }
