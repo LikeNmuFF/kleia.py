@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { canUploadGlobalChallengeFile, canUploadPracticeRoomFile, canUploadSeasonChallengeFile, uploadScopeMatchesChallenge } from './scope'
+import { canUploadGlobalChallengeFile, canUploadPracticeRoomFile, canUploadSeasonChallengeFile, getChallengeUploadRateLimit, uploadScopeMatchesChallenge } from './scope'
 
 describe('challenge upload scope', () => {
   it('allows admins and contributors to upload global files', () => {
@@ -29,5 +29,12 @@ describe('challenge upload scope', () => {
     expect(canUploadPracticeRoomFile({ role: 'contributor', hasSeasonScope: false })).toBe(false)
     expect(canUploadPracticeRoomFile({ role: 'user', hasSeasonScope: false })).toBe(false)
     expect(canUploadPracticeRoomFile({ role: 'admin', hasSeasonScope: true })).toBe(false)
+  })
+
+  it('rate limits contributors but leaves admin uploads unlimited', () => {
+    expect(getChallengeUploadRateLimit('admin')).toBeNull()
+    expect(getChallengeUploadRateLimit('contributor')).toEqual({ windowMs: 60 * 60 * 1000, maxRequests: 5 })
+    expect(getChallengeUploadRateLimit('user')).toBeNull()
+    expect(getChallengeUploadRateLimit(null)).toBeNull()
   })
 })

@@ -1,5 +1,11 @@
 export type CallerRole = 'admin' | 'contributor' | 'user' | null
 
+export function getChallengeUploadRateLimit(role: CallerRole): { windowMs: number; maxRequests: number } | null {
+  return role === 'contributor'
+    ? { windowMs: 60 * 60 * 1000, maxRequests: 5 }
+    : null
+}
+
 export function canUploadGlobalChallengeFile(role: CallerRole): boolean {
   return role === 'admin' || role === 'contributor'
 }

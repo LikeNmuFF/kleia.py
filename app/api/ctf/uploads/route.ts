@@ -16,6 +16,7 @@ import {
   canUploadGlobalChallengeFile,
   canUploadPracticeRoomFile,
   canUploadSeasonChallengeFile,
+  getChallengeUploadRateLimit,
   type CallerRole,
 } from '@/lib/ctf/uploads/scope'
 import { MAX_UPLOAD_BYTES } from '@/lib/ctf/uploads/types'
@@ -63,8 +64,11 @@ async function upload(request: NextRequest) {
   const { supabase, user, role } = await getCaller()
   if (!user) return jsonError('Not logged in', 401)
 
-  const rate = checkNamedRateLimit('ctf-upload', user.id, { windowMs: 60 * 60 * 1000, maxRequests: 5 })
-  if (!rate.allowed) return rateLimitResponse(rate.retryAfter ?? 3600)
+  const rateLimit = getChallengeUploadRateLimit(role)
+  if (rateLimit) {
+    const rate = checkNamedRateLimit('ctf-upload', user.id, rateLimit)
+    if (!rate.allowed) return rateLimitResponse(rate.retryAfter ?? 3600)
+  }
 
   let form: FormData
   try {
