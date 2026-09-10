@@ -9,5 +9,5 @@ export default async function PracticeRoomPage({ params }: { params: Promise<{ i
   const { id } = await params
   const data = await getPracticeRoom(id)
   if (!data) notFound()
-  return <main className="mx-auto max-w-5xl px-4 py-8"><PracticeRoom data={data} /></main>
+  return <main className="mx-auto max-w-6xl px-4 py-8"><PracticeRoom data={data} /></main>
 }

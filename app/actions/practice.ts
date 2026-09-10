@@ -17,7 +17,23 @@ export async function getPracticeRooms(): Promise<{ rooms: PracticeRoom[]; isAdm
     const { supabase, isAdmin } = await practiceCaller()
     const { data, error } = await supabase.from('practice_rooms').select(roomFields).order('created_at', { ascending: false })
     if (error) throw error
-    return { rooms: data ?? [], isAdmin }
+    const rooms = data ?? []
+    if (rooms.length === 0) return { rooms, isAdmin }
+    const roomIds = rooms.map((room) => room.id)
+    const [members, challenges] = await Promise.all([
+      supabase.from('practice_room_members').select('room_id').in('room_id', roomIds),
+      supabase.from('practice_challenges').select('room_id, is_active').in('room_id', roomIds),
+    ])
+    if (members.error || challenges.error) throw members.error ?? challenges.error
+    return {
+      isAdmin,
+      rooms: rooms.map((room) => ({
+        ...room,
+        member_count: (members.data ?? []).filter((member) => member.room_id === room.id).length,
+        challenge_count: (challenges.data ?? []).filter((challenge) => challenge.room_id === room.id).length,
+        active_challenge_count: (challenges.data ?? []).filter((challenge) => challenge.room_id === room.id && challenge.is_active).length,
+      })),
+    }
   } catch (error) { return { rooms: [], isAdmin: false, ...practiceError(error, 'Could not load practice rooms.') } }
 }
 

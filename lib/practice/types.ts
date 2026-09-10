@@ -1,4 +1,7 @@
-export type PracticeRoom = { id: string; title: string; description: string; created_at: string }
+export type PracticeRoom = {
+  id: string; title: string; description: string; created_at: string;
+  member_count?: number; challenge_count?: number; active_challenge_count?: number;
+}
 export type PracticeMember = { user_id: string; invited_at: string; last_reminded_at: string | null; display_name: string }
 export type PracticeChallenge = {
   id: string; room_id: string; title: string; description: string; category: string; difficulty: string;

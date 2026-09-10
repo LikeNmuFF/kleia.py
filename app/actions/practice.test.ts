@@ -12,11 +12,12 @@ const userId = '00000000-0000-4000-8000-000000000002'
 let signedIn: boolean
 let role: string
 let access: boolean
+let adminRoomCounts: boolean
 const selected: string[] = []
 const mutations: string[] = []
 beforeEach(() => {
   vi.clearAllMocks(); selected.length = 0; mutations.length = 0
-  signedIn = true; role = 'user'; access = true
+  signedIn = true; role = 'user'; access = true; adminRoomCounts = false
   mocks.rpc.mockImplementation(async (name: string) => ({ data: name === 'practice_can_access' ? access : name === 'practice_submit' ? { correct: true, alreadySolved: false } : id, error: null }))
   const client = {
     auth: { getUser: async () => ({ data: { user: signedIn ? { id: userId } : null }, error: null }) },
@@ -29,7 +30,7 @@ beforeEach(() => {
         insert: () => { mutations.push(table); return query }, upsert: () => { mutations.push(table); return query },
         delete: () => { mutations.push(table); return query },
         single: async () => result(), maybeSingle: async () => result(),
-        then: (resolve: (value: unknown) => unknown) => Promise.resolve({ data: table === 'practice_room_members' && access ? [{ room_id: id }] : [], error: null }).then(resolve),
+        then: (resolve: (value: unknown) => unknown) => Promise.resolve({ data: table === 'practice_rooms' && access ? [{ id, title: 'Room', description: '', created_at: '' }] : table === 'practice_room_members' && access ? [{ room_id: id }] : table === 'practice_challenges' && adminRoomCounts ? [{ room_id: id, is_active: true }, { room_id: id, is_active: false }] : [], error: null }).then(resolve),
       }
       return query
     },
@@ -67,6 +68,11 @@ it('only advertises practice when the user is invited or is an admin', async () 
   expect(await getPracticeVisibility()).toEqual({ hasAccess: false, isAdmin: false })
   role = 'admin'
   expect(await getPracticeVisibility()).toEqual({ hasAccess: true, isAdmin: true })
+})
+it('adds tester and challenge summaries for the admin room workspace', async () => {
+  role = 'admin'; adminRoomCounts = true
+  const result = await (await import('./practice')).getPracticeRooms()
+  expect(result.rooms[0]).toMatchObject({ member_count: 1, challenge_count: 2, active_challenge_count: 1 })
 })
 it('rejects feedback when room access has been revoked', async () => {
   access = false
