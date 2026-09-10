@@ -1,0 +1,59 @@
+import { renderToStaticMarkup } from 'react-dom/server'
+import { describe, expect, it, vi } from 'vitest'
+import RoomList from './RoomList'
+import PracticeRoom from './PracticeRoom'
+
+vi.mock('@/app/actions/practice', () => ({
+  createPracticeRoom: vi.fn(), findPracticeUsers: vi.fn(), invitePracticeMember: vi.fn(),
+  remindPracticeMember: vi.fn(), revokePracticeMember: vi.fn(), savePracticeChallenge: vi.fn(),
+  submitPracticeFlag: vi.fn(), savePracticeFeedback: vi.fn(), publishPracticeChallenge: vi.fn(),
+}))
+vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }))
+
+const room = { id: 'room-1', title: 'Web Review Lab', description: 'Test challenges before release.', created_at: '2026-09-09T00:00:00Z' }
+
+describe('private practice UI', () => {
+  it('explains the invite-only empty state', () => {
+    const html = renderToStaticMarkup(<RoomList rooms={[]} isAdmin={false} />)
+    expect(html).toMatch(/invite-only/i)
+    expect(html).not.toContain('Create room')
+  })
+
+  it('gives admins room creation controls', () => {
+    const html = renderToStaticMarkup(<RoomList rooms={[room]} isAdmin />)
+    expect(html).toContain('Create room')
+    expect(html).toContain('Web Review Lab')
+  })
+
+  it('renders member solve, download, lesson, and feedback controls', () => {
+    const html = renderToStaticMarkup(<PracticeRoom data={{
+      room, isAdmin: false, userId: 'user-1', members: [], attempts: [], feedback: [], publications: [],
+      challenges: [{ id: 'challenge-1', room_id: room.id, title: 'Cookie Trail', description: 'Find the flag.', category: 'web', difficulty: 'easy', points: 100, hint: 'Inspect storage.', explanation: 'The cookie was unsigned.', upload_id: 'upload-1', learn_topic_slug: 'web', learn_lesson_slug: 'cookies', is_active: true, created_at: room.created_at }],
+    }} />)
+    expect(html).toContain('Submit flag')
+    expect(html).toContain('Send feedback')
+    expect(html).toContain('/api/practice/files/upload-1')
+    expect(html).toContain('/learn/web/cookies')
+    expect(html).toContain('Practice points only')
+  })
+
+  it('shows admin review and global snapshot publication language', () => {
+    const html = renderToStaticMarkup(<PracticeRoom data={{
+      room,
+      isAdmin: true,
+      userId: 'admin',
+      members: [{ user_id: 'user-1', display_name: 'Test User', invited_at: room.created_at, last_reminded_at: null }],
+      attempts: [{ id: 'attempt-1', challenge_id: 'challenge-1', user_id: 'user-1', is_correct: false, created_at: room.created_at }],
+      feedback: [{ challenge_id: 'challenge-1', user_id: 'user-1', message: 'Clarify the hint.', updated_at: room.created_at }],
+      publications: [],
+      challenges: [{ id: 'challenge-1', room_id: room.id, title: 'Cookie Trail', description: 'Find the flag.', category: 'web', difficulty: 'easy', points: 100, hint: null, explanation: null, upload_id: null, learn_topic_slug: null, learn_lesson_slug: null, is_active: true, created_at: room.created_at }],
+    }} />)
+    expect(html).toContain('Invite member')
+    expect(html).toContain('Add challenge')
+    expect(html).toContain('global snapshot')
+    expect(html).toContain('Submit flag')
+    expect(html).toContain('Incorrect')
+    expect(html).toContain('Test User')
+    expect(html).toContain('Clarify the hint.')
+  })
+})

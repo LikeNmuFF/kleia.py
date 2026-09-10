@@ -68,6 +68,7 @@ export type ChallengeUploadRow = {
   owner_id: string
   challenge_id: string | null
   scope_season_id: string | null
+  scope_room_id?: string | null
   cloudinary_asset_id: string
   cloudinary_public_id: string
   original_name: string

@@ -78,13 +78,13 @@ async function resolveApprovedUploadForChallenge(
   if (!uploadId) return { fileUrl: null, uploadId: null }
   const { data: upload } = await supabase
     .from('ctf_challenge_uploads')
-    .select('id, owner_id, challenge_id, scope_season_id, scan_status')
+    .select('id, owner_id, challenge_id, scope_season_id, scope_room_id, scan_status')
     .eq('id', uploadId)
     .maybeSingle()
   if (!upload || upload.owner_id !== userId) return { fileUrl: null, uploadId: null, error: 'File scan rejected' }
   if (upload.scan_status !== 'approved') return { fileUrl: null, uploadId: null, error: 'File scan rejected' }
   if (upload.challenge_id) return { fileUrl: null, uploadId: null, error: 'File scan rejected' }
-  if (!uploadScopeMatchesChallenge({ uploadSeasonId: upload.scope_season_id, challengeSeasonId })) return { fileUrl: null, uploadId: null, error: 'File scan rejected' }
+  if (!uploadScopeMatchesChallenge({ uploadSeasonId: upload.scope_season_id, challengeSeasonId, uploadRoomId: upload.scope_room_id })) return { fileUrl: null, uploadId: null, error: 'File scan rejected' }
   return { fileUrl: `/api/ctf/files/${upload.id}`, uploadId: upload.id }
 }
 

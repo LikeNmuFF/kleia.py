@@ -14,6 +14,7 @@ import { normalizeUploadFileName } from '@/lib/ctf/uploads/filename'
 import { isAllowedUploadOrigin } from '@/lib/ctf/uploads/origin'
 import {
   canUploadGlobalChallengeFile,
+  canUploadPracticeRoomFile,
   canUploadSeasonChallengeFile,
   type CallerRole,
 } from '@/lib/ctf/uploads/scope'
@@ -79,6 +80,13 @@ async function upload(request: NextRequest) {
 
   const seasonIdValue = form.get('season_id')
   const seasonId = typeof seasonIdValue === 'string' && seasonIdValue.trim() ? seasonIdValue.trim() : null
+  const roomIdValue = form.get('room_id')
+  const roomId = typeof roomIdValue === 'string' && roomIdValue.trim() ? roomIdValue.trim() : null
+  if (roomId) {
+    if (!canUploadPracticeRoomFile({ role, hasSeasonScope: Boolean(seasonId) }) || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(roomId)) return jsonError('Invalid practice room upload.', 403)
+    const { data: room, error } = await supabase.from('practice_rooms').select('id').eq('id', roomId).maybeSingle()
+    if (error || !room) return jsonError('Practice room not found.', 404)
+  }
   let invited = false
   if (seasonId && role === 'contributor') {
     const { data: invitation, error } = await supabase
@@ -133,6 +141,7 @@ async function upload(request: NextRequest) {
       owner_id: user.id,
       challenge_id: null,
       scope_season_id: seasonId,
+      scope_room_id: roomId,
       cloudinary_asset_id: uploaded.assetId,
       cloudinary_public_id: uploaded.publicId,
       original_name: normalized.originalName,

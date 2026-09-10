@@ -8,6 +8,10 @@ export function canUploadSeasonChallengeFile(input: { role: CallerRole; invited:
   return input.role === 'admin' || (input.role === 'contributor' && input.invited)
 }
 
-export function uploadScopeMatchesChallenge(input: { uploadSeasonId: string | null; challengeSeasonId: string | null }): boolean {
-  return input.uploadSeasonId === input.challengeSeasonId
+export function canUploadPracticeRoomFile(input: { role: CallerRole; hasSeasonScope: boolean }): boolean {
+  return input.role === 'admin' && !input.hasSeasonScope
+}
+
+export function uploadScopeMatchesChallenge(input: { uploadSeasonId: string | null; challengeSeasonId: string | null; uploadRoomId?: string | null }): boolean {
+  return !input.uploadRoomId && input.uploadSeasonId === input.challengeSeasonId
 }

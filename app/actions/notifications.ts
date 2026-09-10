@@ -12,6 +12,8 @@ export type NotificationType =
   | 'daily_mission'
   | 'spectator_invite'
   | 'contributor_invite'
+  | 'practice_invite'
+  | 'practice_reminder'
 
 export interface Notification {
   id: string

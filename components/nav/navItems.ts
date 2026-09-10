@@ -17,6 +17,7 @@ import {
   GraduationCap,
   Handshake,
   Activity,
+  FlaskConical,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -63,6 +64,12 @@ export const DESKTOP_PRIMARY_NAV: NavItem[] = [
 ]
 
 export const CHALLENGE_NAV: NavItem[] = [
+  {
+    label: 'Private Practice',
+    href: '/practice',
+    icon: FlaskConical,
+    matchPrefix: true,
+  },
   {
     label: 'CTF',
     href: '/ctf',
