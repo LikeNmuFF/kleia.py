@@ -1,0 +1,16 @@
+.flagShake {
+  animation: flag-shake 320ms ease-out;
+}
+
+@keyframes flag-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  50% { transform: translateX(4px); }
+  75% { transform: translateX(-2px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flagShake {
+    animation: none;
+  }
+}
