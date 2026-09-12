@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({ createClient: vi.fn() }))
 vi.mock('@/lib/supabase/server', () => ({ createClient: mocks.createClient }))
 vi.mock('@/app/actions/competition-status', async () => import('../../actions/competition-status'))
 vi.mock('@/components/ctf/ChallengeRatingBadge', () => ({ default: () => null }))
+vi.mock('@/components/Avatar', () => ({ default: () => null }))
 vi.mock('@/components/ctf/ChallengeReviewForm', () => ({ default: () => null }))
 vi.mock('@/components/ctf/ChallengeReviews', () => ({ default: () => null }))
 vi.mock('@/components/ctf/AIFairPlayBanner', () => ({ default: () => null }))
@@ -41,7 +42,7 @@ beforeEach(() => {
 it('keeps disabled challenges and their existing solve status visible in the list', () => {
   const html = renderToStaticMarkup(createElement(CTFClient, {
     challenges: [challenge], solvedIds: [challenge.id], solvesById: { [challenge.id]: 3 },
-    ratingsById: {}, seasonOptions: [], initialSeasonSlug: 'all',
+    ratingsById: {}, recentSolves: [], seasonOptions: [], initialSeasonSlug: 'all',
   }))
   expect(html).toContain('Test challenge')
   expect(html).toContain('Challenge is under maintenance.')
@@ -52,7 +53,7 @@ it('keeps disabled challenges and their existing solve status visible in the lis
 it('does not show maintenance for re-enabled challenges', () => {
   const html = renderToStaticMarkup(createElement(CTFClient, {
     challenges: [{ ...challenge, is_active: true }], solvedIds: [], solvesById: {},
-    ratingsById: {}, seasonOptions: [], initialSeasonSlug: 'all',
+    ratingsById: {}, recentSolves: [], seasonOptions: [], initialSeasonSlug: 'all',
   }))
   expect(html).toContain('Test challenge')
   expect(html).not.toContain('Challenge is under maintenance.')

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
+import Avatar from '@/components/Avatar'
 import ChallengeRatingBadge from '@/components/ctf/ChallengeRatingBadge'
 
 const CATEGORIES = [
@@ -19,6 +20,8 @@ const DIFFICULTY_STYLES: Record<string, { color: string; bg: string; label: stri
   hard: { color: '#ef4444', bg: 'rgba(239,68,68,0.12)', label: 'Hard' },
 }
 
+const DIFFICULTY_ORDER: Record<string, number> = { easy: 0, medium: 1, hard: 2 }
+
 const SOLVED_FILTERS = [
   { key: 'all', label: 'All' },
   { key: 'solved', label: 'Solved' },
@@ -26,6 +29,16 @@ const SOLVED_FILTERS = [
 ] as const
 
 type SolvedFilter = (typeof SOLVED_FILTERS)[number]['key']
+
+const SORT_OPTIONS = [
+  { key: 'newest', label: 'Newest' },
+  { key: 'popular', label: 'Most solved' },
+  { key: 'points-desc', label: 'Points (high→low)' },
+  { key: 'points-asc', label: 'Points (low→high)' },
+  { key: 'difficulty', label: 'Difficulty' },
+] as const
+
+type SortKey = (typeof SORT_OPTIONS)[number]['key']
 
 interface Challenge {
   id: string
@@ -46,11 +59,35 @@ interface SeasonOption {
   slug: string
 }
 
+interface RecentSolve {
+  user_id: string
+  username: string
+  avatar_url: string | null
+  challenge_id: string
+  title: string
+  category: string
+  points: number
+  solved_at: string
+}
+
+function timeAgo(iso: string): string {
+  const seconds = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000))
+  if (seconds < 60) return 'just now'
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  if (days < 30) return `${days}d ago`
+  return new Date(iso).toLocaleDateString()
+}
+
 export default function CTFClient({
   challenges,
   solvedIds,
   solvesById,
   ratingsById,
+  recentSolves,
   seasonOptions,
   initialSeasonSlug,
 }: {
@@ -58,12 +95,14 @@ export default function CTFClient({
   solvedIds: string[]
   solvesById: Record<string, number>
   ratingsById: Record<string, { avgDifficulty: number; avgQuality: number; reviewCount: number }>
+  recentSolves: RecentSolve[]
   seasonOptions: SeasonOption[]
   initialSeasonSlug: string
 }) {
   const activeSeasonSlug = seasonOptions.some(season => season.slug === initialSeasonSlug) ? initialSeasonSlug : 'all'
   const [activeCategory, setActiveCategory] = useState('all')
   const [activeSolvedFilter, setActiveSolvedFilter] = useState<SolvedFilter>('all')
+  const [activeSort, setActiveSort] = useState<SortKey>('newest')
 
   const solvedSet = useMemo(() => new Set(solvedIds), [solvedIds])
 
@@ -82,6 +121,25 @@ export default function CTFClient({
     if (activeSolvedFilter === 'solved') return byCategory.filter(c => solvedSet.has(c.id))
     return byCategory.filter(c => !solvedSet.has(c.id))
   }, [byCategory, activeSolvedFilter, solvedSet])
+
+  const sorted = useMemo(() => {
+    const list = [...filtered]
+    switch (activeSort) {
+      case 'popular':
+        return list.sort((a, b) => (solvesById[b.id] ?? 0) - (solvesById[a.id] ?? 0) || b.points - a.points)
+      case 'points-desc':
+        return list.sort((a, b) => b.points - a.points)
+      case 'points-asc':
+        return list.sort((a, b) => a.points - b.points)
+      case 'difficulty':
+        return list.sort(
+          (a, b) => (DIFFICULTY_ORDER[a.difficulty] ?? 1) - (DIFFICULTY_ORDER[b.difficulty] ?? 1) || b.points - a.points
+        )
+      case 'newest':
+      default:
+        return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    }
+  }, [filtered, activeSort, solvesById])
 
   const stats = useMemo(() => {
     const total = bySeason.length
@@ -295,6 +353,28 @@ export default function CTFClient({
         })}
       </div>
 
+      {/* Sort control */}
+      <div className="flex items-center gap-2 flex-wrap mb-6">
+        <span className="text-sm mr-1" style={{ color: 'var(--text-muted)' }}>Sort</span>
+        {SORT_OPTIONS.map(option => {
+          const isActive = activeSort === option.key
+          return (
+            <button
+              key={option.key}
+              onClick={() => setActiveSort(option.key)}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all"
+              style={{
+                backgroundColor: isActive ? 'var(--accent)' : 'var(--card-bg)',
+                color: isActive ? '#fff' : 'var(--text-secondary)',
+                border: isActive ? 'none' : '1px solid var(--border-color)',
+              }}
+            >
+              <span>{option.label}</span>
+            </button>
+          )
+        })}
+      </div>
+
       {/* Tile grid */}
       {filtered.length === 0 ? (
         <div className="text-center py-16">
@@ -329,7 +409,7 @@ export default function CTFClient({
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map(challenge => {
+          {sorted.map(challenge => {
             const diff = DIFFICULTY_STYLES[challenge.difficulty]
             const cat = CATEGORIES.find(c => c.key === challenge.category)
             const isSolved = solvedSet.has(challenge.id)
@@ -431,6 +511,51 @@ export default function CTFClient({
             )
           })}
         </div>
+      )}
+
+      {/* Recent global solves feed */}
+      {recentSolves.length > 0 && (
+        <section className="mt-12">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <h2 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
+              Recent Solves
+            </h2>
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Live global solve log</span>
+          </div>
+          <div className="rounded-2xl" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
+            {recentSolves.map((solve, i) => (
+              <div
+                key={`${solve.user_id}-${solve.challenge_id}-${solve.solved_at}`}
+                className="flex items-center gap-3 px-4 py-2.5 text-sm"
+                style={{ borderTop: i === 0 ? 'none' : '1px solid var(--border-color)' }}
+              >
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  {solve.avatar_url ? (
+                    <Avatar src={solve.avatar_url} size={32} />
+                  ) : (
+                    <span className="text-white text-xs font-medium">
+                      {solve.username?.[0]?.toUpperCase() || '?'}
+                    </span>
+                  )}
+                </div>
+                <Link href={`/profile/${solve.username}`} className="font-medium truncate hover:underline" style={{ color: 'var(--text-primary)' }}>
+                  {solve.username}
+                </Link>
+                <span className="shrink-0" style={{ color: 'var(--text-muted)' }}>solved</span>
+                <Link href={`/ctf/${solve.challenge_id}`} prefetch={false} className="font-medium truncate hover:underline min-w-0" style={{ color: 'var(--accent)' }}>
+                  {solve.title}
+                </Link>
+                <span className="ml-auto flex-shrink-0 text-right">
+                  <span className="font-bold" style={{ color: 'var(--text-primary)' }}>{solve.points}</span>{' '}
+                  <span className="text-xs" style={{ color: 'var(--text-muted)' }}>pts</span>
+                  <span className="block text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                    {timeAgo(solve.solved_at)}
+                  </span>
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
       )}
     </div>
   )

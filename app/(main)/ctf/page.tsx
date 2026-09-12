@@ -27,6 +27,23 @@ async function getSeasonFilterData() {
   return (data || []).filter(season => Boolean(season.slug)) as SeasonFilterOption[]
 }
 
+interface RecentSolve {
+  user_id: string
+  username: string
+  avatar_url: string | null
+  challenge_id: string
+  title: string
+  category: string
+  points: number
+  solved_at: string
+}
+
+async function getRecentGlobalSolves(): Promise<RecentSolve[]> {
+  const supabase = await createClient()
+  const { data } = await supabase.rpc('get_recent_global_solves')
+  return (data || []) as RecentSolve[]
+}
+
 async function getChallengeData(userId?: string) {
   const supabase = await createClient()
 
@@ -150,9 +167,10 @@ export default async function CTFPage({
   const { data: { user } } = await supabase.auth.getUser()
   const params = await searchParams
 
-  const [{ challenges, solvedIds, solvesById, ratingsById }, seasonOptions] = await Promise.all([
+  const [{ challenges, solvedIds, solvesById, ratingsById }, seasonOptions, recentSolves] = await Promise.all([
     getChallengeData(user?.id),
     getSeasonFilterData(),
+    getRecentGlobalSolves(),
   ])
   const seasonSlug = seasonOptions.some(season => season.slug === params.season) ? params.season! : 'all'
 
@@ -167,6 +185,7 @@ export default async function CTFPage({
         solvedIds={solvedIds}
         solvesById={solvesById}
         ratingsById={ratingsById}
+        recentSolves={recentSolves}
         seasonOptions={seasonOptions}
         initialSeasonSlug={seasonSlug}
       />

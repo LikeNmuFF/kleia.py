@@ -25,4 +25,32 @@ describe('/ctf season filtering', () => {
     expect(source).toContain('bySeason')
     expect(source.indexOf('const bySeason = useMemo')).toBeLessThan(source.indexOf('const byCategory = useMemo'))
   })
+
+  test('server loads recent global solves and passes them to the client', () => {
+    const source = pageSource()
+
+    expect(source).toContain("rpc('get_recent_global_solves')")
+    expect(source).toContain('getRecentGlobalSolves')
+    expect(source).toContain('recentSolves={recentSolves}')
+  })
+
+  test('client exposes a sort control and applies it to the filtered grid', () => {
+    const source = clientSource()
+
+    expect(source).toContain('SORT_OPTIONS')
+    expect(source).toContain('activeSort')
+    expect(source).toContain('const sorted = useMemo')
+    // Sorting must be computed after filtering (built on `filtered`).
+    expect(source.indexOf('const sorted = useMemo')).toBeGreaterThan(source.indexOf('const filtered = useMemo'))
+    // The grid renders the sorted list, not the raw filtered list.
+    expect(source).toContain('{sorted.map(')
+  })
+
+  test('client renders a recent global solves feed', () => {
+    const source = clientSource()
+
+    expect(source).toContain('Recent Solves')
+    expect(source).toContain('recentSolves.length > 0')
+    expect(source).toContain('timeAgo(solve.solved_at)')
+  })
 })
