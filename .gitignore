@@ -75,3 +75,4 @@ solve-*.cjs
 
 # Generated private HackForGov artifacts and runtime flags
 hack4gov_chall/.artifacts/
+hack4gov_chall/__pycache__/
