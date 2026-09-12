@@ -14,6 +14,116 @@ import {
 import ChallengeEditor from './ChallengeEditor'
 import type { PracticeChallenge, PracticeRoomData } from '@/lib/practice/types'
 
+const DIFFICULTY_COLORS = {
+  easy: '#22c55e',
+  medium: '#eab308',
+  hard: '#ef4444',
+}
+
+function DifficultyBadge({ difficulty }: { difficulty: string }) {
+  const color = DIFFICULTY_COLORS[difficulty as keyof typeof DIFFICULTY_COLORS] || '#6b7280'
+  const bg = difficulty === 'easy'
+    ? 'rgba(34,197,94,0.12)'
+    : difficulty === 'medium'
+      ? 'rgba(234,179,8,0.12)'
+      : 'rgba(239,68,68,0.12)'
+  return (
+    <span
+      className="px-2 py-0.5 text-[11px] font-semibold rounded"
+      style={{ color: color, backgroundColor: bg }}
+    >
+      {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
+    </span>
+  )
+}
+
+function ChallengeTile({ challenge, data, onEdit }: { challenge: PracticeChallenge; data: PracticeRoomData; onEdit: () => void }) {
+  const solved = data.attempts.some((attempt) => attempt.challenge_id === challenge.id && attempt.user_id === data.userId && attempt.is_correct)
+  const ownFeedback = data.feedback.find((item) => item.challenge_id === challenge.id && item.user_id === data.userId)?.message ?? ''
+  const attempts = data.attempts.filter((attempt) => attempt.challenge_id === challenge.id)
+  const feedback = data.feedback.filter((item) => item.challenge_id === challenge.id)
+  const difficultyColor = challenge.difficulty === 'easy' ? '#22c55e' : challenge.difficulty === 'hard' ? '#ef4444' : '#f59e0b'
+
+  return (
+    <Link
+      key={challenge.id}
+      href={`/practice/${challenge.room_id}`}
+      className="group block rounded-xl transition-all hover:scale-[1.02] hover:shadow-lg"
+      style={{
+        backgroundColor: 'var(--card-bg)',
+        border: '1px solid var(--border-color)',
+      }}
+    >
+      {/* Top bar: category icon + difficulty + points + solved status */}
+      <div className="flex items-center justify-between p-4 pb-0">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">{challenge.category}</span>
+          <DifficultyBadge difficulty={challenge.difficulty} />
+          {solved && (
+            <span
+              className="px-2 py-0.5 text-[11px] font-semibold rounded flex items-center gap-1"
+              style={{ color: '#22c55e', backgroundColor: 'rgba(34,197,94,0.14)' }}
+            >
+              ✓ Solved
+            </span>
+          )}
+        </div>
+        <div className="text-right">
+          <div className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+            {challenge.points}
+          </div>
+          <div className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+            Pts
+          </div>
+        </div>
+      </div>
+
+      {/* Title */}
+      <div className="px-4 py-3">
+        <h3
+          className="font-semibold text-base leading-snug group-hover:opacity-80 transition-opacity break-words"
+          style={{ color: 'var(--text-primary)' }}
+        >
+          {challenge.title}
+        </h3>
+        {challenge.is_active === false && (
+          <p className="mt-2 text-xs font-medium text-amber-400">
+            Challenge is under maintenance.
+          </p>
+        )}
+      </div>
+
+      {/* Bottom bar: solves + hint + author */}
+      <div
+        className="flex items-center gap-3 px-4 py-2.5 text-xs border-t"
+        style={{ borderColor: 'var(--border-color)', color: 'var(--text-muted)' }}
+      >
+        <span className="flex items-center gap-1">
+          <span>⛳</span>
+          <span className="font-medium" style={{ color: 'var(--text-secondary)' }}>
+            {attempts.length}
+          </span>
+          {attempts.length === 1 ? 'solve' : 'solves'}
+        </span>
+        {challenge.hint && (
+          <span className="flex items-center gap-1">
+            <span>💡</span>
+            Hint
+          </span>
+        )}
+        {challenge.author && (
+          <span className="flex items-center gap-1 truncate ml-auto">
+            <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <span className="truncate">{challenge.author}</span>
+          </span>
+        )}
+      </div>
+    </Link>
+  )
+}
+
 const primaryButton = 'inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-[10px] bg-violet-600 px-4 text-sm font-semibold text-white transition-[background-color,transform,opacity] duration-200 hover:bg-violet-500 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-primary)] disabled:cursor-not-allowed disabled:opacity-50'
 const secondaryButton = 'inline-flex min-h-9 shrink-0 items-center justify-center gap-2 rounded-[10px] border px-3 text-sm font-semibold transition-[background-color,border-color,transform] duration-200 hover:bg-[var(--hover-bg)] active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-primary)] disabled:cursor-not-allowed disabled:opacity-50'
 
@@ -79,94 +189,6 @@ function ActionForm({ challengeId, kind, initial }: { challengeId: string; kind:
   )
 }
 
-function ChallengeCard({ challenge, data, onEdit }: { challenge: PracticeChallenge; data: PracticeRoomData; onEdit: () => void }) {
-  const [publishPending, startPublish] = useTransition()
-  const [publishMessage, setPublishMessage] = useState('')
-  const publication = data.publications.find((item) => item.practice_challenge_id === challenge.id)
-  const [publishedId, setPublishedId] = useState(publication?.ctf_challenge_id)
-  const solved = data.attempts.some((attempt) => attempt.challenge_id === challenge.id && attempt.user_id === data.userId && attempt.is_correct)
-  const ownFeedback = data.feedback.find((item) => item.challenge_id === challenge.id && item.user_id === data.userId)?.message ?? ''
-  const attempts = data.attempts.filter((attempt) => attempt.challenge_id === challenge.id)
-  const feedback = data.feedback.filter((item) => item.challenge_id === challenge.id)
-  const difficultyColor = challenge.difficulty === 'easy' ? '#22c55e' : challenge.difficulty === 'hard' ? '#ef4444' : '#f59e0b'
-
-  return (
-    <article aria-label={`Challenge workspace: ${challenge.title}`} className="overflow-hidden rounded-2xl border transition-[border-color] duration-200 hover:border-[var(--border-hover)]" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--border-color)' }}>
-      <div className="border-b px-5 py-4 sm:px-6" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--input-bg)' }}>
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0">
-            <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
-              <span className="uppercase tracking-[0.12em]">{challenge.category}</span>
-              <span aria-hidden className="h-3 w-px" style={{ backgroundColor: 'var(--border-color)' }} />
-              <span style={{ color: difficultyColor }}>{challenge.difficulty}</span>
-              <span>{challenge.points} points</span>
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <h3 className="text-xl font-semibold tracking-tight sm:text-2xl" style={{ color: 'var(--text-primary)' }}>{challenge.title}</h3>
-              {solved && <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-500"><CheckCircle2 className="h-3.5 w-3.5" aria-hidden />Solved</span>}
-              {!challenge.is_active && <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-500"><XCircle className="h-3.5 w-3.5" aria-hidden />Inactive</span>}
-              {challenge.is_active && !solved && <span className="text-xs font-semibold" style={{ color: 'var(--accent)' }}>Ready for testing</span>}
-            </div>
-          </div>
-          {data.isAdmin && <button onClick={onEdit} className={secondaryButton} style={{ borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}><Edit3 className="h-4 w-4" aria-hidden />Edit</button>}
-        </div>
-      </div>
-
-      <div className="p-5 sm:p-6">
-        <p className="max-w-3xl whitespace-pre-wrap leading-7" style={{ color: 'var(--text-secondary)' }}>{challenge.description}</p>
-
-        {(challenge.learn_topic_slug || challenge.upload_id) && (
-          <div className="mt-5 flex flex-wrap gap-2 border-t pt-5" style={{ borderColor: 'var(--border-color)' }}>
-            {challenge.learn_topic_slug && challenge.learn_lesson_slug && <Link className={secondaryButton} style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} href={`/learn/${challenge.learn_topic_slug}/${challenge.learn_lesson_slug}`}><BookOpen className="h-4 w-4" aria-hidden />Open lesson</Link>}
-            {challenge.upload_id && <a className={secondaryButton} style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} href={`/api/practice/files/${challenge.upload_id}`}><Download className="h-4 w-4" aria-hidden />Download attachment</a>}
-          </div>
-        )}
-
-        <div className="mt-5 space-y-2">
-          {challenge.hint && <details className="rounded-xl border px-4 py-3" style={{ backgroundColor: 'var(--input-bg)', borderColor: 'var(--border-color)' }}><summary className="cursor-pointer text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>Hint</summary><p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>{challenge.hint}</p></details>}
-          {challenge.explanation && <details className="rounded-xl border px-4 py-3" style={{ backgroundColor: 'var(--input-bg)', borderColor: 'var(--border-color)' }}><summary className="cursor-pointer text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>Explanation</summary><p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>{challenge.explanation}</p></details>}
-        </div>
-
-        {challenge.is_active && <div className="mt-6 space-y-3"><ActionForm challengeId={challenge.id} kind="flag" />{solved && <ActionForm challengeId={challenge.id} kind="feedback" initial={ownFeedback} />}</div>}
-      </div>
-
-      {data.isAdmin && (
-        <div className="border-t px-5 py-4 sm:px-6" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--input-bg)' }}>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h4 className="font-semibold" style={{ color: 'var(--text-primary)' }}>Release and review</h4>
-              <p className="mt-0.5 text-xs" style={{ color: 'var(--text-muted)' }}>{attempts.length} attempts · {feedback.length} feedback entries</p>
-            </div>
-            {publishedId ? (
-              <Link href={`/ctf/${publishedId}`} className="inline-flex min-h-9 items-center gap-2 rounded-lg border px-3 text-sm font-semibold" style={{ borderColor: 'var(--border-color)', color: 'var(--accent)' }}>View global copy</Link>
-            ) : (
-              <button disabled={publishPending} onClick={() => startPublish(async () => {
-                try {
-                  const result = await publishPracticeChallenge(challenge.id)
-                  if ('error' in result) setPublishMessage(result.error)
-                  else {
-                    setPublishedId(result.id)
-                    setPublishMessage('Published as a global snapshot. Later lab edits remain private.')
-                  }
-                } catch {
-                  setPublishMessage('Unable to publish the challenge. Please try again.')
-                }
-              })} className={primaryButton}><Rocket className="h-4 w-4" aria-hidden />{publishPending ? 'Publishing…' : 'Publish snapshot'}</button>
-            )}
-          </div>
-          {publishMessage && <p role="status" className="mt-2 text-sm" style={{ color: publishMessage.startsWith('Published') ? '#22c55e' : '#ef4444' }}>{publishMessage}</p>}
-          {(attempts.length > 0 || feedback.length > 0) && (
-            <details className="mt-4 rounded-xl border bg-[var(--card-bg)] px-4 py-3" style={{ borderColor: 'var(--border-color)' }}>
-              <summary className="cursor-pointer text-sm font-semibold">Review tester activity</summary>
-              {attempts.length > 0 && <ul aria-label="Recent attempts" className="mt-3 space-y-2">{attempts.map((attempt) => <li key={attempt.id} className="flex flex-wrap justify-between gap-2 rounded-lg p-3 text-sm" style={{ backgroundColor: 'var(--input-bg)' }}><span><span className="font-medium">{data.members.find((member) => member.user_id === attempt.user_id)?.display_name ?? 'Tester'}</span> · <span className={attempt.is_correct ? 'text-green-500' : 'text-red-500'}>{attempt.is_correct ? 'Correct' : 'Incorrect'}</span></span><time className="text-xs" style={{ color: 'var(--text-muted)' }}>{new Date(attempt.created_at).toLocaleString()}</time></li>)}</ul>}
-              {feedback.length > 0 && <ul aria-label="Recent feedback" className="mt-3 space-y-2">{feedback.map((item) => <li key={`${item.challenge_id}-${item.user_id}`} className="rounded-lg p-3 text-sm" style={{ backgroundColor: 'var(--input-bg)' }}><span className="font-medium">{data.members.find((member) => member.user_id === item.user_id)?.display_name ?? 'Tester'}:</span> {item.message}<time className="mt-1 block text-xs" style={{ color: 'var(--text-muted)' }}>{new Date(item.updated_at).toLocaleString()}</time></li>)}</ul>}
-            </details>
-          )}
-        </div>
-      )}
-    </article>
-  )
-}
 
 function TesterAccess({ data }: { data: PracticeRoomData }) {
   const router = useRouter()
@@ -240,9 +262,6 @@ export default function PracticeRoom({ data }: { data: PracticeRoomData }) {
             <p className="mt-2 max-w-[62ch] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{data.room.description}</p>
             <div className="mt-5 flex items-start gap-2 border-t pt-4 text-xs leading-relaxed" style={{ borderColor: 'var(--border-color)', color: 'var(--text-muted)' }}><FlaskConical className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden /><span><strong style={{ color: 'var(--text-secondary)' }}>Lab points only.</strong> Solves do not affect XP, global scores, badges, teams, or first blood.</span></div>
           </div>
-          <div className="grid grid-cols-3 divide-x lg:min-w-[22rem]" style={{ borderColor: 'var(--border-color)' }}>
-            {data.isAdmin ? <><Stat label="testers" value={data.members.length} /><Stat label="active challenges" value={activeChallenges.length} /><Stat label="feedback" value={feedbackCount} /></> : <><Stat label="completed" value={solvedCount} /><Stat label="available" value={activeChallenges.length} /><Stat label="lab points" value={activeChallenges.filter((challenge) => data.attempts.some((attempt) => attempt.challenge_id === challenge.id && attempt.user_id === data.userId && attempt.is_correct)).reduce((sum, challenge) => sum + challenge.points, 0)} /></>}
-          </div>
         </div>
       </section>
 
@@ -264,10 +283,10 @@ export default function PracticeRoom({ data }: { data: PracticeRoomData }) {
 
           {editing && <ChallengeEditor key={editing === 'new' ? 'new' : editing.id} roomId={data.room.id} challenge={editing === 'new' ? undefined : editing} onCancel={() => setEditing(null)} onSaved={() => { setEditing(null); router.refresh() }} />}
 
-          {data.challenges.length === 0 ? (
+{data.challenges.length === 0 ? (
             <div className="rounded-2xl border px-6 py-14 text-center" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--border-color)' }}><Lightbulb className="mx-auto h-8 w-8" style={{ color: 'var(--text-muted)' }} aria-hidden /><h3 className="mt-4 font-semibold">No challenges available</h3><p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>{data.isAdmin ? 'Add the first challenge when the lab brief is ready.' : 'The admin is still preparing this lab.'}</p></div>
           ) : (
-            <div className="space-y-4">{data.challenges.map((challenge) => <ChallengeCard key={challenge.id} challenge={challenge} data={data} onEdit={() => setEditing(challenge)} />)}</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">{data.challenges.map((challenge) => <ChallengeTile key={challenge.id} challenge={challenge} data={data} onEdit={() => setEditing(challenge)} />)}</div>
           )}
         </main>
         {data.isAdmin && <TesterAccess data={data} />}
