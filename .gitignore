@@ -72,3 +72,6 @@ fix-*.cjs
 kleia-*.mjs
 remaining.cjs
 solve-*.cjs
+
+# Generated private HackForGov artifacts and runtime flags
+hack4gov_chall/.artifacts/
