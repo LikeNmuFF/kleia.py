@@ -18,7 +18,9 @@ const pdf = Buffer.from("%PDF-1.7");
 const zip = Buffer.from("504b0304", "hex");
 
 function file(name: string, type: string, bytes: Buffer): File {
-  return new File([bytes], name, { type });
+  const arrayBuffer = new ArrayBuffer(bytes.length);
+  new Uint8Array(arrayBuffer).set(bytes);
+  return new File([arrayBuffer], name, { type });
 }
 
 describe("practice team avatar uploads", () => {

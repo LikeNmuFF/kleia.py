@@ -40,6 +40,7 @@ supabase/migrations/*
 !supabase/migrations/20260905020000_notifications.sql
 !supabase/migrations/20260906010000_season_contributors.sql
 !supabase/migrations/20260906020000_global_contributor_challenges.sql
+!supabase/migrations/20260906030001_practice_teams.sql
 !supabase/migrations/20260906060000_gamification_schema.sql
 !supabase/migrations/20260907090112_chat_replies_reactions.sql
 !supabase/tests/
