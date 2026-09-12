@@ -1,56 +1,84 @@
 <div align="center">
 
 <!-- Animated Logo -->
-<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+<svg width="150" height="150" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Kleia animated logo">
   <defs>
-    <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#8b5cf6">
-        <animate attributeName="stop-color" values="#8b5cf6;#06b6d4;#ec4899;#8b5cf6" dur="4s" repeatCount="indefinite"/>
+    <linearGradient id="kGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8b5cf6">
+        <animate attributeName="stop-color" values="#8b5cf6;#06b6d4;#ec4899;#22d3ee;#8b5cf6" dur="8s" repeatCount="indefinite"/>
       </stop>
-      <stop offset="100%" style="stop-color:#06b6d4">
-        <animate attributeName="stop-color" values="#06b6d4;#ec4899;#8b5cf6;#06b6d4" dur="4s" repeatCount="indefinite"/>
+      <stop offset="50%" stop-color="#06b6d4">
+        <animate attributeName="stop-color" values="#06b6d4;#ec4899;#22d3ee;#8b5cf6;#06b6d4" dur="8s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="100%" stop-color="#22d3ee">
+        <animate attributeName="stop-color" values="#22d3ee;#8b5cf6;#ec4899;#06b6d4;#22d3ee" dur="8s" repeatCount="indefinite"/>
       </stop>
     </linearGradient>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-      <feMerge>
-        <feMergeNode in="coloredBlur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
   </defs>
-  <!-- Outer ring -->
-  <circle cx="60" cy="60" r="56" fill="none" stroke="url(#logoGrad)" stroke-width="2.5" opacity="0.6">
-    <animateTransform attributeName="transform" type="rotate" from="0 60 60" to="360 60 60" dur="20s" repeatCount="indefinite"/>
+
+  <!-- breathing glow core -->
+  <circle cx="70" cy="70" r="46" fill="#a78bfa" opacity="0.14">
+    <animate attributeName="opacity" values="0.14;0.32;0.14" dur="4s" repeatCount="indefinite"/>
+    <animate attributeName="r" values="42;52;42" dur="4s" repeatCount="indefinite"/>
   </circle>
-  <!-- Orbiting dot -->
-  <circle cx="60" cy="4" r="3" fill="#8b5cf6" filter="url(#glow)">
-    <animateTransform attributeName="transform" type="rotate" from="0 60 60" to="360 60 60" dur="6s" repeatCount="indefinite"/>
-    <animate attributeName="fill" values="#8b5cf6;#06b6d4;#ec4899;#8b5cf6" dur="4s" repeatCount="indefinite"/>
+
+  <!-- outer dashed orbit -->
+  <circle cx="70" cy="70" r="61" fill="none" stroke="url(#kGrad)" stroke-width="1.4" stroke-dasharray="6 7" opacity="0.8">
+    <animateTransform attributeName="transform" type="rotate" from="0 70 70" to="360 70 70" dur="30s" repeatCount="indefinite"/>
   </circle>
-  <!-- Inner hexagon -->
-  <polygon points="60,18 97,39 97,81 60,102 23,81 23,39" fill="none" stroke="url(#logoGrad)" stroke-width="1.5" opacity="0.3">
-    <animateTransform attributeName="transform" type="rotate" from="0 60 60" to="-360 60 60" dur="12s" repeatCount="indefinite"/>
+
+  <!-- inner counter-rotating ring -->
+  <circle cx="70" cy="70" r="51" fill="none" stroke="#22d3ee" stroke-width="1" stroke-dasharray="1 9" opacity="0.5">
+    <animateTransform attributeName="transform" type="rotate" from="360 70 70" to="0 70 70" dur="18s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- hexagon -->
+  <polygon points="70,32 102,51 102,89 70,108 38,89 38,51" fill="none" stroke="url(#kGrad)" stroke-width="1.1" opacity="0.35">
+    <animateTransform attributeName="transform" type="rotate" from="0 70 70" to="-360 70 70" dur="40s" repeatCount="indefinite"/>
   </polygon>
-  <!-- K letterform -->
-  <g filter="url(#glow)">
-    <path d="M42 35 L42 85 M42 62 L70 35 M42 62 L70 85" fill="none" stroke="url(#logoGrad)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
-      <animate attributeName="stroke-dasharray" values="0,300;180,300;180,300" dur="2s" fill="freeze"/>
-      <animate attributeName="stroke-dashoffset" values="300;0;0" dur="2s" fill="freeze"/>
-    </path>
+
+  <!-- K letterform (draw-on) -->
+  <path d="M54 46 L54 94 M54 70 L86 46 M54 70 L86 94" fill="none" stroke="url(#kGrad)" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round">
+    <animate attributeName="stroke-dasharray" values="0 200;200 200" dur="1.4s" fill="freeze"/>
+    <animate attributeName="stroke-dashoffset" values="200;0" dur="1.4s" fill="freeze"/>
+  </path>
+
+  <!-- orbit satellites -->
+  <g>
+    <animateTransform attributeName="transform" type="rotate" from="0 70 70" to="360 70 70" dur="9s" repeatCount="indefinite"/>
+    <circle cx="70" cy="9" r="3.4" fill="#a78bfa"/>
   </g>
-  <!-- Pulse ring -->
-  <circle cx="60" cy="60" r="56" fill="none" stroke="url(#logoGrad)" stroke-width="1" opacity="0">
-    <animate attributeName="r" values="40;60" dur="2s" repeatCount="indefinite"/>
-    <animate attributeName="opacity" values="0.5;0" dur="2s" repeatCount="indefinite"/>
+  <g>
+    <animateTransform attributeName="transform" type="rotate" from="120 70 70" to="480 70 70" dur="14s" repeatCount="indefinite"/>
+    <circle cx="70" cy="11" r="2.4" fill="#ec4899"/>
+  </g>
+  <g>
+    <animateTransform attributeName="transform" type="rotate" from="240 70 70" to="600 70 70" dur="19s" repeatCount="indefinite"/>
+    <circle cx="70" cy="10" r="2.0" fill="#22d3ee"/>
+  </g>
+
+  <!-- soft pulse ring -->
+  <circle cx="70" cy="70" r="61" fill="none" stroke="#a78bfa" stroke-width="1" opacity="0">
+    <animate attributeName="r" values="44;61" dur="3s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.5;0" dur="3s" repeatCount="indefinite"/>
   </circle>
 </svg>
 
 <br/>
 
-<h1><code>kleia</code></h1>
+<!-- ============ Wordmark ============ -->
+<svg width="280" height="62" viewBox="0 0 280 62" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="kleia wordmark">
+  <defs>
+    <linearGradient id="kWord" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#c4b5fd"><animate attributeName="stop-color" values="#c4b5fd;#67e8f9;#f9a8d4;#c4b5fd" dur="8s" repeatCount="indefinite"/></stop>
+      <stop offset="100%" stop-color="#67e8f9"><animate attributeName="stop-color" values="#67e8f9;#f9a8d4;#c4b5fd;#67e8f9" dur="8s" repeatCount="indefinite"/></stop>
+    </linearGradient>
+  </defs>
+  <text x="140" y="40" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" font-size="40" font-weight="900" fill="url(#kWord)" letter-spacing="-1.5">kleia</text>
+  <text x="140" y="56" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" font-size="10" font-weight="600" letter-spacing="4" fill="#9ca3af">LEARN TOGETHER · GROW TOGETHER</text>
+</svg>
 
-<p><b>Learn Together, Grow Together</b></p>
+<p><b>Learn Together, Grow Together.</b></p>
 
 <p>
 A community platform where friends learn skills, solve CTF challenges, track progress, and grow together — all in one place.
@@ -76,7 +104,39 @@ A community platform where friends learn skills, solve CTF challenges, track pro
 <a href="https://github.com/LikeNmuFF/kleia.py/blob/main/CONTRIBUTING.md">
   <img src="https://img.shields.io/badge/Contributions-Welcome-8b5cf6?style=for-the-badge" alt="Contributions Welcome">
 </a>
+<br/><br/>
+<a href="https://github.com/LikeNmuFF/kleia.py">
+  <img src="https://img.shields.io/github/stars/LikeNmuFF/kleia.py?style=for-the-badge&logo=github&color=181717" alt="GitHub stars">
+</a>
+<a href="https://github.com/LikeNmuFF/kleia.py">
+  <img src="https://img.shields.io/github/forks/LikeNmuFF/kleia.py?style=for-the-badge&logo=github&color=181717" alt="GitHub forks">
+</a>
+<a href="https://github.com/LikeNmuFF/kleia.py/issues">
+  <img src="https://img.shields.io/github/issues/LikeNmuFF/kleia.py?style=for-the-badge&logo=github&color=181717" alt="GitHub issues">
+</a>
+<a href="https://github.com/LikeNmuFF/kleia.py/pulse">
+  <img src="https://img.shields.io/github/commit-activity/m/LikeNmuFF/kleia.py?style=for-the-badge&logo=github&color=181717" alt="commit activity">
+</a>
+<a href="https://github.com/LikeNmuFF/kleia.py/graphs/contributors">
+  <img src="https://img.shields.io/github/contributors/LikeNmuFF/kleia.py?style=for-the-badge&logo=github&color=181717" alt="contributors">
+</a>
 
+</div>
+
+<br/>
+
+<!-- ============ Animated divider ============ -->
+<div align="center">
+<svg width="320" height="6" viewBox="0 0 320 6" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <linearGradient id="kDiv" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8b5cf6"><animate attributeName="stop-color" values="#8b5cf6;#22d3ee;#ec4899;#8b5cf6" dur="6s" repeatCount="indefinite"/></stop>
+      <stop offset="50%" stop-color="#22d3ee"><animate attributeName="stop-color" values="#22d3ee;#ec4899;#8b5cf6;#22d3ee" dur="6s" repeatCount="indefinite"/></stop>
+      <stop offset="100%" stop-color="#ec4899"><animate attributeName="stop-color" values="#ec4899;#8b5cf6;#22d3ee;#ec4899" dur="6s" repeatCount="indefinite"/></stop>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="2" width="320" height="2" rx="1" fill="url(#kDiv)"/>
+</svg>
 </div>
 
 <br/>
