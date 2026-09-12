@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => ({
   createClient: vi.fn(),
   isAdmin: vi.fn(),
+  getServiceClient: vi.fn(),
 }))
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -11,6 +12,10 @@ vi.mock('@/lib/supabase/server', () => ({
 
 vi.mock('@/lib/admin', () => ({
   isAdmin: mocks.isAdmin,
+}))
+
+vi.mock('@/lib/supabase/service', () => ({
+  getServiceClient: mocks.getServiceClient,
 }))
 
 vi.mock('@/lib/errorHandler', () => ({

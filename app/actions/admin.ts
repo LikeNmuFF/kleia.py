@@ -75,11 +75,11 @@ export async function getDatabaseUsage() {
   }
 
   if (dbResult.error) {
-    return { totalBytes: 0, percentUsed: 0, freeTierBytes: FREE_TIER_BYTES, largestTables: [], error: dbResult.error.message }
+    return { totalBytes: 0, percentUsed: 0, freeTierBytes: FREE_TIER_BYTES, largestTables: [], error: getSafeErrorMessage(dbResult.error, 'Could not load database usage.') }
   }
 
   if (tablesResult.error) {
-    return { totalBytes, percentUsed: Math.round(percentUsed * 100) / 100, freeTierBytes: FREE_TIER_BYTES, largestTables: [], error: tablesResult.error.message }
+    return { totalBytes, percentUsed: Math.round(percentUsed * 100) / 100, freeTierBytes: FREE_TIER_BYTES, largestTables: [], error: getSafeErrorMessage(tablesResult.error, 'Could not load database tables.') }
   }
 
   return {
@@ -391,7 +391,7 @@ export async function deleteUser(userId: string) {
       .eq(step.column, userId)
 
     if (error && error.code !== '42P01' && error.code !== '42703') {
-      return { error: `Could not remove ${step.table}.${step.column}: ${error.message}` }
+      return { error: getSafeErrorMessage(error, 'Could not remove the user data.') }
     }
   }
 
@@ -401,7 +401,7 @@ export async function deleteUser(userId: string) {
     .eq('id', userId)
 
   if (profileError) {
-    return { error: `Could not remove profile: ${profileError.message}` }
+    return { error: getSafeErrorMessage(profileError, 'Could not remove the profile.') }
   }
 
   const { error: authError } = await adminClient.auth.admin.deleteUser(userId)

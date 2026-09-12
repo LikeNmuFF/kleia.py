@@ -247,6 +247,10 @@ export async function creditPracticeTeamSolve(
   challengeId: string,
   submissionId: string | null = null,
 ): Promise<{ success: true; credited: number } | { error: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || user.id !== userId) return { error: "Unauthorized" };
+
   const service = getServiceClient() as any;
   const { data: memberships, error: membershipError } = await service
     .from("practice_team_members")

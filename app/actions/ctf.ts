@@ -177,7 +177,7 @@ export async function submitFlag(challengeId: string, submittedFlag: string) {
     }
   }
 
-  const { data: isCorrectData, error: checkError } = await supabase.rpc('check_flag', {
+  const { data: isCorrectData, error: checkError } = await (getServiceClient() as any).rpc('check_flag', {
     p_challenge_id: challengeId,
     p_flag: submittedFlag.trim(),
   })

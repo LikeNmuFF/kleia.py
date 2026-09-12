@@ -8,7 +8,7 @@ afterEach(() => {
   vi.unstubAllEnvs()
 })
 
-it('uploads authenticated files without requesting moderation or requiring scan results', async () => {
+it('requests malware moderation for authenticated challenge files', async () => {
   vi.stubEnv('NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME', 'test')
   vi.stubEnv('CLOUDINARY_API_KEY', 'test')
   vi.stubEnv('CLOUDINARY_API_SECRET', 'test')
@@ -16,7 +16,7 @@ it('uploads authenticated files without requesting moderation or requiring scan 
   const upload = vi.spyOn(cloudinary.uploader, 'upload_stream').mockImplementation(((options: any, callback: any) => {
     expect(options.resource_type).toBe('raw')
     expect(options.type).toBe('authenticated')
-    expect(options).not.toHaveProperty('moderation')
+    expect(options.moderation).toBe('perception_point')
     expect(options).not.toHaveProperty('notification_url')
     return new Writable({
       write(chunk, _encoding, done) { chunks.push(Buffer.from(chunk)); done() },

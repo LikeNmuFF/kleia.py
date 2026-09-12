@@ -4,6 +4,7 @@ import { type EmailOtpType } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/server'
+import { getSafeNextPath } from '@/lib/auth/redirect-url'
 
 const OTP_EXPIRED_ERROR_CODE = 'otp_expired'
 
@@ -11,7 +12,7 @@ export async function confirmEmail(formData: FormData) {
   const tokenHash = formData.get('token_hash') as string | null
   const type = formData.get('type') as EmailOtpType | null
   const nextParam = formData.get('next') as string | null
-  const nextPath = nextParam?.startsWith('/') && !nextParam.includes('://') ? nextParam : '/feed'
+  const nextPath = getSafeNextPath(nextParam)
 
   if (!tokenHash || !type) {
     redirect('/login?error=auth_failed')

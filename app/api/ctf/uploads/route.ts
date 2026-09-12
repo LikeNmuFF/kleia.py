@@ -4,13 +4,13 @@ import { getServiceClient } from '@/lib/supabase/service'
 import { checkNamedRateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import { logEvent } from '@/lib/logEvent'
 import { getSafeErrorMessage } from '@/lib/errorHandler'
-import { createHash } from 'node:crypto'
 import {
   destroyChallengeFile,
   refreshChallengeFileModerationStatus,
   uploadChallengeFile,
 } from '@/lib/ctf/uploads/cloudinary'
 import { normalizeUploadFileName } from '@/lib/ctf/uploads/filename'
+import { validateChallengeUpload } from '@/lib/ctf/uploads/validate'
 import { isAllowedUploadOrigin } from '@/lib/ctf/uploads/origin'
 import {
   canUploadGlobalChallengeFile,
@@ -111,15 +111,16 @@ async function upload(request: NextRequest) {
     return jsonError('You do not have permission to attach files in this workspace.', 403)
   }
 
-  const buffer = Buffer.from(await file.arrayBuffer())
+  const inputBuffer = Buffer.from(await file.arrayBuffer())
   let normalized
   try {
-    normalized = normalizeUploadFileName(file.name)
+    normalized = await validateChallengeUpload(file.name, inputBuffer)
   } catch {
     await logEvent({ endpoint: 'ctf.upload', status: 'error', durationMs: Date.now() - start, errorMessage: 'Unsupported file type', userId: user.id })
     return jsonError('Unsupported file type', 400)
   }
-  const sha256 = createHash('sha256').update(buffer).digest('hex')
+  const buffer = normalized.buffer
+  const sha256 = normalized.sha256
 
   let uploaded
   try {
@@ -151,12 +152,11 @@ async function upload(request: NextRequest) {
       original_name: normalized.originalName,
       stored_name: normalized.storedName,
       extension: normalized.extension,
-      size_bytes: buffer.byteLength,
+      size_bytes: normalized.sizeBytes,
       sha256,
-      // Approved means attachable; these files have not been malware-scanned.
-      scan_status: 'approved',
-      scan_provider: 'none',
-      scan_result: { scanning: 'disabled' },
+      scan_status: 'pending',
+      scan_provider: 'perception_point',
+      scan_result: { scanning: 'pending' },
       scanned_at: null,
     })
     .select('id, scan_status, stored_name')

@@ -4,6 +4,7 @@ import { getSafeErrorMessage } from '@/lib/errorHandler'
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { getServiceClient } from '@/lib/supabase/service'
 import { isAdmin } from '@/lib/admin'
 import { getEffectiveSeasonStatus, getSeasonHintCost, type SeasonRow, type SeasonStatus } from './competition-status'
 import { notifyUser } from './notifications'
@@ -143,6 +144,9 @@ export async function getUpcomingRegistration() {
  */
 export async function creditSeasonSolve(userId: string, challengeId: string) {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user || user.id !== userId) return
+  const service = getServiceClient() as any
 
   const { data: links } = await supabase
     .from('ctf_season_challenges')
@@ -166,7 +170,7 @@ export async function creditSeasonSolve(userId: string, challengeId: string) {
       .single()
 
     const points = (challenge?.points ?? 0) + (link.bonus_points ?? 0)
-    const { data: credited, error } = await supabase.rpc('increment_season_score', {
+    const { data: credited, error } = await service.rpc('increment_season_score', {
       p_season_id: season.id,
       p_user_id: userId,
       p_points: points,

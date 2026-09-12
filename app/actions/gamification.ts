@@ -14,7 +14,7 @@ import { createClient } from "@/lib/supabase/server";
 
 type ActionResult = { success: true } | { error: string };
 
-export async function awardXp(
+async function awardXp(
   userId: string,
   difficulty: string,
   streakDays: number,
@@ -68,7 +68,7 @@ export async function awardXp(
   return { success: true };
 }
 
-export async function checkAndGrantBadges(
+async function checkAndGrantBadges(
   userId: string,
   teamIds: string[],
 ): Promise<void> {

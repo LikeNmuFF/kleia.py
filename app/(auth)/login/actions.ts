@@ -6,16 +6,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/server'
-import { buildAuthCallbackUrl } from '@/lib/auth/redirect-url'
-
-function getSafeNextPath(value: FormDataEntryValue | null) {
-  return typeof value === 'string'
-    && value.startsWith('/')
-    && !value.startsWith('//')
-    && !value.includes('://')
-    ? value
-    : '/feed'
-}
+import { buildAuthCallbackUrl, getSafeNextPath } from '@/lib/auth/redirect-url'
 
 export async function login(formData: FormData) {
   const supabase = await createClient()
@@ -35,7 +26,7 @@ export async function login(formData: FormData) {
       ? 'Invalid email or password'
       : error.message === 'Email not confirmed'
         ? 'Please confirm your email before signing in'
-        : error.message
+        : getSafeErrorMessage(error, 'Unable to sign in. Please try again.')
     redirect('/login?error=' + encodeURIComponent(message))
   }
 

@@ -160,7 +160,7 @@ export async function sendInviteEmails(
   try {
     resend = getResend()
   } catch (err) {
-    return { success: false, error: (err as Error).message, sent: 0, failed: 0, results: [] }
+    return { success: false, error: getSafeErrorMessage(err, 'Email service is temporarily unavailable.'), sent: 0, failed: 0, results: [] }
   }
 
   const bodyLines = cleanedBody.split('\n')
@@ -195,7 +195,7 @@ export async function sendInviteEmails(
       })
     } catch (err) {
       failed++
-      results.push({ email, ok: false, error: (err as Error).message })
+      results.push({ email, ok: false, error: getSafeErrorMessage(err, 'Email could not be sent.') })
       await supabase.from('email_logs').insert({
         subject: cleanedSubject,
         recipient: email,

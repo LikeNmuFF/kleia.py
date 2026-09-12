@@ -91,8 +91,8 @@ export default function EmailTab() {
       setResults(res.results)
       if (res.error) setError(res.error)
       await fetchLogs()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to send emails.')
+    } catch {
+      setError('Failed to send emails. Please try again.')
     } finally {
       setSending(false)
     }

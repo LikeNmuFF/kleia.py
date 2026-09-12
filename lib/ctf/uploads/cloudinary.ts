@@ -86,6 +86,7 @@ export async function uploadChallengeFile(upload: ChallengeUploadInput, ownerId:
         public_id: publicId,
         resource_type: 'raw',
         type: 'authenticated',
+        moderation: 'perception_point',
         context: {
           owner_id: ownerId,
           original_name: upload.originalName,

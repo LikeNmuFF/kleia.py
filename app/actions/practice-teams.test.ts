@@ -37,6 +37,7 @@ describe("practice team actions", () => {
     expect(ctf).toContain("creditPracticeTeamSolve");
     expect(ctf).toContain("creditPracticeTeamSolve(user.id, challengeId");
     expect(practiceTeams).toContain("export async function creditPracticeTeamSolve");
+    expect(practiceTeams).toContain('if (!user || user.id !== userId) return { error: "Unauthorized" }');
     expect(practiceTeams).toContain('.from("practice_team_solves")');
     expect(practiceTeams).toContain('.from("practice_team_members")');
     expect(practiceTeams).toContain('.eq("status", "accepted")');

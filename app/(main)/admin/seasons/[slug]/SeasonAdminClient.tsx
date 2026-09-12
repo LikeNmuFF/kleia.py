@@ -310,8 +310,8 @@ export default function SeasonAdminClient({
                 try {
                   setUploading(true)
                   uploadedFileUrl = await uploadChallengeFile(file)
-                } catch (error) {
-                  notify(error instanceof Error ? error.message : 'Challenge file upload failed', 'error')
+                } catch {
+                  notify('Challenge file upload failed. Please try again.', 'error')
                   setUploading(false)
                   return
                 }

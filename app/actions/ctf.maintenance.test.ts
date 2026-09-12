@@ -1,8 +1,8 @@
 import { beforeEach, expect, it, vi } from 'vitest'
 
-const mocks = vi.hoisted(() => ({ createClient: vi.fn(), rpc: vi.fn(), revalidate: vi.fn() }))
+const mocks = vi.hoisted(() => ({ createClient: vi.fn(), rpc: vi.fn(), serviceClient: vi.fn(), revalidate: vi.fn() }))
 vi.mock('@/lib/supabase/server', () => ({ createClient: mocks.createClient }))
-vi.mock('@/lib/supabase/service', () => ({ getServiceClient: vi.fn() }))
+vi.mock('@/lib/supabase/service', () => ({ getServiceClient: mocks.serviceClient }))
 vi.mock('@/lib/errorHandler', () => ({ getSafeErrorMessage: () => 'Update failed' }))
 vi.mock('@/lib/logEvent', () => ({ logEvent: vi.fn(), extractClientIp: () => '127.0.0.1' }))
 vi.mock('@/lib/security-log', () => ({ logSecurityEvent: vi.fn() }))
@@ -31,6 +31,7 @@ beforeEach(() => {
   role = 'admin'
   updateResult = { data: { id: 'challenge' }, error: null }
   mocks.rpc.mockResolvedValue({ data: null, error: { message: 'Flag checker reached' } })
+  mocks.serviceClient.mockReturnValue({ rpc: mocks.rpc })
   mocks.createClient.mockResolvedValue({
     auth: { getUser: async () => ({ data: { user: { id: 'user' } } }) },
     rpc: mocks.rpc,

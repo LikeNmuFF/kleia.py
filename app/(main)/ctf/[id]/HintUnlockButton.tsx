@@ -27,8 +27,8 @@ export default function HintUnlockButton({
       if (result.xpSpent > 0) {
         setMessage(`-${result.xpSpent} XP spent`)
       }
-    } catch (error: any) {
-      setMessage(error.message || 'Failed to unlock hint')
+    } catch {
+      setMessage('Failed to unlock hint. Please try again.')
     } finally {
       setLoading(false)
     }

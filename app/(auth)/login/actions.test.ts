@@ -12,11 +12,15 @@ vi.mock('@/lib/supabase/server', () => ({
 }))
 
 vi.mock('@/lib/errorHandler', () => ({
-  getSafeErrorMessage: vi.fn(),
+  getSafeErrorMessage: vi.fn(() => 'Unable to sign in. Please try again.'),
 }))
 
 vi.mock('@/lib/auth/redirect-url', () => ({
   buildAuthCallbackUrl: vi.fn(() => 'https://www.kleia.site/auth/callback'),
+  getSafeNextPath: (value: FormDataEntryValue | null) =>
+    typeof value === 'string' && value.startsWith('/') && !value.startsWith('//') && !value.includes('://')
+      ? value
+      : '/feed',
 }))
 
 vi.mock('next/navigation', () => ({
@@ -60,5 +64,19 @@ describe('login', () => {
     formData.set('next', 'https://evil.example/phish')
 
     await expect(login(formData)).rejects.toThrow('NEXT_REDIRECT:/feed')
+  })
+
+  it('does not expose provider or database errors to the user', async () => {
+    const client = signedInClient()
+    client.auth.signInWithPassword.mockResolvedValue({ error: { message: 'database relation details' } })
+    mocks.createClient.mockResolvedValue(client)
+
+    const formData = new FormData()
+    formData.set('email', 'participant@example.com')
+    formData.set('password', 'correct-password')
+
+    await expect(login(formData)).rejects.toThrow(
+      'NEXT_REDIRECT:/login?error=Unable%20to%20sign%20in.%20Please%20try%20again.'
+    )
   })
 })
