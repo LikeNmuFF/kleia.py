@@ -7,6 +7,7 @@ const clientSource = () => readFileSync(join(process.cwd(), 'app', '(main)', 'ct
 const solvesPageSource = () => readFileSync(join(process.cwd(), 'app', '(main)', 'ctf', 'solves', 'page.tsx'), 'utf8')
 const feedSource = () => readFileSync(join(process.cwd(), 'components', 'ctf', 'RecentSolvesFeed.tsx'), 'utf8')
 const actionSource = () => readFileSync(join(process.cwd(), 'app', 'actions', 'recent-global-solves.ts'), 'utf8')
+const solvesApiSource = () => readFileSync(join(process.cwd(), 'app', 'api', 'ctf', 'recent-solves', 'route.ts'), 'utf8')
 
 describe('/ctf season filtering', () => {
   test('loads season filter options and passes selected season to the CTF client', () => {
@@ -73,5 +74,28 @@ describe('/ctf season filtering', () => {
     expect(feed).toContain('timeAgo(solve.solved_at)')
     // The feed never renders an empty section.
     expect(feed).not.toContain('{solves.length > 0')
+  })
+
+  test('feed updates live: client polls the public solves endpoint', () => {
+    const feed = feedSource()
+
+    expect(feed).toContain("'use client'")
+    expect(feed).toContain("fetch('/api/ctf/recent-solves'")
+    expect(feed).toContain('setInterval')
+    // Polling pauses while the tab is hidden, resumes on focus.
+    expect(feed).toContain('document.hidden')
+    expect(feed).toContain('visibilitychange')
+    // Fresh solves get a NEW badge, and the header shows a Live indicator.
+    expect(feed).toContain('isFresh')
+    expect(feed).toContain('animate-pulse')
+  })
+
+  test('public solves endpoint serves uncached RPC data with rate limiting', () => {
+    const source = solvesApiSource()
+
+    expect(source).toContain("rpc('get_recent_global_solves')")
+    expect(source).toContain('getServiceClient')
+    expect(source).toContain('no-store')
+    expect(source).toContain('checkNamedRateLimit')
   })
 })

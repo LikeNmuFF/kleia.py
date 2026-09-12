@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   description: 'Public global solve log — see who recently solved CTF challenges.',
 }
 
+// Always server-render fresh solve data; the client then keeps it live via polling.
+export const dynamic = 'force-dynamic'
+
 export default async function RecentSolvesPage() {
   const recentSolves = await getRecentGlobalSolves()
 
