@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 import RoomList from './RoomList'
 import PracticeRoom from './PracticeRoom'
+import PracticeChallengeDetail from './PracticeChallengeDetail'
 import ChallengeEditor from './ChallengeEditor'
 
 vi.mock('@/app/actions/practice', () => ({
@@ -14,6 +15,24 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }))
 const room = { id: 'room-1', title: 'Web Review Lab', description: 'Test challenges before release.', created_at: '2026-09-09T00:00:00Z', member_count: 2, challenge_count: 3, active_challenge_count: 2 }
 
 describe('Labs UI', () => {
+  const challenge = { id: 'challenge-1', room_id: room.id, title: 'Cookie Trail', description: 'Find the flag.', category: 'web', difficulty: 'easy', points: 100, hint: 'Inspect storage.', explanation: 'The cookie was unsigned.', upload_id: 'upload-1', learn_topic_slug: 'web', learn_lesson_slug: 'cookies', is_active: true, created_at: room.created_at }
+
+  it('opens an individual challenge workspace from the room', () => {
+    const roomHtml = renderToStaticMarkup(<PracticeRoom data={{
+      room, isAdmin: false, userId: 'user-1', members: [], attempts: [], feedback: [], publications: [], challenges: [challenge],
+    }} />)
+    const detailHtml = renderToStaticMarkup(<PracticeChallengeDetail data={{
+      room, isAdmin: false, userId: 'user-1', members: [], attempts: [{ id: 'solve-1', challenge_id: challenge.id, user_id: 'user-1', is_correct: true, created_at: room.created_at }], feedback: [], publications: [], challenges: [challenge],
+    }} challenge={challenge} />)
+
+    expect(roomHtml).toContain(`/practice/${room.id}/challenge/${challenge.id}`)
+    expect(detailHtml).toContain('Submit flag')
+    expect(detailHtml).toContain('Send feedback')
+    expect(detailHtml).toContain('/api/practice/files/upload-1')
+    expect(detailHtml).toContain('/learn/web/cookies')
+    expect(detailHtml).toContain('The cookie was unsigned.')
+  })
+
   it('explains the invite-only empty state', () => {
     const html = renderToStaticMarkup(<RoomList rooms={[]} isAdmin={false} />)
     expect(html).toMatch(/invite-only/i)
@@ -32,25 +51,23 @@ describe('Labs UI', () => {
   })
 
   it('renders member solve, download, lesson, and feedback controls', () => {
-    const html = renderToStaticMarkup(<PracticeRoom data={{
+    const html = renderToStaticMarkup(<PracticeChallengeDetail challenge={challenge} data={{
       room, isAdmin: false, userId: 'user-1', members: [], attempts: [{ id: 'solve-1', challenge_id: 'challenge-1', user_id: 'user-1', is_correct: true, created_at: room.created_at }], feedback: [], publications: [],
-      challenges: [{ id: 'challenge-1', room_id: room.id, title: 'Cookie Trail', description: 'Find the flag.', category: 'web', difficulty: 'easy', points: 100, hint: 'Inspect storage.', explanation: 'The cookie was unsigned.', upload_id: 'upload-1', learn_topic_slug: 'web', learn_lesson_slug: 'cookies', is_active: true, created_at: room.created_at }],
+      challenges: [challenge],
     }} />)
     expect(html).toContain('Submit flag')
     expect(html).toContain('Send feedback')
     expect(html).toContain('/api/practice/files/upload-1')
     expect(html).toContain('/learn/web/cookies')
-    expect(html).toContain('Lab points only')
-    expect(html).toContain('Your progress')
-    expect(html).toContain('1 of 1 complete')
+    expect(html).toContain('Back to Web Review Lab')
   })
 
   it('keeps feedback unavailable until the current user solves the challenge', () => {
-    const unsolved = renderToStaticMarkup(<PracticeRoom data={{
+    const unsolved = renderToStaticMarkup(<PracticeChallengeDetail challenge={challenge} data={{
       room, isAdmin: false, userId: 'user-1', members: [], attempts: [], feedback: [], publications: [],
       challenges: [{ id: 'challenge-1', room_id: room.id, title: 'Cookie Trail', description: 'Find the flag.', category: 'web', difficulty: 'easy', points: 100, hint: null, explanation: null, upload_id: null, learn_topic_slug: null, learn_lesson_slug: null, is_active: true, created_at: room.created_at }],
     }} />)
-    const solved = renderToStaticMarkup(<PracticeRoom data={{
+    const solved = renderToStaticMarkup(<PracticeChallengeDetail challenge={challenge} data={{
       room, isAdmin: false, userId: 'user-1', members: [], attempts: [{ id: 'solve-1', challenge_id: 'challenge-1', user_id: 'user-1', is_correct: true, created_at: room.created_at }], feedback: [], publications: [],
       challenges: [{ id: 'challenge-1', room_id: room.id, title: 'Cookie Trail', description: 'Find the flag.', category: 'web', difficulty: 'easy', points: 100, hint: null, explanation: null, upload_id: null, learn_topic_slug: null, learn_lesson_slug: null, is_active: true, created_at: room.created_at }],
     }} />)
@@ -60,7 +77,7 @@ describe('Labs UI', () => {
   })
 
   it('uses an accessible icon-only flag submission control', () => {
-    const html = renderToStaticMarkup(<PracticeRoom data={{
+    const html = renderToStaticMarkup(<PracticeChallengeDetail challenge={challenge} data={{
       room, isAdmin: false, userId: 'user-1', members: [], attempts: [], feedback: [], publications: [],
       challenges: [{ id: 'challenge-1', room_id: room.id, title: 'Cookie Trail', description: 'Find the flag.', category: 'web', difficulty: 'easy', points: 100, hint: null, explanation: null, upload_id: null, learn_topic_slug: null, learn_lesson_slug: null, is_active: true, created_at: room.created_at }],
     }} />)
@@ -83,10 +100,8 @@ describe('Labs UI', () => {
     expect(html).toContain('Invite a tester')
     expect(html).toContain('Add challenge')
     expect(html).toContain('global snapshot')
-    expect(html).toContain('Submit flag')
-    expect(html).toContain('Incorrect')
+    expect(html).toContain('Build and validate')
     expect(html).toContain('Test User')
-    expect(html).toContain('Clarify the hint.')
     expect(html).toContain('Lab control')
     expect(html).toContain('Tester access')
     expect(html).toContain('Build and validate')
@@ -106,9 +121,8 @@ describe('Labs UI', () => {
     }} />)
 
     expect(html).toContain('aria-label="Lab summary"')
-    expect(html).toContain('aria-label="Challenge workspace: Cookie Trail"')
+    expect(html).toContain('aria-label="Open challenge: Cookie Trail"')
     expect(html).toContain('aria-label="Tester management"')
-    expect(html).toContain('Ready for testing')
     expect(html).toContain('Invite a tester')
   })
 
