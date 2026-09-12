@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240" role="img" aria-label="Kleia logo">
+  <!--
+    Kleia knot mark: four interlocking rounded loops arranged in a clover.
+    Blue = top + left petals, Yellow = right + bottom petals, with a woven overlap.
+  -->
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Top petal (blue) -->
+    <g stroke="#2168b0">
+      <rect x="66" y="12" width="108" height="108" rx="42" stroke-width="16"/>
+      <rect x="82" y="28" width="76" height="76" rx="30" stroke-width="6"/>
+    </g>
+    <!-- Left petal (blue) -->
+    <g stroke="#2168b0">
+      <rect x="12" y="66" width="108" height="108" rx="42" stroke-width="16"/>
+      <rect x="28" y="82" width="76" height="76" rx="30" stroke-width="6"/>
+    </g>
+    <!-- Right petal (yellow, woven over the blue top/left arms) -->
+    <g stroke="#ffd200">
+      <rect x="120" y="66" width="108" height="108" rx="42" stroke-width="16"/>
+      <rect x="136" y="82" width="76" height="76" rx="30" stroke-width="6"/>
+    </g>
+    <!-- Bottom petal (yellow, woven over the blue left arm) -->
+    <g stroke="#ffd200">
+      <rect x="66" y="120" width="108" height="108" rx="42" stroke-width="16"/>
+      <rect x="82" y="136" width="76" height="76" rx="30" stroke-width="6"/>
+    </g>
+    <!-- Weave patches: blue passes back over yellow (over/under knot) -->
+    <g stroke="#2168b0" stroke-width="16">
+      <path d="M174 92 a30 30 0 0 1 0 34"/>
+      <path d="M92 174 a30 30 0 0 0 34 0"/>
+    </g>
+    <g stroke="#2168b0" stroke-width="6">
+      <path d="M166 96 a24 24 0 0 1 0 26"/>
+      <path d="M96 166 a24 24 0 0 0 26 0"/>
+    </g>
+  </g>
+</svg>
