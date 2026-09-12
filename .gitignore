@@ -43,6 +43,7 @@ supabase/migrations/*
 !supabase/migrations/20260906030001_practice_teams.sql
 !supabase/migrations/20260906060000_gamification_schema.sql
 !supabase/migrations/20260907090112_chat_replies_reactions.sql
+!supabase/migrations/20260912112156_include_season_solves_in_recent_feed.sql
 !supabase/tests/
 supabase/tests/*
 !supabase/tests/skill_snapshots_rls.sql
