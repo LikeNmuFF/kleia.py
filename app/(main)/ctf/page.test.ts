@@ -4,6 +4,9 @@ import { describe, expect, test } from 'vitest'
 
 const pageSource = () => readFileSync(join(process.cwd(), 'app', '(main)', 'ctf', 'page.tsx'), 'utf8')
 const clientSource = () => readFileSync(join(process.cwd(), 'app', '(main)', 'ctf', 'CTFClient.tsx'), 'utf8')
+const solvesPageSource = () => readFileSync(join(process.cwd(), 'app', '(main)', 'ctf', 'solves', 'page.tsx'), 'utf8')
+const feedSource = () => readFileSync(join(process.cwd(), 'components', 'ctf', 'RecentSolvesFeed.tsx'), 'utf8')
+const actionSource = () => readFileSync(join(process.cwd(), 'app', 'actions', 'recent-global-solves.ts'), 'utf8')
 
 describe('/ctf season filtering', () => {
   test('loads season filter options and passes selected season to the CTF client', () => {
@@ -29,9 +32,18 @@ describe('/ctf season filtering', () => {
   test('server loads recent global solves and passes them to the client', () => {
     const source = pageSource()
 
-    expect(source).toContain("rpc('get_recent_global_solves')")
     expect(source).toContain('getRecentGlobalSolves')
     expect(source).toContain('recentSolves={recentSolves}')
+    // The RPC call lives in the shared server action.
+    expect(actionSource()).toContain("rpc('get_recent_global_solves')")
+  })
+
+  test('exposes a public /ctf/solves page that renders the feed', () => {
+    const source = solvesPageSource()
+
+    expect(source).toContain('getRecentGlobalSolves')
+    expect(source).toContain('RecentSolvesFeed')
+    expect(source).toContain('Recent Solves')
   })
 
   test('client exposes a sort control and applies it to the filtered grid', () => {
@@ -46,11 +58,20 @@ describe('/ctf season filtering', () => {
     expect(source).toContain('{sorted.map(')
   })
 
-  test('client renders a recent global solves feed', () => {
+  test('client renders the recent global solves feed via the shared component', () => {
     const source = clientSource()
 
-    expect(source).toContain('Recent Solves')
-    expect(source).toContain('recentSolves.length > 0')
-    expect(source).toContain('timeAgo(solve.solved_at)')
+    // CTFClient delegates to the shared feed component (also used by /ctf/solves).
+    expect(source).toContain('RecentSolvesFeed')
+    expect(source).toContain('solves={recentSolves}')
+    // A header button on /ctf links to the public solves page.
+    expect(source).toContain('href="/ctf/solves"')
+    // The feed markup lives in the shared component.
+    const feed = feedSource()
+    expect(feed).toContain('Recent Solves')
+    expect(feed).toContain('solves.length === 0')
+    expect(feed).toContain('timeAgo(solve.solved_at)')
+    // The feed never renders an empty section.
+    expect(feed).not.toContain('{solves.length > 0')
   })
 })

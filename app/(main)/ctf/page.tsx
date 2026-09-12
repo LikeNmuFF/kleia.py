@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { getEffectiveSeasonStatus, isChallengePublicAfterSeasons, type SeasonStatus } from '@/app/actions/competition-status'
+import { getRecentGlobalSolves } from '@/app/actions/recent-global-solves'
 import AnnouncementBanner from '@/components/AnnouncementBanner'
 import AIFairPlayBanner from '@/components/ctf/AIFairPlayBanner'
 import CTFClient from './CTFClient'
@@ -25,23 +26,6 @@ async function getSeasonFilterData() {
     .order('start_date', { ascending: false })
 
   return (data || []).filter(season => Boolean(season.slug)) as SeasonFilterOption[]
-}
-
-interface RecentSolve {
-  user_id: string
-  username: string
-  avatar_url: string | null
-  challenge_id: string
-  title: string
-  category: string
-  points: number
-  solved_at: string
-}
-
-async function getRecentGlobalSolves(): Promise<RecentSolve[]> {
-  const supabase = await createClient()
-  const { data } = await supabase.rpc('get_recent_global_solves')
-  return (data || []) as RecentSolve[]
 }
 
 async function getChallengeData(userId?: string) {

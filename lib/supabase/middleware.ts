@@ -51,6 +51,7 @@ export async function updateSession(request: NextRequest) {
     '/terms',
     '/api',
     '/cco',
+    '/ctf/solves',
     '/ctf/seasons',
   ]
 

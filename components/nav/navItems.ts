@@ -17,6 +17,7 @@ import {
   GraduationCap,
   Handshake,
   Activity,
+  History,
   FlaskConical,
   type LucideIcon,
 } from 'lucide-react'
@@ -76,6 +77,12 @@ export const CHALLENGE_NAV: NavItem[] = [
     icon: Flag,
     badge: 'beta',
     matchPrefix: true,
+  },
+  {
+    label: 'Recent Solves',
+    href: '/ctf/solves',
+    icon: History,
+    matchers: ['/ctf/solves'],
   },
   { label: 'Regex Golf', href: '/regex-golf', icon: Braces, matchPrefix: true },
   { label: 'Cipher', href: '/cipher', icon: KeyRound, matchPrefix: true },
