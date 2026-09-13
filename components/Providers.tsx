@@ -5,6 +5,7 @@ import { ThemeProvider } from 'next-themes'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { LoadingProvider } from '@/lib/context/LoadingContext'
 import { RouterLoader } from '@/components/RouterLoader'
+import CookieConsent from '@/components/CookieConsent'
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -25,6 +26,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
             <RouterLoader />
           </Suspense>
           {children}
+          <CookieConsent />
         </LoadingProvider>
       </ThemeProvider>
     </QueryClientProvider>

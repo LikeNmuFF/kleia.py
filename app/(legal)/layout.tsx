@@ -18,6 +18,7 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
             <Link href="/security" className="text-sm" style={{ color: 'var(--text-secondary)' }}>Security</Link>
             <Link href="/privacy" className="text-sm" style={{ color: 'var(--text-secondary)' }}>Privacy</Link>
             <Link href="/terms" className="text-sm" style={{ color: 'var(--text-secondary)' }}>Terms</Link>
+            <Link href="/changelog" className="text-sm" style={{ color: 'var(--text-secondary)' }}>Changelog</Link>
           </div>
         </div>
       </nav>
@@ -29,6 +30,7 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
           <Link href="/security" className="hover:text-violet-400 transition-colors">Security</Link>
           <Link href="/privacy" className="hover:text-violet-400 transition-colors">Privacy</Link>
           <Link href="/terms" className="hover:text-violet-400 transition-colors">Terms</Link>
+          <Link href="/changelog" className="hover:text-violet-400 transition-colors">Changelog</Link>
         </div>
       </footer>
     </div>

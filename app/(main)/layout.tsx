@@ -138,6 +138,7 @@ export default async function MainLayout({
             <Link href="/security" className="hover:text-violet-400 transition-colors">Security</Link>
             <Link href="/privacy" className="hover:text-violet-400 transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-violet-400 transition-colors">Terms</Link>
+            <Link href="/changelog" className="hover:text-violet-400 transition-colors">Changelog</Link>
             <SupportButton />
           </div>
         </footer>
